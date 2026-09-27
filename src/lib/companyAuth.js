@@ -1,6 +1,6 @@
 import { clearImageCache } from './imageCache';
 import { setBrandLogo } from './brandStore.js';
-export const COMPANY_API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_COMPANY_API_URL) || '/api/company-auth';
+export const COMPANY_API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_COMPANY_API_URL) || (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') ? '/api/company-auth' : 'https://hrms-api.mkmkataria07.workers.dev/api/v1');
 export async function companyRequest(path, { token, ...options } = {}) {
   const response = await fetch(COMPANY_API + path, { ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers } });
   const body = await response.json().catch(() => ({}));

@@ -1,4 +1,4 @@
-name = "hrms-company-api"
+name = "hrms-api"
 main = "worker/index.mjs"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
@@ -18,7 +18,7 @@ BILLING_MODE = "test"
 # Temporarily disabled. Restore the site key to re-enable verification.
 RECAPTCHA_SITE_KEY = ""
 RECAPTCHA_ALLOWED_HOSTNAMES = "nexthr.com,www.nexthr.com,localhost,127.0.0.1"
-ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+ALLOWED_ORIGINS = "*"
 
 [[r2_buckets]]
 binding = "HRMS_BRANDING"
