@@ -82,9 +82,8 @@ export function DonutChart({
           return (
             <div
               key={item.label}
-              className={`flex items-center justify-between text-xs p-1 rounded transition-colors cursor-pointer ${
-                isHovered ? 'bg-slate-800 text-white' : 'text-slate-400'
-              }`}
+              className={`flex items-center justify-between text-[13px] p-1 rounded transition-colors cursor-pointer ${isHovered ? 'bg-slate-800 text-white' : 'text-slate-400'
+                }`}
               onMouseEnter={() => setHoveredIdx(idx)}
               onMouseLeave={() => setHoveredIdx(null)}
             >

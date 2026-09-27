@@ -1,0 +1,338 @@
+﻿.employee-directory {
+  background: #fff;
+  border: 1px solid #e5eadf;
+  border-radius: 12px;
+  min-width: 0;
+  overflow: hidden;
+  position: sticky;
+  top: 20px;
+}
+
+.employee-directory>header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 18px 16px;
+}
+
+.employee-directory h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #36452e;
+}
+
+.employee-directory h2 span {
+  background: #f0f4e9;
+  border: 1px solid #e5ebdc;
+  border-radius: 5px;
+  font-size: 10px;
+  padding: 2px 6px;
+  color: #85966e;
+}
+
+.employee-directory header p {
+  font-size: 11px;
+  color: #929e86;
+  margin-top: 7px;
+}
+
+.employee-directory button {
+  cursor: pointer;
+  font: inherit;
+}
+
+.employee-directory button:disabled {
+  cursor: not-allowed;
+  opacity: .4;
+}
+
+.employee-directory button:focus-visible {
+  outline: 2px solid #64814c;
+  outline-offset: -2px;
+}
+
+.employee-directory-tools {
+  padding: 0 18px 15px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.employee-directory-tools input,
+.employee-directory-tools select {
+  height: 36px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 11px;
+  background: #fff;
+  border: 1px solid #e1e8d8;
+  border-radius: 6px;
+  padding: 0 9px;
+}
+
+.employee-directory-tools input {
+  width: 100%;
+}
+
+.employee-directory-tools select {
+  flex: 1;
+  width: 40%;
+}
+
+.employee-directory-tools>button {
+  border: 0;
+  background: transparent;
+  color: #7f926b;
+  font-size: 10px;
+}
+
+.employee-directory-count {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 18px;
+  border-top: 1px solid #edf1e7;
+  color: #9aa78c;
+  font-size: 10px;
+}
+
+.employee-directory-count button,
+.employee-directory footer button {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  border: 1px solid #e6eddd;
+  border-radius: 5px;
+  color: #80956b;
+}
+
+.employee-directory-cards {
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px 10px;
+  max-height: 660px;
+  overflow-y: auto;
+  gap: 4px;
+}
+
+.employee-directory-card {
+  display: flex;
+  align-items: flex-start;
+  text-align: left;
+  gap: 12px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 15px 12px;
+  background: #fff;
+  color: #58644f;
+}
+
+.employee-directory-card:hover {
+  background: #fafbf7;
+}
+
+.employee-directory-card.is-selected {
+  border-color: #cddac3;
+  background: #f3f7ef;
+  box-shadow: inset 3px 0 #6d875c;
+}
+
+.employee-directory-card>svg {
+  margin-top: 9px;
+  flex-shrink: 0;
+  color: #8f9b84;
+}
+
+.employee-directory-person {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.employee-directory-person strong {
+  color: #394632;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.employee-directory-person small {
+  color: #88967a;
+  font-size: 11px;
+}
+
+.employee-directory-person>span {
+  color: #a1aa95;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.employee-directory-person .employee-directory-status {
+  margin-top: 4px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  border: 1px solid #e6eadf;
+  color: #8b957d;
+  background: #f8faf4;
+  font-size: 9px;
+}
+
+.employee-directory-person .employee-directory-status.is-active {
+  background: #edf7e8;
+  color: #61834b;
+  border-color: #dcebd1;
+}
+
+.employee-directory-avatar {
+  width: 37px;
+  height: 37px;
+  flex-shrink: 0;
+  border-radius: 19px;
+  border: 1px solid #e2ead9;
+  background: #edf3e6;
+  color: #7e9366;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  object-fit: cover;
+}
+
+.employee-directory>footer {
+  border-top: 1px solid #ecf1e4;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #9aa88b;
+  font-size: 10px;
+}
+
+.employee-directory>footer>div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.employee-directory-empty {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 13px;
+  padding: 25px;
+  color: #91a17e;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .employee-directory {
+    position: static;
+  }
+
+  .employee-directory-cards {
+    max-height: 300px;
+  }
+}
+
+/* Universal two-column employee workspace. Keep beside the shared card styles. */
+.employee-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 8fr) minmax(300px, 4fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.employee-workspace>* {
+  min-width: 0;
+  grid-column: auto;
+}
+
+.employee-workspace-content {
+  min-width: 0;
+}
+
+.employee-workspace-directory {
+  min-width: 0;
+  position: sticky;
+  top: 20px;
+}
+
+.employee-workspace-directory>.employee-directory {
+  position: static;
+}
+
+.employee-directory-extra {
+  padding: 0 18px 15px;
+}
+
+.employee-directory-bulk {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 18px 15px;
+  font-size: 10px;
+  color: #7f926b;
+}
+
+.employee-directory-bulk button {
+  background: transparent;
+  border: 0;
+  color: #627d4e;
+  text-decoration: underline;
+}
+
+.employee-directory-check {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #cddac3;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 9px;
+}
+
+.employee-directory-card.is-selected .employee-directory-check {
+  background: #627d4e;
+  color: white;
+}
+
+.employee-directory-person .employee-directory-meta {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.employee-directory-tools input:focus-visible,
+.employee-directory-tools select:focus-visible {
+  outline: 2px solid #64814c;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+  .employee-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .employee-workspace>.employee-directory,
+  .employee-workspace>.employee-workspace-directory {
+    grid-row: 1;
+    position: static;
+  }
+}

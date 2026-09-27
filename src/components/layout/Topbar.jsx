@@ -1,204 +1,137 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Menu,
-  Search,
-  Bell,
-  Clock,
-  LogOut,
-  ChevronDown,
-  User,
-  Database
-} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, Search, LogOut, ChevronDown, CalendarDays, X, ArrowUpRight, Users, PanelLeftClose } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
-import { Dropdown, DropdownItem, DropdownDivider, DropdownLabel } from '../ui/Dropdown';
+import { NotificationDropdown } from './NotificationDropdown';
+import './Topbar.css';
+import { getBrandLogo, onBrandLogoChange } from '../../lib/brandStore';
 
 export function Topbar({
-  onToggleSidebar,
-  currentUser,
-  onSwitchUser,
-  allUsers = [],
-  onSearch,
-  todaysAttendance,
-  onQuickPunch,
-  onOpenNotifications,
-  onLogout,
-  unreadCount = 2
+  onToggleSidebar, currentUser, onSwitchUser, allUsers = [], onSearch,
+  onSelectEmployee, onOpenNotifications, onLogout,
+  tenantName, isCollapsed = false
 }) {
-  const [currentTime, setCurrentTime] = useState('');
+  const [brandLogo, setBrandLogo] = useState(getBrandLogo);
+  useEffect(() => onBrandLogoChange(setBrandLogo), []);
+  const [now, setNow] = useState(() => new Date());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const searchRef = useRef(null);
+  const inputRef = useRef(null);
+  const profileRef = useRef(null);
+  const profileButtonRef = useRef(null);
+  const name = ([currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ').trim() || currentUser?.name || currentUser?.username || 'Admin').toLocaleUpperCase();
+  const workspace = tenantName || currentUser?.company_name || 'PulseHRMS';
+  const role = currentUser?.type || 'Tenant Admin';
+  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 17 ? 'Good afternoon' : 'Good evening';
+  const query = searchQuery.trim().toLowerCase();
+  const matches = query ? allUsers.filter(user =>
+    `${user.first_name || ''} ${user.last_name || ''} ${user.department || ''} ${user.userid || ''}`.toLowerCase().includes(query)
+  ).slice(0, 5) : [];
 
   useEffect(() => {
-    function updateClock() {
-      const now = new Date();
-      const options = {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-      };
-      setCurrentTime(now.toLocaleString('en-US', options));
-    }
-    updateClock();
-    const timer = setInterval(updateClock, 1000);
-    return () => clearInterval(timer);
+    const interval = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const isCheckedIn = Boolean(todaysAttendance?.check_in_time);
-  const isCheckedOut = Boolean(todaysAttendance?.check_out_time);
+  useEffect(() => {
+    const outside = event => {
+      if (!searchRef.current?.contains(event.target)) setSearchOpen(false);
+      if (!profileRef.current?.contains(event.target)) setProfileOpen(false);
+    };
+    const keyboard = event => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+      if (event.key === 'Escape') {
+        setSearchOpen(false);
+        setProfileOpen(false);
+        if (profileRef.current?.contains(document.activeElement)) profileButtonRef.current?.focus();
+        else if (searchRef.current?.contains(document.activeElement)) inputRef.current?.focus();
+      }
+    };
+    document.addEventListener('mousedown', outside);
+    document.addEventListener('keydown', keyboard);
+    return () => {
+      document.removeEventListener('mousedown', outside);
+      document.removeEventListener('keydown', keyboard);
+    };
+  }, []);
+
+  const updateSearch = value => {
+    setSearchQuery(value);
+    setSearchOpen(Boolean(value.trim()));
+    onSearch?.(value);
+  };
 
   return (
-    <header className="topbar">
-      <div className="topbar__left">
-        <button
-          type="button"
-          className="topbar__icon-btn md:hidden"
-          onClick={onToggleSidebar}
-          aria-label="Toggle Navigation"
-        >
-          <Menu className="w-5 h-5 text-[#27292C]" />
-        </button>
-
-        <div className="topbar__search">
-          <Search className="w-4 h-4 text-[#5F6368]" />
-          <input
-            type="text"
-            placeholder="Search employees, jobs, policies..."
-            onChange={(e) => onSearch && onSearch(e.target.value)}
-          />
+    <header id="tenant-admin-header-bar" className="tenant-topbar">
+      <div className="tenant-topbar__identity">
+        <div className="tenant-topbar__brand">
+          {brandLogo ? <img src={brandLogo} alt="Company Logo" /> : <strong>{workspace}</strong>}
         </div>
+        <button id="btn-toggle-sidebar" type="button" className="tenant-topbar__icon-button" onClick={onToggleSidebar}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Toggle sidebar'} title="Toggle sidebar (Ctrl / ⌘ B)">
+          {isCollapsed ? <Menu size={19} /> : <PanelLeftClose size={19} />}
+        </button>
       </div>
 
-      <div className="topbar__right">
-        {/* Real-time Date / Clock */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] text-xs text-[#5F6368]">
-          <Clock className="w-3.5 h-3.5 text-[#27292C]" />
-          <span className="font-mono text-xs">{currentTime}</span>
-        </div>
-
-        {/* Quick Punch Button */}
-        <button
-          type="button"
-          onClick={onQuickPunch}
-          className={`hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-            isCheckedIn && !isCheckedOut
-              ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#059669] hover:bg-[#D1FAE5]'
-              : isCheckedOut
-              ? 'bg-[#F9FAFB] border-[#E5E7EB] text-[#5F6368]'
-              : 'bg-[#27292C] border-[#27292C] text-[#FFFFFF] hover:bg-[#1A1C1E]'
-          }`}
-          title="Record shift attendance"
-        >
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              isCheckedIn && !isCheckedOut ? 'bg-[#059669] animate-pulse' : 'bg-current'
-            }`}
-          />
-          <span>
-            {isCheckedIn && !isCheckedOut
-              ? `Punched In (${todaysAttendance.check_in_time?.slice(0, 5)})`
-              : isCheckedOut
-              ? 'Shift Finished'
-              : 'Punch In'}
-          </span>
-        </button>
-
-        <div className="topbar__divider" />
-
-        {/* Notifications */}
-        <button
-          type="button"
-          className="topbar__icon-btn"
-          onClick={onOpenNotifications}
-          aria-label="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          {unreadCount > 0 && <span className="topbar__notification-dot" />}
-        </button>
-
-        {/* User Profile & Persona Switcher */}
-        <Dropdown
-          align="right"
-          trigger={
-            <div className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-[#F3F4F6] cursor-pointer transition-colors">
-              <Avatar
-                name={`${currentUser?.first_name || 'Admin'} ${currentUser?.last_name || ''}`}
-                src={currentUser?.profile_pic_url}
-                size="sm"
-                avatarId={currentUser?.avatar_id}
-              />
-              <div className="hidden lg:flex flex-col text-left text-xs leading-tight">
-                <span className="font-semibold text-[#27292C]">
-                  {currentUser?.first_name} {currentUser?.last_name}
-                </span>
-                <span className="text-[11px] text-[#5F6368]">
-                  {currentUser?.type || 'Admin'}
-                </span>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-[#5F6368]" />
-            </div>
-          }
-        >
-          <DropdownLabel>Active Profile</DropdownLabel>
-          <div className="px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg mx-1 mb-2 text-xs">
-            <p className="font-semibold text-[#27292C]">
-              {currentUser?.first_name} {currentUser?.last_name}
-            </p>
-            <p className="text-[11px] text-[#5F6368] font-mono">{currentUser?.email}</p>
-            <div className="mt-1 flex items-center justify-between">
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E5E7EB] text-[#27292C] font-medium">
-                {currentUser?.type}
-              </span>
-              <span className="text-[10px] font-mono text-[#5F6368]">
-                {currentUser?.userid}
-              </span>
-            </div>
+      <div ref={searchRef} className="tenant-topbar__search" onBlur={event => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false);
+      }}>
+        <Search size={17} aria-hidden="true" />
+        <input ref={inputRef} id="input-global-employee-search" type="search" value={searchQuery}
+          onChange={event => updateSearch(event.target.value)} onFocus={() => setSearchOpen(Boolean(query))}
+          aria-label="Search employees by name, ID, or department" aria-expanded={searchOpen}
+          aria-controls={searchOpen ? 'search-lookup-dropdown' : undefined}
+          placeholder="Search employees…" autoComplete="off" />
+        {searchQuery ? (
+          <button type="button" className="tenant-topbar__clear" aria-label="Clear employee search" onClick={() => { updateSearch(''); inputRef.current?.focus(); }}><X size={15} /></button>
+        ) : <kbd title="Press Control or Command and K">⌘ / Ctrl K</kbd>}
+        {searchOpen && (
+          <div id="search-lookup-dropdown" className="tenant-topbar__search-results">
+            <div className="tenant-topbar__results-heading"><span>People in your workspace</span><span>{matches.length} found</span></div>
+            {matches.length ? matches.map(employee => (
+              <button key={employee.userid} type="button" className="tenant-topbar__result" onClick={() => {
+                updateSearch(''); onSelectEmployee?.(employee.userid);
+              }}>
+                <Avatar name={`${employee.first_name || ''} ${employee.last_name || ''}`} src={employee.profile_pic_url} avatarId={employee.avatar_id} size="sm" userid={employee.userid} />
+                <span><strong>{employee.first_name} {employee.last_name}</strong><small>{[employee.userid, employee.department].filter(Boolean).join(' · ')}</small></span>
+                <ArrowUpRight size={15} />
+              </button>
+            )) : <div className="tenant-topbar__empty"><Users size={24} /><strong>No employees found</strong><p>Try another name, employee ID, or department.</p></div>}
+            <div className="tenant-topbar__search-footer">Search by name, ID, or department <span>Esc to close</span></div>
           </div>
+        )}
+      </div>
 
-          {allUsers.length > 1 && (
-            <>
-              <DropdownLabel>Switch Persona</DropdownLabel>
-              {allUsers.map((u) => (
-                <DropdownItem
-                  key={u.userid}
-                  onClick={() => onSwitchUser && onSwitchUser(u)}
-                  className={currentUser?.userid === u.userid ? 'bg-[#F3F4F6] font-semibold' : ''}
-                >
-                  <div className="flex items-center justify-between w-full text-xs">
-                    <span className="text-[#27292C]">
-                      {u.first_name} {u.last_name}
-                    </span>
-                    <span className="text-[10px] text-[#5F6368]">
-                      {u.type}
-                    </span>
-                  </div>
-                </DropdownItem>
-              ))}
-              <DropdownDivider />
-            </>
-          )}
-
-          <DropdownItem
-            onClick={onLogout}
-            className="text-[#DC2626] hover:bg-[#FEF2F2] hover:text-[#DC2626] font-medium"
-          >
-            <LogOut className="w-4 h-4 text-[#DC2626]" />
-            <span>Log Out</span>
-          </DropdownItem>
-        </Dropdown>
-
-        {/* Direct Standalone Logout Button */}
-        <button
-          type="button"
-          onClick={onLogout}
-          className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] text-xs font-medium text-[#5F6368] hover:text-[#DC2626] hover:border-[#FCA5A5] hover:bg-[#FEF2F2] transition-colors cursor-pointer"
-          title="Sign out of HRMS"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Log Out</span>
-        </button>
+      <div className="tenant-topbar__actions">
+        <div id="header-date-greeting" className="tenant-topbar__date">
+          <span>{greeting}</span>
+          <time dateTime={`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`}><CalendarDays size={13} />{now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</time>
+        </div>
+        <NotificationDropdown onOpenNotificationsCenter={onOpenNotifications} />
+        <span className="tenant-topbar__action-rule" aria-hidden="true" />
+        <div className="tenant-topbar__account" ref={profileRef} onBlur={event => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setProfileOpen(false);
+        }}>
+          <button ref={profileButtonRef} id="btn-header-profile-menu" type="button" className="tenant-topbar__profile"
+            aria-label={`Account menu for ${name}`} aria-expanded={profileOpen} aria-controls={profileOpen ? 'header-account-panel' : undefined}
+            onClick={() => setProfileOpen(open => !open)}>
+            <Avatar name={name} src={currentUser?.profile_pic_url} size="sm" avatarId={currentUser?.avatar_id} userid={currentUser?.userid || currentUser?.username} />
+            <span className="tenant-topbar__profile-copy"><strong>{name}</strong><small>{role}</small></span>
+            <ChevronDown size={14} className={profileOpen ? 'is-open' : ''} />
+          </button>
+          {profileOpen && <div id="header-account-panel" className="tenant-topbar__account-panel">
+            <div className="tenant-topbar__account-summary"><span className="tenant-topbar__eyebrow">YOUR ACCOUNT</span><strong>{name}</strong>{currentUser?.email && <span>{currentUser.email}</span>}<small>{role} · {workspace}</small></div>
+            {allUsers.length > 1 && onSwitchUser && <div className="tenant-topbar__personas"><span className="tenant-topbar__eyebrow">SWITCH PERSONA</span>{allUsers.map(user => <button type="button" key={user.userid} onClick={() => { onSwitchUser(user); setProfileOpen(false); }}><span>{user.first_name} {user.last_name}</span><small>{user.type}</small></button>)}</div>}
+            <button type="button" className="tenant-topbar__logout" onClick={() => { setProfileOpen(false); onLogout?.(); }}><LogOut size={16} />Sign out<ArrowUpRight size={14} /></button>
+          </div>}
+        </div>
       </div>
     </header>
   );
 }
+
+export default Topbar;

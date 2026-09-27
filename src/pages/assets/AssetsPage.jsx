@@ -87,13 +87,18 @@ export function AssetsPage({
     }
   };
 
+  const [selectedCat, setSelectedCat] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('All');
+
   const filteredAssets = assets.filter((a) => {
     const term = search.toLowerCase();
-    return (
+    const matchesSearch =
       (a.name || '').toLowerCase().includes(term) ||
       (a.serial_number || '').toLowerCase().includes(term) ||
-      (a.assigned_user || '').toLowerCase().includes(term)
-    );
+      (a.assigned_user || '').toLowerCase().includes(term);
+    const matchesCat = selectedCat === 'All' || a.category === selectedCat;
+    const matchesStatus = selectedStatus === 'All' || a.status === selectedStatus;
+    return matchesSearch && matchesCat && matchesStatus;
   });
 
   return (
@@ -150,13 +155,37 @@ export function AssetsPage({
         searchValue={search}
         onSearchChange={setSearch}
         searchPlaceholder="Filter assets by model, serial number, or assignee..."
-      />
+      >
+        <select
+          value={selectedCat}
+          onChange={(e) => setSelectedCat(e.target.value)}
+          className="filter-bar__select text-[13px]"
+        >
+          <option value="All">All Categories</option>
+          <option value="Laptop">Laptops</option>
+          <option value="Workstation">Workstations</option>
+          <option value="Monitor">Monitors</option>
+          <option value="Smartphone">Smartphones</option>
+          <option value="Peripherals">Peripherals & Audio</option>
+        </select>
+
+        <select
+          value={selectedStatus}
+          onChange={(e) => setSelectedStatus(e.target.value)}
+          className="filter-bar__select text-[13px]"
+        >
+          <option value="All">All Statuses</option>
+          <option value="Assigned">Assigned</option>
+          <option value="In Stock">In Stock / Pool</option>
+          <option value="Maintenance">Maintenance</option>
+        </select>
+      </FilterBar>
 
       {/* Table */}
-      <div className="card p-0 overflow-hidden">
+      <div className="card p-0 overflow-hidden bg-white border border-[#E5E7EB]">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
+          <table className="w-full text-left text-[13px]">
+            <thead className="bg-[#F9FAFB] text-[#5F6368] font-semibold border-b border-[#E5E7EB] uppercase tracking-wider text-[11px]">
               <tr>
                 <th className="py-3.5 px-4">Hardware Item</th>
                 <th className="py-3.5 px-4">Category</th>
@@ -167,34 +196,34 @@ export function AssetsPage({
                 <th className="py-3.5 px-4">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
+            <tbody className="divide-y divide-[#F3F4F6] text-[#27292C]">
               {filteredAssets.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-500">
-                    No hardware assets found.
+                  <td colSpan={7} className="py-10 text-center text-[#5F6368]">
+                    No hardware assets found matching the criteria.
                   </td>
                 </tr>
               ) : (
                 filteredAssets.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-800/40">
-                    <td className="py-3 px-4 font-bold text-white">
+                  <tr key={item.id} className="hover:bg-[#F9FAFB] transition-colors">
+                    <td className="py-3 px-4 font-semibold text-[#27292C]">
                       {item.name}
                     </td>
-                    <td className="py-3 px-4 text-slate-400">
+                    <td className="py-3 px-4 text-[#5F6368]">
                       {item.category}
                     </td>
-                    <td className="py-3 px-4 font-mono text-indigo-400 text-[11px]">
+                    <td className="py-3 px-4 text-[#4F46E5] text-[11px] font-semibold">
                       {item.serial_number}
                     </td>
                     <td className="py-3 px-4">
-                      <p className="font-semibold text-slate-200">{item.assigned_user}</p>
-                      <p className="text-[10px] text-slate-500 font-mono">{item.assigned_userid}</p>
+                      <p className="font-semibold text-[#27292C]">{item.assigned_user}</p>
+                      <p className="text-[11px] text-[#5F6368] font-mono">{item.assigned_userid}</p>
                     </td>
-                    <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
+                    <td className="py-3 px-4 text-[#5F6368] text-[11px]">
                       {item.issue_date}
                     </td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 font-medium">
+                      <span className="px-2 py-0.5 rounded text-[11px] bg-[#F3F4F6] text-[#27292C] font-medium border border-[#E5E7EB]">
                         {item.condition}
                       </span>
                     </td>
@@ -219,7 +248,7 @@ export function AssetsPage({
       >
         <form onSubmit={handleAddAsset} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">
+            <label className="block text-[13px] font-semibold text-slate-300 mb-1">
               Asset Model & Name *
             </label>
             <input
@@ -228,19 +257,19 @@ export function AssetsPage({
               value={assetName}
               onChange={(e) => setAssetName(e.target.value)}
               placeholder="e.g. MacBook Pro 16 M3 Max (32GB / 1TB)"
-              className="w-full text-xs"
+              className="w-full text-[13px]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-300 mb-1">
                 Category
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full h-10 text-xs"
+                className="w-full h-10 text-[13px]"
               >
                 <option value="Laptop">Laptop Workstation</option>
                 <option value="Display">Display Monitor</option>
@@ -249,7 +278,7 @@ export function AssetsPage({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-300 mb-1">
                 Serial Number *
               </label>
               <input
@@ -258,32 +287,32 @@ export function AssetsPage({
                 value={serialNo}
                 onChange={(e) => setSerialNo(e.target.value)}
                 placeholder="e.g. C02G90XXMD6M"
-                className="w-full text-xs"
+                className="w-full text-[13px]"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-300 mb-1">
                 Assigned Employee Name
               </label>
               <input
                 type="text"
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-full text-xs"
+                className="w-full text-[13px]"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-[13px] font-semibold text-slate-300 mb-1">
                 Employee ID
               </label>
               <input
                 type="text"
                 value={assignedId}
                 onChange={(e) => setAssignedId(e.target.value)}
-                className="w-full text-xs"
+                className="w-full text-[13px]"
               />
             </div>
           </div>

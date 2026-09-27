@@ -8,17 +8,21 @@ export function EmptyState({
   icon: Icon = Inbox,
   actionLabel,
   onAction,
-  className = ''
+  className = '',
+  id
 }) {
   return (
-    <div className={`flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed border-slate-800 bg-slate-900/30 ${className}`}>
-      <div className="w-12 h-12 rounded-xl bg-slate-800/80 text-slate-400 flex items-center justify-center mb-4">
-        <Icon className="w-6 h-6" />
+    <div
+      id={id}
+      className={`flex flex-col items-center justify-center p-8 text-center rounded-xl border border-dashed border-[#E5E7EB] bg-[#F9FAFB] ${className}`}
+    >
+      <div className="w-10 h-10 rounded-xl bg-[#F3F4F6] text-[#5F6368] flex items-center justify-center mb-3">
+        <Icon className="w-5 h-5" />
       </div>
-      <h4 className="text-base font-bold text-slate-200 font-display">{title}</h4>
-      <p className="text-xs text-slate-400 max-w-sm mt-1 mb-5">{description}</p>
+      <h4 className="text-sm font-semibold text-[#27292C]">{title}</h4>
+      <p className="text-[13px] text-[#5F6368] max-w-xs mt-1 mb-4 leading-relaxed">{description}</p>
       {actionLabel && onAction && (
-        <Button variant="primary" size="sm" onClick={onAction}>
+        <Button variant="secondary" size="sm" onClick={onAction}>
           {actionLabel}
         </Button>
       )}

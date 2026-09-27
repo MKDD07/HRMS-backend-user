@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { dashboardAdminApi } from './lib/dashboardAdminApi';
+import { cacheCompanyShifts } from './lib/shiftStore';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './pages/auth/LoginPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
@@ -6,19 +8,29 @@ import { EmployeesPage } from './pages/employees/EmployeesPage';
 import { EmployeeDetailPage } from './pages/employees/EmployeeDetailPage';
 import { AttendancePage } from './pages/attendance/AttendancePage';
 import { LeavePage } from './pages/leave/LeavePage';
+import { CompanyCalendarPage } from './pages/company-calendar/CompanyCalendarPage';
 import { PayrollPage } from './pages/payroll/PayrollPage';
 import { RecruitmentPage } from './pages/recruitment/RecruitmentPage';
 import { PerformancePage } from './pages/performance/PerformancePage';
 import { AssetsPage } from './pages/assets/AssetsPage';
+import { HRConnectPage } from './pages/hr-connect/HRConnectPage';
 import { DocumentsPage } from './pages/documents/DocumentsPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
-import { SettingsPage } from './pages/settings/SettingsPage';
+import { WorkspaceSettingsPage } from './pages/settings/WorkspaceSettingsPage';
+import { DashboardUsersPage } from './pages/settings/DashboardUsersPage';
+import { ShiftsPage } from './pages/settings/ShiftsPage';
+import { canUseDashboard, canUsePage } from '../shared/dashboardAccess.mjs';
+import { SalaryStructurePage } from './pages/salary/SalaryStructurePage';
+import { GeofenceRulesPage } from './pages/geofence/GeofenceRulesPage';
+import { HierarchyMatrixPage } from './pages/hierarchy/HierarchyMatrixPage';
 import { hrmsApi } from './lib/api';
+import { companyAuth } from './lib/companyAuth';
 
 export default function App() {
-  const [activePage, setActivePage] = useState('dashboard');
+  const [requestedPage, setActivePage] = useState('dashboard');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const activePage = canUsePage(currentUser, requestedPage) ? requestedPage : currentUser?.dashboard_pages?.[0] || 'dashboard';
   const [allUsers, setAllUsers] = useState([]);
   const [todaysAttendance, setTodaysAttendance] = useState(null);
   const [toasts, setToasts] = useState([]);
@@ -41,27 +53,16 @@ export default function App() {
   useEffect(() => {
     async function init() {
       try {
-        const storedUser = hrmsApi.getCurrentUser();
         const token = hrmsApi.getAuthToken();
-
-        if (token && storedUser) {
-          setCurrentUser(storedUser);
-          // Fetch attendance for stored user
-          const today = new Date().toISOString().split('T')[0];
-          const attRes = await hrmsApi.getAttendance(storedUser.userid, today);
-          if (attRes.data && attRes.data.length > 0) {
-            setTodaysAttendance(attRes.data[0]);
-          }
+        if (token) {
+          try {
+            const user = await companyAuth.verify(token);
+            if (!canUseDashboard(user) || user.must_change_password) throw new Error('Administrator sign-in required.');
+            await companyAuth.syncBrand(user.company_id);
+            setCurrentUser({ ...user, first_name: user.first_name || user.name || user.username });
+          } catch { companyAuth.clear(); }
         }
 
-        // Fetch directory of live users
-        const usersRes = await hrmsApi.getAllUsers();
-        if (usersRes.data && usersRes.data.length > 0) {
-          setAllUsers(usersRes.data);
-          if (!storedUser) {
-            // Not logged in yet
-          }
-        }
       } catch (err) {
         console.error('Initialization error:', err);
       } finally {
@@ -72,28 +73,18 @@ export default function App() {
   }, []);
 
   const handleLoginSuccess = async (user) => {
+    await companyAuth.syncBrand(user.company_id);
     setCurrentUser(user);
     setActivePage('dashboard');
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const attRes = await hrmsApi.getAttendance(user.userid, today);
-      if (attRes.data && attRes.data.length > 0) {
-        setTodaysAttendance(attRes.data[0]);
-      } else {
-        setTodaysAttendance(null);
-      }
-      // Refresh users list
-      const usersRes = await hrmsApi.getAllUsers();
-      if (usersRes.data) {
-        setAllUsers(usersRes.data);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+    setAllUsers([]);
+    setTodaysAttendance(null);
   };
 
   const handleLogout = () => {
-    hrmsApi.logout();
+    const token = hrmsApi.getAuthToken();
+    if (token) companyAuth.logout(token).catch(() => {});
+    companyAuth.clear();
+    setAllUsers([]);
     setCurrentUser(null);
     setTodaysAttendance(null);
     showToast({
@@ -103,27 +94,19 @@ export default function App() {
     });
   };
 
+  useEffect(() => {
+    if (!currentUser) return;
+    const timer = setInterval(async () => {
+      try { const verified = await companyAuth.verify(hrmsApi.getAuthToken()); if (!canUseDashboard(verified)) throw new Error(); setCurrentUser(previous => ({ ...previous, ...verified })); }
+      catch { companyAuth.clear(); setCurrentUser(null); }
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [currentUser?.userid]);
+
+  useEffect(() => { if (currentUser?.company_id) dashboardAdminApi.configuration('shifts').then(result => cacheCompanyShifts(result.value)).catch(() => {}); }, [currentUser?.company_id]);
+
   // Switch persona (e.g. Admin to HR Admin)
-  const handleSwitchUser = async (user) => {
-    setCurrentUser(user);
-    hrmsApi.setCurrentUser(user);
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const attRes = await hrmsApi.getAttendance(user.userid, today);
-      if (attRes.data && attRes.data.length > 0) {
-        setTodaysAttendance(attRes.data[0]);
-      } else {
-        setTodaysAttendance(null);
-      }
-      showToast({
-        type: 'info',
-        title: 'Persona Switched',
-        message: `Now viewing workspace as ${user.first_name} ${user.last_name} (${user.type}).`
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const handleSwitchUser = () => { showToast({ type: 'info', title: 'Separate sign-in required', message: 'Sign out before using another account.' }); };
 
   const handlePunchAttendance = async ({ action, latitude, longitude, photo_url }) => {
     if (!currentUser) return;
@@ -166,7 +149,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center text-[#5F6368] space-y-3">
         <div className="w-8 h-8 border-2 border-[#27292C] border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-medium text-[#5F6368]">
+        <p className="text-[13px] font-medium text-[#5F6368]">
           Connecting to Cloudflare Worker & D1 Database...
         </p>
       </div>
@@ -177,13 +160,13 @@ export default function App() {
   if (!currentUser) {
     return (
       <>
-        <LoginPage onLoginSuccess={handleLoginSuccess} onShowToast={showToast} />
+      <LoginPage onLoginSuccess={handleLoginSuccess} />
         {/* Toast Alerts on Login */}
         <div className="fixed bottom-4 right-4 z-50 space-y-2">
           {toasts.map((toast) => (
             <div
               key={toast.id}
-              className="p-3 bg-[#FFFFFF] border border-[#E5E7EB] rounded-lg shadow-lg text-xs flex items-center justify-between gap-3 text-[#27292C]"
+              className="p-3 bg-[#FFFFFF] border border-[#E5E7EB] rounded-lg shadow-lg text-[13px] flex items-center justify-between gap-3 text-[#27292C]"
             >
               <span>{toast.message}</span>
               <button
@@ -191,7 +174,7 @@ export default function App() {
                 onClick={() => dismissToast(toast.id)}
                 className="text-[#5F6368] hover:text-[#27292C]"
               >
-                ✕
+                &times;
               </button>
             </div>
           ))}
@@ -212,6 +195,7 @@ export default function App() {
       currentUser={currentUser}
       allUsers={allUsers}
       onSwitchUser={handleSwitchUser}
+      onSelectEmployee={handleSelectEmployee}
       todaysAttendance={todaysAttendance}
       onPunchAttendance={handlePunchAttendance}
       onLogout={handleLogout}
@@ -232,6 +216,15 @@ export default function App() {
 
       {activePage === 'employees' && (
         <EmployeesPage
+          api={hrmsApi}
+          onSelectEmployee={handleSelectEmployee}
+          onShowToast={showToast}
+          onNavigate={(page) => setActivePage(page)}
+        />
+      )}
+
+      {activePage === 'hierarchy' && (
+        <HierarchyMatrixPage currentUser={currentUser}
           api={hrmsApi}
           onSelectEmployee={handleSelectEmployee}
           onShowToast={showToast}
@@ -260,16 +253,38 @@ export default function App() {
       {activePage === 'leave' && (
         <LeavePage
           currentUser={currentUser}
+          allUsers={allUsers}
           api={hrmsApi}
           onShowToast={showToast}
         />
+      )}
+
+      {activePage === 'company-calendar' && (
+        <CompanyCalendarPage api={hrmsApi} onShowToast={showToast} />
       )}
 
       {activePage === 'payroll' && (
         <PayrollPage
           api={hrmsApi}
           currentUser={currentUser}
+          allUsers={allUsers}
           onShowToast={showToast}
+        />
+      )}
+
+      {activePage === 'salary-structure' && (
+        <SalaryStructurePage
+          api={hrmsApi}
+          onShowToast={showToast}
+          onSelectEmployee={handleSelectEmployee}
+        />
+      )}
+
+      {activePage === 'geofence-rules' && (
+        <GeofenceRulesPage
+          api={hrmsApi}
+          onShowToast={showToast}
+          onSelectEmployee={handleSelectEmployee}
         />
       )}
 
@@ -295,6 +310,8 @@ export default function App() {
         />
       )}
 
+      {activePage === 'helpdesk' && <HRConnectPage api={hrmsApi} onShowToast={showToast} onNavigate={setActivePage} />}
+
       {activePage === 'documents' && (
         <DocumentsPage
           api={hrmsApi}
@@ -309,12 +326,9 @@ export default function App() {
         />
       )}
 
-      {activePage === 'settings' && (
-        <SettingsPage
-          api={hrmsApi}
-          onShowToast={showToast}
-        />
-      )}
+      {activePage === 'settings' && <WorkspaceSettingsPage currentUser={currentUser} onNavigate={setActivePage} onLogout={handleLogout} />}
+      {activePage === 'dashboard-users' && currentUser.role === 'company_admin' && <DashboardUsersPage />}
+      {activePage === 'shifts' && <ShiftsPage />}
     </AppLayout>
   );
 }

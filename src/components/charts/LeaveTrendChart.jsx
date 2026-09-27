@@ -162,7 +162,7 @@ export function LeaveTrendChart({
         </svg>
 
         {hoveredIdx !== null && (
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700/90 px-3 py-1.5 rounded-lg shadow-xl text-xs flex items-center gap-3 pointer-events-none">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700/90 px-3 py-1.5 rounded-lg shadow-xl text-[13px] flex items-center gap-3 pointer-events-none">
             <span className="font-bold text-white">{data[hoveredIdx].month}:</span>
             <span className="text-indigo-400 font-semibold">{data[hoveredIdx].casual} Casual</span>
             <span className="text-amber-400 font-semibold">{data[hoveredIdx].sick} Sick</span>
@@ -171,7 +171,7 @@ export function LeaveTrendChart({
         )}
       </div>
 
-      <div className="flex items-center gap-5 mt-2 text-xs text-slate-400">
+      <div className="flex items-center gap-5 mt-2 text-[13px] text-slate-400">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
           <span>Casual Leave</span>

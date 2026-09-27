@@ -93,7 +93,7 @@ export function PayrollChart({
       </svg>
 
       {hoveredIdx !== null && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg shadow-xl text-xs flex items-center gap-2 pointer-events-none">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg shadow-xl text-[13px] flex items-center gap-2 pointer-events-none">
           <span className="font-bold text-white">{data[hoveredIdx].month}:</span>
           <span className="text-indigo-400 font-semibold">
             ₹{data[hoveredIdx].amount} Lakhs CTC

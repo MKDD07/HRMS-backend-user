@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import express from 'express';
+import { createPayrollDatabase } from './payrollDatabase.mjs';
+import { createPayrollRouter, payrollAuthorization, createR2Storage } from './payrollRoutes.mjs';
+import { getInitialMonthlyRecord, saveMonthlySalary } from '../src/lib/salaryStore.js';
+import { normalizeSalary, newPayslipTemplate } from '../src/lib/payslipModel.js';
+
+const db = createPayrollDatabase({ filename: ':memory:' });
+let failUpload = true, uploads = 0;
+const storage = { configured: true, async upload(key, bytes) { uploads++; assert.ok(key.startsWith('payslips/')); assert.equal(Buffer.from(bytes).subarray(0, 5).toString(), '%PDF-'); if (failUpload) throw new Error('R2 test outage'); }, async downloadUrl() { return 'https://example.test/private-payslip'; } };
+const app = express(); app.use('/api', createPayrollRouter({ database: db, storage, authorize: async req => req.headers.authorization === 'Bearer admin' ? { userid: 'admin', admin: true } : req.headers.authorization === 'Bearer own' ? { userid: 'EMP-1', admin: false } : req.headers.authorization === 'Bearer other' ? { userid: 'EMP-2', admin: false } : null }));
+const server = app.listen(0, '127.0.0.1'); await new Promise(resolve => server.once('listening', resolve));
+const base = `http://127.0.0.1:${server.address().port}/api`;
+async function call(path, body, token = 'admin', expected = 200) {
+  const response = await fetch(base + path, { method: body ? 'POST' : 'GET', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const result = await response.json(); assert.equal(response.status, expected, JSON.stringify(result)); return result;
+}
+try {
+  const cache = new Map(); globalThis.localStorage = { getItem: key => cache.get(key) ?? null, setItem: (key, value) => cache.set(key, value) };
+  assert.equal(getInitialMonthlyRecord('TYS-1021', '2026', 'September').basic, 0);
+  assert.equal(saveMonthlySalary('QA', '2026', 'September', { basic: 0, bonus_incentive: 125 }).monthly_net, 125);
+  const signed = new URL(await createR2Storage({ CLOUDFLARE_ACCOUNT_ID: 'test-account', R2_ACCESS_KEY_ID: 'test-key', R2_SECRET_ACCESS_KEY: 'test-secret' }).downloadUrl('payslips/QA/2026/September/qa.pdf'));
+  assert.equal(signed.searchParams.get('X-Amz-Expires'), '300');
+  assert.ok(signed.searchParams.has('X-Amz-Signature'));
+  assert.equal(normalizeSalary({ basic: 0, hra: 0, bonus_incentive: 125 }).monthly_net, 125);
+  assert.equal(normalizeSalary({ basic: 0.1, hra: 0.2 }).monthly_net, 0.3);
+  assert.throws(() => normalizeSalary({ basic: 10, tds_tax: 11 }));
+  assert.throws(() => normalizeSalary({ basic: -1 }));
+  await call('/configuration', null, 'missing', 401);
+  await call('/configuration', null, 'own', 403);
+  const values = { ...newPayslipTemplate(), name: 'Company variant', company_name: 'Test Company' };
+  const template = await call('/templates', values);
+  for (let i = 2; i <= 5; i++) await call('/templates', { ...values, name: 'Variant ' + i });
+  await call('/templates', { ...values, name: 'Too many' }, 'admin', 400);
+  const group = await call('/groups', { name: 'Engineering', type: 'Permanent', template_id: template.id });
+  await call('/assignments', { userid: 'EMP-1', group_id: group.id, auto_generate: true });
+  const salary = { employee: { userid: 'EMP-1', first_name: 'Test', last_name: 'Employee' }, salary: { basic: 10000, bonus_incentive: 500, pf_deduction: 1000 }, month: 'September', year: '2026' };
+  await call('/salaries', { ...salary, month: 'February', salary: { basic: 100, paid_days: 31 } }, 'admin', 400);
+  await call('/salaries', { ...salary, salary: { basic: 100, pay_date: '2026-02-30' } }, 'admin', 400);
+  let issued = await call('/salaries', salary); assert.equal(issued.status, 'failed'); assert.equal(issued.salary.monthly_net, 9500); assert.equal(issued.download_path, null);
+  await call(`/records/${issued.id}/download`, null, 'own', 400);
+  failUpload = false;
+  issued = await call(`/records/${issued.id}/generate`, {}); assert.equal(issued.status, 'ready');
+  const completedUploads = uploads;
+  await call('/salaries', salary); assert.equal(uploads, completedUploads, 'Repeated saves must reuse the PDF');
+  const rows = await call('/records/EMP-1', null, 'own'); assert.equal(rows.length, 1);
+  await call('/records/EMP-1', null, 'other', 403);
+  await call(`/records/${issued.id}/download`, null, 'other', 404);
+  assert.equal((await call(`/records/${issued.id}/download`, null, 'own')).expires_in, 300);
+  const edited = await call('/templates', { ...template, name: 'Updated company variant' }); assert.equal(edited.version, 2);
+  await call('/templates', { ...template, name: 'Stale edit' }, 'admin', 400);
+  assert.equal((await call('/records/EMP-1', null, 'own'))[0].template.version, 1, 'Issued PDF must retain its template');
+  const modern = await call('/templates', { ...values, design: 'modern' });
+  await call('/assignments', { userid: 'EMP-1', group_id: group.id, template_id: modern.id, auto_generate: false });
+  const pending = await call('/salaries', salary); assert.equal(pending.status, 'pending'); assert.equal(pending.template.design, 'modern');
+  assert.equal(uploads, completedUploads);
+  assert.equal(await payrollAuthorization({ headers: { host: 'localhost:3000' }, socket: { remoteAddress: '127.0.0.1' } }, { NODE_ENV: 'production', PAYROLL_LOCAL_DEV: 'true' }), null);
+  assert.equal(await payrollAuthorization({ headers: { host: 'evil.test' }, socket: { remoteAddress: '127.0.0.1' } }, { PAYROLL_LOCAL_DEV: 'true' }), null);
+  console.log('Payroll tests passed: caps, validation, persistence, overrides, immutable revisions, upload failure/retry, idempotency and access control.');
+} finally { await new Promise(resolve => server.close(resolve)); db.close(); }

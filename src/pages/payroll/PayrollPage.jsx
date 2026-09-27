@@ -1,532 +1,139 @@
-import React, { useState, useEffect } from 'react';
-import {
-  CreditCard,
-  Download,
-  FileText,
-  DollarSign,
-  Plus,
-  Search,
-  CheckCircle2,
-  Printer,
-  ShieldCheck,
-  Building2,
-  TrendingUp
-} from 'lucide-react';
+import './PayrollPage.css';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Calendar, Download, Lock, Sparkles } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { StatCard } from '../../components/ui/StatCard';
-import { Modal } from '../../components/ui/Modal';
-import { FilterBar } from '../../components/ui/FilterBar';
+import { Tabs } from '../../components/ui/Tabs';
+import {
+  MONTHS,
+  YEARS,
+  getMonthlySalary,
+  saveMonthlySalary,
+  getInitialMonthlyRecord
+} from '../../lib/salaryStore';
+import { payslipApi, issueEmployeePayslip } from '../../lib/payslipApi';
+import { applyScopedRows, buildPayrollCsv, downloadTextFile, getMonthRecord, inr, isFinal } from './lib/payrollHelpers';
+import { PersonLedgerTab } from './tabs/PersonLedgerTab';
+import { ProcessingTab } from './tabs/ProcessingTab';
+import { RegisterTab } from './tabs/RegisterTab';
+import { StructureTab } from './tabs/StructureTab';
 
-export function PayrollPage({
-  api,
-  currentUser,
-  onShowToast
-}) {
-  const [salaries, setSalaries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [selectedSlip, setSelectedSlip] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+/**
+ * Payroll shell. Owns only what tabs share:
+ * month/year, person list, selected person, refresh counter, toasts, downloads, bulk actions.
+ * Each tab lives in ./tabs and can be changed on its own.
+ */
+export function PayrollPage({ api, currentUser, allUsers = [], onShowToast }) {
+  const [activeTab, setActiveTab] = useState('person-history');
+  const [year, setYear] = useState(String(new Date().getFullYear()));
+  const [month, setMonth] = useState(MONTHS[new Date().getMonth()]);
+  const [users, setUsers] = useState(allUsers || []);
+  const [selectedUid, setSelectedUid] = useState(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [version, setVersion] = useState(0); // bump after any save so tabs re-read data
 
-  // New Salary Form
-  const [empName, setEmpName] = useState('Mohit Kataria');
-  const [empId, setEmpId] = useState('TYS-1021');
-  const [basicSal, setBasicSal] = useState(45000);
-  const [hra, setHra] = useState(22500);
-  const [conveyance, setConveyance] = useState(3000);
-  const [allowance, setAllowance] = useState(14500);
-  const [pf, setPf] = useState(5400);
-  const [tds, setTds] = useState(4200);
-
-  const loadSalaries = async () => {
-    setLoading(true);
-    try {
-      const res = await api.getSalaries();
-      if (res.data) setSalaries(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const bump = useCallback(() => setVersion((v) => v + 1), []);
+  const toast = useCallback((t) => onShowToast && onShowToast(t), [onShowToast]);
 
   useEffect(() => {
-    loadSalaries();
-  }, []);
+    async function load() {
+      try {
+        let list = allUsers;
+        if (!list || list.length === 0) {
+          const res = await api.getAllUsers({ liveOnly: true });
+          list = res?.data || [];
+        }
+        if (list.length > 0) {
+          setUsers(list);
+          setSelectedUid((cur) => cur || (list.find((u) => u.userid === currentUser?.userid) || list[0]).userid);
+        }
+      } catch (err) {
+        console.error('Failed to load personnel:', err);
+      }
+    }
+    load();
+  }, [allUsers, currentUser?.userid]);
 
-  const grossCalculated = Number(basicSal) + Number(hra) + Number(conveyance) + Number(allowance);
-  const deductionsCalculated = Number(pf) + 200 + Number(tds);
-  const netCalculated = grossCalculated - deductionsCalculated;
-
-  const handleAddSalary = async (e) => {
-    e.preventDefault();
+  const downloadPayslip = async (emp, record) => {
     try {
-      await api.addSalary({
-        user_id: empId,
-        employee_name: empName,
-        month: 'September',
-        year: '2026',
-        pay_date: '2026-09-30',
-        basic_salary: Number(basicSal),
-        hra: Number(hra),
-        conveyance: Number(conveyance),
-        special_allowance: Number(allowance),
-        bonus_incentive: 0,
-        provident_fund: Number(pf),
-        professional_tax: 200,
-        income_tax_tds: Number(tds),
-        gross_salary: grossCalculated,
-        net_salary: netCalculated,
-        annual_ctc: grossCalculated * 12
-      });
-
-      setIsAddModalOpen(false);
-      await loadSalaries();
-      if (onShowToast) {
-        onShowToast({
-          type: 'success',
-          title: 'Payslip Processed',
-          message: `September 2026 payslip generated for ${empName}.`
-        });
-      }
+      await issueEmployeePayslip(emp, record, record?.month || month, record?.year || year, true);
+      toast({ type: 'success', title: 'Payslip downloaded', message: `Payslip ready for ${emp?.first_name || 'employee'}.` });
     } catch (err) {
-      if (onShowToast) {
-        onShowToast({
-          type: 'error',
-          title: 'Processing Failed',
-          message: err.message
-        });
-      }
+      toast({ type: 'error', title: 'PDF error', message: err.message });
     }
   };
 
-  const filteredSalaries = salaries.filter((s) => {
-    const name = (s.employee_name || '').toLowerCase();
-    const uid = (s.user_id || '').toLowerCase();
-    return name.includes(search.toLowerCase()) || uid.includes(search.toLowerCase());
-  });
+  const saveBulk = async (finalize) => {
+    if (!users.length || bulkBusy) return;
+    if (finalize && !window.confirm('Finalize salary and generate assigned payslips for ' + month + ' ' + year + '?')) return;
+    setBulkBusy(true); let saved = 0, failedUploads = 0; const errors = [];
+    for (const employee of users) {
+      try {
+        const records = await payslipApi.records(employee.userid);
+        const latest = records.find(item => item.month === month && item.year === String(year));
+        const existing = latest ? { ...latest.salary, month, year } : getMonthlySalary(employee.userid, year, month);
+        if (finalize && !existing) { errors.push(employee.userid + ': no saved salary'); continue; }
+        const rec = applyScopedRows(existing || getInitialMonthlyRecord(employee.userid, year, month), employee.userid, year, month);
+        const record = { ...rec, status: finalize ? 'Finalized' : rec.status || 'Draft' };
+        const issued = await payslipApi.saveSalary({ employee, salary: record, month, year });
+        saveMonthlySalary(employee.userid, year, month, record); saved++; if (issued.status === 'failed') failedUploads++;
+      } catch (error) { errors.push(employee.userid + ': ' + error.message); }
+    }
+    bump(); setBulkBusy(false); window.dispatchEvent(new Event('payslip-records-changed'));
+    toast({ type: errors.length || failedUploads ? 'warning' : 'success', title: 'Payroll batch completed', message: saved + ' saved; ' + failedUploads + ' uploads need retry; ' + errors.length + ' salaries not saved.' + (errors.length ? ' ' + errors.slice(0, 2).join(' / ') : '') });
+  };
+  const bulkCreate = () => saveBulk(false);
+  const bulkFinalize = () => saveBulk(true);
+
+  const exportCsv = () => {
+    downloadTextFile(`payroll-${month}-${year}.csv`, buildPayrollCsv(users, year, month));
+    toast({ type: 'success', title: 'Payroll exported', message: `${month} ${year} CSV downloaded.` });
+  };
+
+  const summary = useMemo(() => {
+    const recs = users.map((u) => getMonthRecord(u, year, month));
+    return {
+      net: recs.reduce((a, r) => a + (r.monthly_net || 0), 0),
+      done: recs.filter(isFinal).length
+    };
+  }, [users, year, month, version]);
+
+  const shared = { users, selectedUid, onSelect: setSelectedUid, year, month, version, onChanged: bump, onToast: toast, onDownload: downloadPayslip };
+
+
 
   return (
-    <div className="space-y-6">
+    <div className="payroll-console">
       <PageHeader
         title="Payroll & Compensation"
-        subtitle="Manage salary disbursements, statutory deductions, TDS calculation, and official payslips."
-        breadcrumbs={['HRMS', 'Payroll']}
-        actions={
-          <Button
-            variant="primary"
-            size="sm"
-            icon={Plus}
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            Process Month Salary
-          </Button>
-        }
+        subtitle="Monthly salary ledgers, drafts, company register and custom pay rows."
+        breadcrumbs={['HRMS', 'Payroll & CTC', `${month} ${year}`]}
+      />
+      <section className="payroll-cycle" aria-label="Payroll period and actions">
+        <div className="payroll-period"><Calendar size={18} /><div><span className="payroll-eyebrow">PAY PERIOD</span><div className="payroll-period-inputs"><select aria-label="Month" value={month} onChange={e => setMonth(e.target.value)}>{MONTHS.map(value => <option key={value}>{value}</option>)}</select><select aria-label="Year" value={year} onChange={e => setYear(e.target.value)}>{[...new Set([...YEARS.map(String), year])].sort().map(value => <option key={value}>{value}</option>)}</select></div></div></div>
+        <div className="payroll-batch-actions"><Button variant="outline" size="sm" icon={Sparkles} disabled={bulkBusy || !users.length} onClick={bulkCreate}>{bulkBusy ? 'Processing?' : 'Create salary drafts'}</Button><Button variant="primary" size="sm" icon={Lock} disabled={bulkBusy || !users.length} onClick={bulkFinalize}>Finalize all</Button><Button variant="secondary" size="sm" icon={Download} disabled={!users.length} onClick={exportCsv}>Export CSV</Button></div>
+      </section>
+      <section className="payroll-overview" aria-label="Selected period summary">
+        <article><span>Employees</span><strong>{users.length}</strong><small>In the payroll directory</small></article>
+        <article><span>Finalized</span><strong>{summary.done}<em> / {users.length}</em></strong><small>For {month} {year}</small></article>
+        <article className="payroll-overview-net"><span>Net payable</span><strong>{inr(summary.net)}</strong><small>From locally saved salary records</small></article>
+      </section>
+
+      <Tabs
+        tabs={[
+          { id: 'person-history', label: 'Person ledger' },
+          { id: 'processing-drafts', label: `Monthly processing (${month})` },
+          { id: 'company-register', label: 'Company register', count: users.length },
+          { id: 'salary-structure', label: 'Structure & custom rows' }
+        ]}
+        activeTab={activeTab}
+        onChange={setActiveTab}
       />
 
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Monthly Disbursal"
-          value="₹84.6 L"
-          icon={CreditCard}
-          color="indigo"
-          trend={{ direction: 'up', value: '+3.4%' }}
-          metaText="Net employee payout"
-        />
-        <StatCard
-          label="Statutory PF Contribution"
-          value="₹5.82 L"
-          icon={ShieldCheck}
-          color="cyan"
-          metaText="Deposited with EPFO"
-        />
-        <StatCard
-          label="Withholding TDS Deductions"
-          value="₹4.65 L"
-          icon={DollarSign}
-          color="amber"
-          metaText="Quarterly Form 24Q"
-        />
-        <StatCard
-          label="Payroll Compliance Score"
-          value="100%"
-          icon={CheckCircle2}
-          color="green"
-          metaText="Zero overdue audits"
-        />
-      </div>
-
-      {/* Filter Bar */}
-      <FilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Filter salary records by employee or ID..."
-      >
-        <div className="flex items-center gap-2">
-          <Badge variant="info">
-            Cycle: 1st - 30th Sep 2026
-          </Badge>
-        </div>
-      </FilterBar>
-
-      {/* Salaries Ledger Table */}
-      <div className="card p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
-              <tr>
-                <th className="py-3.5 px-4">Employee</th>
-                <th className="py-3.5 px-4">Pay Period</th>
-                <th className="py-3.5 px-4">Gross CTC</th>
-                <th className="py-3.5 px-4">PF & TDS Deductions</th>
-                <th className="py-3.5 px-4">Net Salary Paid</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-300">
-              {filteredSalaries.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-10 text-center text-slate-500">
-                    No payroll entries found for this query.
-                  </td>
-                </tr>
-              ) : (
-                filteredSalaries.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-800/40">
-                    <td className="py-3 px-4">
-                      <p className="font-bold text-white">
-                        {item.employee_name}
-                      </p>
-                      <p className="text-[11px] text-indigo-400 font-mono">
-                        {item.user_id}
-                      </p>
-                    </td>
-
-                    <td className="py-3 px-4 text-slate-300">
-                      {item.month} {item.year}
-                      <span className="text-[10px] text-slate-500 block">
-                        Disbursed {item.pay_date}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-4 font-mono font-medium text-slate-200">
-                      ₹{item.structure?.gross_salary?.toLocaleString() || '90,000'}
-                    </td>
-
-                    <td className="py-3 px-4 text-rose-400 font-mono">
-                      -₹{(
-                        (item.structure?.provident_fund || 5400) +
-                        (item.structure?.professional_tax || 200) +
-                        (item.structure?.income_tax_tds || 4200)
-                      ).toLocaleString()}
-                    </td>
-
-                    <td className="py-3 px-4 font-bold text-emerald-400 font-mono text-sm">
-                      ₹{(item.amount_paid || item.structure?.net_salary || 80200).toLocaleString()}
-                    </td>
-
-                    <td className="py-3 px-4">
-                      <Badge variant="success">
-                        {item.status || 'Processed'}
-                      </Badge>
-                    </td>
-
-                    <td className="py-3 px-4 text-right">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon={FileText}
-                        onClick={() => setSelectedSlip(item)}
-                      >
-                        View Payslip
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Official Payslip Modal */}
-      {selectedSlip && (
-        <Modal
-          isOpen={Boolean(selectedSlip)}
-          onClose={() => setSelectedSlip(null)}
-          title={`Official Salary Payslip - ${selectedSlip.month} ${selectedSlip.year}`}
-          size="lg"
-          footer={
-            <div className="flex items-center justify-between w-full">
-              <span className="text-xs text-slate-500 font-mono">
-                Ref: {selectedSlip.transaction_ref || 'TXN-SAL-2026-1021'}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  icon={Printer}
-                  onClick={() => window.print()}
-                >
-                  Print Slip
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  icon={Download}
-                  onClick={() => {
-                    if (onShowToast) {
-                      onShowToast({
-                        type: 'success',
-                        title: 'Payslip Downloaded',
-                        message: `Payslip PDF for ${selectedSlip.employee_name} saved.`
-                      });
-                    }
-                  }}
-                >
-                  Download PDF
-                </Button>
-              </div>
-            </div>
-          }
-        >
-          <div className="p-6 bg-slate-900 border border-slate-800 rounded-xl space-y-6 text-xs">
-            {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-800 pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-white font-display">
-                  PulseHRMS Enterprise Ltd.
-                </h3>
-                <p className="text-slate-400">HQ Vashi Infotech Park, Sector 30A, Navi Mumbai, MH 400703</p>
-                <p className="text-[11px] text-slate-500 font-mono">CIN: U72200MH2021PTC368819 • TAN: MUMB12345E</p>
-              </div>
-              <div className="text-right">
-                <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold font-mono">
-                  CONFIDENTIAL
-                </span>
-                <p className="text-slate-400 mt-1">Pay Period: {selectedSlip.month} {selectedSlip.year}</p>
-              </div>
-            </div>
-
-            {/* Employee metadata */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 rounded-lg bg-slate-950/60 border border-slate-800">
-              <div>
-                <span className="text-slate-400">Employee Name:</span>
-                <p className="font-bold text-white mt-0.5">{selectedSlip.employee_name}</p>
-              </div>
-              <div>
-                <span className="text-slate-400">Employee ID:</span>
-                <p className="font-mono font-bold text-indigo-400 mt-0.5">{selectedSlip.user_id}</p>
-              </div>
-              <div>
-                <span className="text-slate-400">Designation:</span>
-                <p className="font-semibold text-slate-200 mt-0.5">Lead Mobile Architect</p>
-              </div>
-              <div>
-                <span className="text-slate-400">Bank Account:</span>
-                <p className="font-mono text-slate-200 mt-0.5">HDFC •••• 9901</p>
-              </div>
-            </div>
-
-            {/* Earnings & Deductions Breakdown */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Earnings */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between font-bold text-slate-200 border-b border-slate-800 pb-1.5">
-                  <span>Earnings Component</span>
-                  <span>Amount (INR)</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Basic Salary</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.basic_salary || 45000).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>House Rent Allowance (HRA)</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.hra || 22500).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Conveyance Allowance</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.conveyance || 3000).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Special / Performance Allowance</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.special_allowance || 14500).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Bonus / Incentives</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.bonus_incentive || 5000).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-white pt-2 border-t border-slate-800">
-                  <span>Gross Earnings</span>
-                  <span className="font-mono text-indigo-400">₹{(selectedSlip.structure?.gross_salary || 90000).toLocaleString()}</span>
-                </div>
-              </div>
-
-              {/* Deductions */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between font-bold text-slate-200 border-b border-slate-800 pb-1.5">
-                  <span>Deductions Component</span>
-                  <span>Amount (INR)</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Provident Fund (Employee 12%)</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.provident_fund || 5400).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>Professional Tax (PT)</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.professional_tax || 200).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-slate-300">
-                  <span>TDS / Income Tax (Sec 192)</span>
-                  <span className="font-mono">₹{(selectedSlip.structure?.income_tax_tds || 4200).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-white pt-2 border-t border-slate-800">
-                  <span>Total Deductions</span>
-                  <span className="font-mono text-rose-400">
-                    ₹{(
-                      (selectedSlip.structure?.provident_fund || 5400) +
-                      (selectedSlip.structure?.professional_tax || 200) +
-                      (selectedSlip.structure?.income_tax_tds || 4200)
-                    ).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Net Salary Highlight */}
-            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
-              <div>
-                <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">
-                  Net Salary Transferred
-                </span>
-                <p className="text-2xl font-bold text-emerald-400 font-display">
-                  ₹{(selectedSlip.amount_paid || selectedSlip.structure?.net_salary || 80200).toLocaleString()}
-                </p>
-                <span className="text-[11px] text-slate-400">
-                  Eighty Thousand Two Hundred Rupees Only
-                </span>
-              </div>
-              <div className="text-right text-xs text-slate-400">
-                <p>Status: <strong className="text-emerald-400">Disbursed via NEFT/IMPS</strong></p>
-                <p className="font-mono text-[10px] mt-1 text-slate-500">Authorized Signature: Finance Controller</p>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {/* Process New Salary Modal */}
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        title="Process Salary Payslip"
-      >
-        <form onSubmit={handleAddSalary} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Employee Name
-              </label>
-              <input
-                type="text"
-                required
-                value={empName}
-                onChange={(e) => setEmpName(e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Employee ID
-              </label>
-              <input
-                type="text"
-                required
-                value={empId}
-                onChange={(e) => setEmpId(e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Basic Pay (₹)
-              </label>
-              <input
-                type="number"
-                value={basicSal}
-                onChange={(e) => setBasicSal(e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                HRA (₹)
-              </label>
-              <input
-                type="number"
-                value={hra}
-                onChange={(e) => setHra(e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Special Allowance (₹)
-              </label>
-              <input
-                type="number"
-                value={allowance}
-                onChange={(e) => setAllowance(e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                TDS Income Tax (₹)
-              </label>
-              <input
-                type="number"
-                value={tds}
-                onChange={(e) => setTds(e.target.value)}
-                className="w-full text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs">
-            <div>
-              <span className="text-slate-400">Computed Net Salary:</span>
-              <p className="text-base font-bold text-emerald-400 font-mono">
-                ₹{netCalculated.toLocaleString()}
-              </p>
-            </div>
-            <Badge variant="success">Calculated</Badge>
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsAddModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="primary" size="sm">
-              Confirm & Save Slip
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {activeTab === 'person-history' && <PersonLedgerTab {...shared} />}
+      {activeTab === 'processing-drafts' && <ProcessingTab {...shared} />}
+      {activeTab === 'company-register' && <RegisterTab {...shared} />}
+      {activeTab === 'salary-structure' && <StructureTab {...shared} />}
     </div>
   );
 }

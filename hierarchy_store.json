@@ -1,0 +1,147 @@
+{
+  "db": {
+    "TYS-1021": {
+      "user_id": "TYS-1021",
+      "name": "Mohit Kataria",
+      "job_title": "Chief Technology Officer & Principal Architect",
+      "department": "Engineering & Technology",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_1.jpg",
+      "avatar_id": 2,
+      "stage": 1,
+      "senior_ids": [],
+      "junior_ids": [
+        "TYS-1008",
+        "TYS-1003",
+        "TYS-1005",
+        "TYS-1013"
+      ],
+      "custom_notes": "C-Suite Executive Committee"
+    },
+    "TYS-1008": {
+      "user_id": "TYS-1008",
+      "name": "Rajesh Sharma",
+      "job_title": "VP of Engineering & Cloud Infrastructure",
+      "department": "Engineering & Technology",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_2.jpg",
+      "avatar_id": 3,
+      "stage": 2,
+      "senior_ids": [
+        "TYS-1021"
+      ],
+      "junior_ids": [
+        "TYS-1005",
+        "TYS-1014",
+        "TYS-1012",
+        "TYS-1016"
+      ],
+      "custom_notes": "Cloud & Platforms"
+    },
+    "TYS-1003": {
+      "user_id": "TYS-1003",
+      "name": "Priyanka Chopra",
+      "job_title": "Head of People Operations & HR Director",
+      "department": "Human Resources",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_3.jpg",
+      "avatar_id": 4,
+      "stage": 2,
+      "senior_ids": [
+        "TYS-1021"
+      ],
+      "junior_ids": [],
+      "custom_notes": "Talent & People Governance"
+    },
+    "TYS-1005": {
+      "user_id": "TYS-1005",
+      "name": "Ananya Deshmukh",
+      "job_title": "Lead Full Stack & Mobile Engineer",
+      "department": "Engineering & Technology",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_4.jpg",
+      "avatar_id": 5,
+      "stage": 3,
+      "senior_ids": [
+        "TYS-1008",
+        "TYS-1021"
+      ],
+      "junior_ids": [
+        "TYS-1016"
+      ],
+      "custom_notes": "Matrixed reporting structure"
+    },
+    "TYS-1012": {
+      "user_id": "TYS-1012",
+      "name": "Sneha Iyer",
+      "job_title": "Frontend Engineer",
+      "department": "Engineering & Technology",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_6.jpg",
+      "avatar_id": 0,
+      "stage": 4,
+      "senior_ids": [
+        "TYS-1014",
+        "TYS-1008"
+      ],
+      "junior_ids": [],
+      "custom_notes": ""
+    },
+    "TYS-1013": {
+      "user_id": "TYS-1013",
+      "name": "Karan Malhotra",
+      "job_title": "DevOps Engineer",
+      "department": "Engineering & Technology",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_7.jpg",
+      "avatar_id": 0,
+      "stage": 4,
+      "senior_ids": [
+        "TYS-1014",
+        "TYS-1021"
+      ],
+      "junior_ids": [],
+      "custom_notes": ""
+    },
+    "TYS-1014": {
+      "user_id": "TYS-1014",
+      "name": "Neha Verma",
+      "job_title": "HR Executive",
+      "department": "Human Resources",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_8.jpg",
+      "avatar_id": 0,
+      "stage": 3,
+      "senior_ids": [
+        "TYS-1008"
+      ],
+      "junior_ids": [
+        "TYS-1013",
+        "TYS-1012"
+      ],
+      "custom_notes": ""
+    },
+    "TYS-1016": {
+      "user_id": "TYS-1016",
+      "name": "Pooja Nair",
+      "job_title": "Marketing Executive",
+      "department": "Sales & Marketing",
+      "profile_pic_url": "https://hrms-api.mkmkataria07.workers.dev/storage/images/profile/company/profile_pics/user_10.jpg",
+      "avatar_id": 0,
+      "stage": 4,
+      "senior_ids": [
+        "TYS-1005",
+        "TYS-1008"
+      ],
+      "junior_ids": [],
+      "custom_notes": ""
+    },
+    "TYS-1022": {
+      "user_id": "TYS-1022",
+      "name": "Test User",
+      "job_title": "Employee",
+      "department": "General",
+      "profile_pic_url": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=256&h=256&q=80",
+      "avatar_id": 0,
+      "stage": 1,
+      "senior_ids": [],
+      "junior_ids": [],
+      "custom_notes": ""
+    }
+  },
+  "savedTime": "09:06:46 PM",
+  "timestamp": "2026-09-23T15:36:46.751Z"
+}

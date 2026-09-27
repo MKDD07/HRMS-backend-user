@@ -1,0 +1,295 @@
+.cc-workspace.is-full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cc-holiday-workspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.85fr) minmax(400px, 1.45fr) minmax(280px, 1.05fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.cc-holiday-workspace .cc-panel {
+  min-height: 580px;
+}
+
+/* Official Days Column */
+.cc-official-days .cc-holidays {
+  padding: 10px 14px 16px;
+  max-height: 640px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cc-official-days .cc-holidays>button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid #edf1e8;
+  border-radius: 8px;
+  background: #fff;
+  transition: all 0.15s ease;
+}
+
+.cc-official-days .cc-holidays>button:hover {
+  background: #f7faf4;
+  border-color: #dce7d4;
+}
+
+.cc-official-days .cc-holidays>button.is-selected {
+  border-color: #a4be91;
+  background: #edf5e6;
+  box-shadow: inset 3px 0 #4e6b3d;
+}
+
+.cc-official-days time {
+  flex-shrink: 0;
+  color: #4a6338;
+  font-size: 11px;
+  font-weight: 600;
+  background: #edf5e6;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.cc-official-days .cc-holidays span {
+  min-width: 0;
+  flex: 1;
+}
+
+.cc-official-days strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2b3a24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cc-official-days small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #7d8c73;
+}
+
+/* DayPicker in Holiday Workspace */
+.cc-calendar-card .rdp-root {
+  --rdp-accent-color: #2e503d;
+  --rdp-accent-background-color: #edf4e5;
+  --rdp-day-width: 100%;
+  --rdp-day-height: 54px;
+  --rdp-day_button-width: 100%;
+  --rdp-day_button-height: 50px;
+  --rdp-day_button-border-radius: 8px;
+  margin: 12px 18px 16px;
+}
+
+.cc-calendar-card .rdp-months {
+  max-width: none;
+  width: 100%;
+}
+
+.cc-calendar-card .rdp-month {
+  width: 100%;
+}
+
+.cc-calendar-card .rdp-month_grid {
+  width: 100%;
+  table-layout: fixed;
+  border-spacing: 4px;
+  border-collapse: separate;
+}
+
+.cc-calendar-card .rdp-month_caption {
+  padding: 8px 4px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2e3d28;
+}
+
+.cc-calendar-card .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2e3d28;
+}
+
+.cc-calendar-card .rdp-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.cc-calendar-card .rdp-nav button {
+  border: 1px solid #dfe5df;
+  border-radius: 6px;
+  color: #556c45;
+  width: 30px;
+  height: 30px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-calendar-card .rdp-nav button:hover {
+  background: #f6f8f5;
+  border-color: #cfd8ce;
+}
+
+.cc-calendar-card .rdp-weekday {
+  color: #8c9b83;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.cc-calendar-card .rdp-day_button {
+  color: #3b5030;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.cc-calendar-card .rdp-day_button:hover {
+  border-color: #dce7d4;
+  background: #f4f8ee;
+}
+
+.cc-calendar-card .rdp-selected .rdp-day_button {
+  color: #fff !important;
+  background: #2e503d !important;
+  font-weight: 600;
+}
+
+.cc-calendar-card .cc-day-published:not(.rdp-selected) .rdp-day_button {
+  background: #e7f2dd;
+  color: #2e4a1f;
+  font-weight: 600;
+  box-shadow: inset 0 -4px #65934a;
+}
+
+.cc-calendar-card .cc-day-hidden:not(.rdp-selected) .rdp-day_button {
+  background: #f1f3ed;
+  color: #737e6f;
+  box-shadow: inset 0 -4px #a2aba0;
+}
+
+.cc-calendar-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 12px 6px 4px;
+  color: #7b8b73;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.cc-calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cc-calendar-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: #65934a;
+}
+
+.cc-calendar-legend span:last-child::before {
+  background: #a2aba0;
+}
+
+/* Holiday Editor Column */
+.cc-holiday-editor {
+  position: sticky;
+  top: 20px;
+}
+
+.cc-holiday-editor .cc-holiday-form {
+  display: grid;
+  gap: 16px;
+}
+
+.cc-holiday-editor form {
+  padding: 22px 24px;
+}
+
+.cc-holiday-editor footer {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-google-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #dfe5df;
+  border-radius: 8px;
+  color: #414b43;
+  background: #fff;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.cc-google-link:hover {
+  background: #f6f8f5;
+  color: #2e503d;
+  border-color: #cfd8ce;
+}
+
+/* Responsive */
+@media (max-width: 1250px) {
+  .cc-holiday-workspace {
+    grid-template-columns: minmax(230px, 0.9fr) minmax(380px, 1.4fr);
+  }
+
+  .cc-holiday-editor {
+    position: static;
+    grid-column: 1 / -1;
+    min-height: 0 !important;
+  }
+
+  .cc-holiday-editor .cc-holiday-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .cc-holiday-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-holiday-editor {
+    grid-column: auto;
+  }
+
+  .cc-holiday-workspace .cc-panel {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .cc-holiday-editor .cc-holiday-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-calendar-card .rdp-root {
+    --rdp-day-height: 48px;
+    --rdp-day_button-height: 44px;
+    margin: 8px;
+  }
+}

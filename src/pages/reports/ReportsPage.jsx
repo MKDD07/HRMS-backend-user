@@ -76,7 +76,7 @@ export function ReportsPage({
             <h3 className="text-base font-bold text-white font-display">
               6-Month Leave Pattern & Utilization
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-[13px] text-slate-400">
               Analysis across Casual, Sick, and Privilege Leave categories
             </p>
           </div>
@@ -109,13 +109,13 @@ export function ReportsPage({
                   {r.status}
                 </Badge>
               </div>
-              <p className="text-xs text-slate-400 mt-2">
+              <p className="text-[13px] text-slate-400 mt-2">
                 {r.description}
               </p>
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-mono text-[11px]">
+            <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[13px]">
+              <span className="text-slate-500 text-[11px]">
                 Updated: {r.last_generated || 'Today, 06:00 AM'}
               </span>
               <Button
@@ -138,7 +138,7 @@ export function ReportsPage({
             <h3 className="text-sm font-bold text-white font-display">
               Immutable Daily Work Report (DWR) Logs
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-[13px] text-slate-400">
               Real-time daily task submissions locked by employees on date of work.
             </p>
           </div>
@@ -153,7 +153,7 @@ export function ReportsPage({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-[13px]">
             <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
               <tr>
                 <th className="py-3 px-4">Date</th>
@@ -167,7 +167,7 @@ export function ReportsPage({
             <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {dailyReports.map((dwr) => (
                 <tr key={dwr.id} className="hover:bg-slate-800/30">
-                  <td className="py-2.5 px-4 font-mono text-slate-400">
+                  <td className="py-2.5 px-4 text-slate-400">
                     {dwr.report_date}
                   </td>
                   <td className="py-2.5 px-4 font-bold text-white">
@@ -179,7 +179,7 @@ export function ReportsPage({
                   <td className="py-2.5 px-4 max-w-sm truncate text-slate-300">
                     {dwr.tasks_completed}
                   </td>
-                  <td className="py-2.5 px-4 font-mono font-semibold text-slate-200">
+                  <td className="py-2.5 px-4 font-semibold text-slate-200">
                     {dwr.hours_spent}h
                   </td>
                   <td className="py-2.5 px-4">

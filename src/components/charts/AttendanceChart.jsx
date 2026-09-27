@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './charts.css';
 
 export function AttendanceChart({
   data = [
@@ -137,7 +138,7 @@ export function AttendanceChart({
         {/* Floating Tooltip */}
         {hoveredIdx !== null && (
           <div
-            className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700/80 px-3 py-1.5 rounded-lg shadow-xl text-xs flex items-center gap-3 z-10 pointer-events-none"
+            className="absolute top-2 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700/80 px-3 py-1.5 rounded-lg shadow-xl text-[13px] flex items-center gap-3 z-10 pointer-events-none"
           >
             <span className="font-bold text-white">
               {data[hoveredIdx].day}:
@@ -156,7 +157,7 @@ export function AttendanceChart({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-5 mt-3 text-xs text-slate-400">
+      <div className="flex items-center gap-5 mt-3 text-[13px] text-slate-400">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
           <span>Present</span>

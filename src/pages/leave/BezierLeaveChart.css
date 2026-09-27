@@ -1,0 +1,264 @@
+.bezier-chart-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bezier-canvas-container {
+  position: relative;
+  width: 100%;
+}
+
+.bezier-svg {
+  width: 100%;
+  height: auto;
+  max-height: 310px;
+  display: block;
+  overflow: visible;
+}
+
+.bezier-grid line {
+  transition: stroke 0.2s ease;
+}
+
+.bezier-axis-label {
+  fill: #788c6f;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.bezier-axis-month {
+  fill: #718468;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: fill 0.15s ease, font-weight 0.15s ease;
+}
+
+.bezier-axis-month.is-active {
+  fill: #273b1f;
+  font-weight: 700;
+}
+
+.bezier-axis-title {
+  fill: #435b37;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.bezier-area-path {
+  pointer-events: none;
+}
+
+.bezier-curve-stroke {
+  pointer-events: none;
+}
+
+.bezier-col-hit {
+  cursor: crosshair;
+}
+
+.bezier-dot-group {
+  cursor: pointer;
+}
+
+.bezier-dot-circle {
+  transition: r 0.2s ease, stroke-width 0.2s ease;
+}
+
+.bezier-dot-ring {
+  animation: bezierDotPulse 1.4s infinite ease-out;
+  transform-origin: center;
+}
+
+@keyframes bezierDotPulse {
+  0% {
+    r: 6;
+    opacity: 0.7;
+  }
+
+  100% {
+    r: 13;
+    opacity: 0;
+  }
+}
+
+/* Floating Tooltip Box */
+.bezier-floating-tooltip {
+  position: absolute;
+  top: 14px;
+  transform: translateX(-50%);
+  background: #ffffff;
+  border: 1px solid #d5e2cb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(35, 50, 25, 0.14);
+  padding: 10px 14px;
+  font-size: 11px;
+  min-width: 190px;
+  max-width: 280px;
+  z-index: 40;
+  pointer-events: none;
+  animation: bezierTooltipSlide 0.15s ease-out;
+}
+
+@keyframes bezierTooltipSlide {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.bezier-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #edf4e7;
+}
+
+.bezier-tooltip-month {
+  font-weight: 700;
+  color: #273b1f;
+  font-size: 12px;
+}
+
+.bezier-tooltip-total {
+  font-size: 10px;
+  font-weight: 600;
+  color: #4f772d;
+  background: #eef6e8;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.bezier-tooltip-list {
+  display: grid;
+  gap: 5px;
+}
+
+.bezier-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4b6040;
+  font-size: 11px;
+}
+
+.bezier-tooltip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bezier-tooltip-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bezier-tooltip-days {
+  color: #1f2f18;
+  font-weight: 700;
+}
+
+.bezier-tooltip-count {
+  color: #819478;
+  font-size: 9.5px;
+}
+
+/* Legend Pills Below Chart */
+.bezier-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  padding: 14px 4px 0;
+  margin-top: 10px;
+  border-top: 1px solid #edf3e7;
+}
+
+.bezier-legend-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid #dfe7da;
+  font-size: 11px;
+  color: #495e3f;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  outline: none;
+}
+
+.bezier-legend-tag:hover {
+  background: #f7faf4;
+  border-color: #b7cba9;
+  color: #25391c;
+}
+
+.bezier-legend-tag.is-active {
+  background: #f1f6ed;
+  border-color: #4f772d;
+  color: #1f3115;
+  box-shadow: 0 1px 3px rgba(79, 119, 45, 0.15);
+}
+
+.bezier-tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.bezier-tag-code {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #6c7f63;
+}
+
+.bezier-legend-tag.is-active .bezier-tag-code {
+  color: #2e4321;
+}
+
+.bezier-tag-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.bezier-tag-days {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #3b5030;
+  background: #eef5e7;
+  border: 1px solid #dce8d2;
+  padding: 0 5px;
+  border-radius: 8px;
+  line-height: 15px;
+  margin-left: 2px;
+}
+
+.bezier-empty {
+  padding: 36px 20px;
+  text-align: center;
+  color: #8c9e83;
+  font-size: 12px;
+}

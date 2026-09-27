@@ -1,6 +1,6 @@
 {
   "name": "HRMS Admin Console",
-  "description": "Enterprise Human Resource Management System admin console for managing employees, attendance, leave, payroll, recruitment ATS, performance, assets, documents, and reports.",
+  "description": "Enterprise Human Resource Management System admin console for managing employees, organizational hierarchy, attendance, leave, payroll, recruitment ATS, performance, assets, documents, and reports.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,0 +1,28 @@
+name = "hrms-company-api"
+main = "worker/index.mjs"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hrms-db"
+database_id = "4fe0e2c8-e4f0-4433-8351-6dbf73359cd7"
+migrations_dir = "./migrations/hrms"
+
+[[r2_buckets]]
+binding = "HRMS_DOCUMENTS"
+bucket_name = "hrms-documents-vault"
+
+[vars]
+BILLING_MODE = "test"
+# Temporarily disabled. Restore the site key to re-enable verification.
+RECAPTCHA_SITE_KEY = ""
+RECAPTCHA_ALLOWED_HOSTNAMES = "nexthr.com,www.nexthr.com,localhost,127.0.0.1"
+ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+
+[[r2_buckets]]
+binding = "HRMS_BRANDING"
+bucket_name = "hrms-db"
+
+[triggers]
+crons = ["0 * * * *"]

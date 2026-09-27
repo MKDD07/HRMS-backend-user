@@ -25,16 +25,15 @@ export function DepartmentChart({
             onMouseEnter={() => setHoveredIdx(idx)}
             onMouseLeave={() => setHoveredIdx(null)}
           >
-            <div className="flex items-center justify-between text-xs mb-1.5">
+            <div className="flex items-center justify-between text-[13px] mb-1.5">
               <span
-                className={`font-medium transition-colors ${
-                  isHovered ? 'text-white' : 'text-slate-300'
-                }`}
+                className={`font-medium transition-colors ${isHovered ? 'text-white' : 'text-slate-300'
+                  }`}
               >
                 {item.department}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 font-mono text-[11px]">
+                <span className="text-slate-400 text-[11px]">
                   {item.count} members
                 </span>
                 <span className="font-semibold text-slate-200">

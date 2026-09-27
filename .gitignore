@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+bun.lock
+bun.lockb
+data/
+.directory-check-*/
+tmp/
+*.zip
+restored_*.txt

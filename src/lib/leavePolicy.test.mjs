@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { accruedBalance, eligibleFor, googleCalendarUrl, holidaysToIcs } from './leavePolicy.js';
+const earned = { active: true, initial_days: 5, accrual_frequency: 'monthly', accrual_amount: 1.25, max_balance: 20, accrual_start_date: '2026-01-01' };
+assert.equal(accruedBalance(earned, '2026-04-15'), 8.75);
+assert.equal(accruedBalance(earned, '2028-04-15'), 20);
+assert.equal(eligibleFor({ active: true, eligibility_mode: 'gender', genders: ['Female'] }, { gender: 'Female' }), true);
+assert.equal(eligibleFor({ active: true, eligibility_mode: 'people', userids: ['A'] }, { userid: 'B' }), false);
+assert.match(googleCalendarUrl({ name: 'Foundation Day', holiday_date: '2026-04-01' }), /calendar\.google\.com/);
+assert.match(holidaysToIcs([{ id: 'one', name: 'Foundation Day', holiday_date: '2026-04-01' }]), /DTEND;VALUE=DATE:20260402/);
+assert.match(holidaysToIcs([{ id: 'optional', name: 'Choice Day', holiday_date: '2026-04-02', type: 'Optional Holiday', optional_note: 'Choose one regional festival' }]), /Choose one regional festival/);
+console.log('Leave policy checks passed.');

@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import './TenantLayout.css';
+import { subscribeNotifications, markAllNotificationsRead } from '../../lib/realtimeNotifications';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { Modal } from '../ui/Modal';
@@ -12,6 +14,7 @@ export function AppLayout({
   currentUser,
   allUsers,
   onSwitchUser,
+  onSelectEmployee,
   todaysAttendance,
   onPunchAttendance,
   onLogout,
@@ -22,31 +25,45 @@ export function AppLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [punchModalOpen, setPunchModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'Leave Request Pending Review',
-      message: 'Rohan Mehra (EMP-1004) submitted a Sick Leave application for Sep 22-23.',
-      type: 'Leave',
-      time: '15 mins ago'
-    },
-    {
-      id: 2,
-      title: 'Profile Change Approved',
-      message: 'Your personal address update PCR-1021-01 was approved by Systems Administrator.',
-      type: 'Profile',
-      time: '2 hours ago'
-    },
-    {
-      id: 3,
-      title: 'Company Birthday',
-      message: "It's John Doe's and Ananya Deshmukh's birthday today! Send wishes from Dashboard.",
-      type: 'Birthday',
-      time: 'Today'
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  useEffect(() => subscribeNotifications(data => setNotifications(data)), []);
 
   const [punchLoading, setPunchLoading] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('hrms_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleSidebar = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen((prev) => !prev);
+    } else {
+      setSidebarCollapsed((prev) => {
+        const next = !prev;
+        try {
+          localStorage.setItem('hrms_sidebar_collapsed', String(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    }
+  };
+
+  // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        handleToggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const isCheckedIn = Boolean(todaysAttendance?.check_in_time);
   const isCheckedOut = Boolean(todaysAttendance?.check_out_time);
@@ -69,7 +86,18 @@ export function AppLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#27292C] flex flex-col font-sans">
+    <div className="tenant-shell">
+        <Topbar
+          onToggleSidebar={handleToggleSidebar}
+          currentUser={currentUser}
+          onSwitchUser={onSwitchUser}
+          allUsers={allUsers}
+          onSelectEmployee={onSelectEmployee}
+          onOpenNotifications={() => setNotificationsOpen(true)}
+          onLogout={onLogout}
+          unreadCount={notifications.length}
+          isCollapsed={sidebarCollapsed}
+        />
       <Sidebar
         activeTab={activePage}
         onNavigate={onNavigate}
@@ -77,22 +105,13 @@ export function AppLayout({
         onClose={() => setSidebarOpen(false)}
         currentUser={currentUser}
         onLogout={onLogout}
+        isCollapsed={sidebarCollapsed && !sidebarOpen}
       />
 
-      <div className="layout-content">
-        <Topbar
-          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-          currentUser={currentUser}
-          onSwitchUser={onSwitchUser}
-          allUsers={allUsers}
-          todaysAttendance={todaysAttendance}
-          onQuickPunch={() => setPunchModalOpen(true)}
-          onOpenNotifications={() => setNotificationsOpen(true)}
-          onLogout={onLogout}
-          unreadCount={notifications.length}
-        />
+      <div className={`layout-content ${sidebarCollapsed ? 'layout-content--collapsed' : ''}`}>
 
-        <main className="py-6">{children}</main>
+
+        <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
 
       {/* Punch In / Out Modal */}
@@ -102,8 +121,8 @@ export function AppLayout({
         title="Biometric & Geofenced Time Clock"
         footer={
           <div className="flex items-center justify-between w-full">
-            <span className="text-xs text-[#5F6368]">
-              Perimeter: <strong className="text-[#10B981]">HQ Infotech Geofence Validated (18m)</strong>
+            <span className="text-[13px] text-[#5F6368]">
+              Perimeter: <strong className="text-[#000000]">HQ Infotech Geofence Validated (18m)</strong>
             </span>
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={() => setPunchModalOpen(false)}>
@@ -135,24 +154,23 @@ export function AppLayout({
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-between">
             <div>
-              <p className="text-xs text-[#5F6368]">Current Employee</p>
+              <p className="text-[13px] text-[#5F6368]">Current Employee</p>
               <h4 className="text-base font-bold text-[#27292C]">
                 {currentUser?.first_name} {currentUser?.last_name}
               </h4>
-              <p className="text-xs text-[#5F6368] font-mono">{currentUser?.userid} • {currentUser?.designation}</p>
+              <p className="text-[13px] text-[#5F6368] font-mono">{currentUser?.userid} • {currentUser?.designation}</p>
             </div>
             <div className="text-right">
-              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                isCheckedIn && !isCheckedOut
-                  ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
-                  : 'bg-[#F3F4F6] text-[#5F6368]'
-              }`}>
+              <span className={`px-2.5 py-1 rounded-full text-[13px] font-semibold ${isCheckedIn && !isCheckedOut
+                ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
+                : 'bg-[#F3F4F6] text-[#5F6368]'
+                }`}>
                 {isCheckedIn && !isCheckedOut ? 'Shift Active' : isCheckedOut ? 'Shift Completed' : 'Not Punched'}
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="grid grid-cols-2 gap-3 text-[13px]">
             <div className="p-3 rounded-lg bg-[#FFFFFF] border border-[#E5E7EB]">
               <span className="text-[#5F6368]">Punch In Record</span>
               <p className="text-sm font-bold text-[#27292C] mt-0.5">
@@ -167,7 +185,7 @@ export function AppLayout({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-xs text-[#27292C]">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-[#F9FAFB] border border-[#E5E7EB] text-[13px] text-[#27292C]">
             <MapPin className="w-4 h-4 text-[#27292C] shrink-0" />
             <div>
               <p className="font-semibold text-[#27292C]">Vashi Infotech Park Campus</p>
@@ -187,9 +205,9 @@ export function AppLayout({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setNotifications([])}
+              onClick={() => markAllNotificationsRead().catch(error => window.alert(error.message))}
             >
-              Clear All
+              Mark all read
             </Button>
             <Button
               variant="secondary"
@@ -203,7 +221,7 @@ export function AppLayout({
       >
         <div className="space-y-3">
           {notifications.length === 0 ? (
-            <p className="text-xs text-[#5F6368] py-6 text-center">No notifications at this time.</p>
+            <p className="text-[13px] text-[#5F6368] py-6 text-center">No notifications at this time.</p>
           ) : (
             notifications.map((item) => (
               <div
@@ -211,10 +229,10 @@ export function AppLayout({
                 className="p-3 rounded-lg bg-[#FFFFFF] border border-[#E5E7EB] hover:border-[#D1D5DB] transition-colors"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-[#27292C]">{item.title}</span>
-                  <span className="text-[10px] text-[#5F6368]">{item.time}</span>
+                  <span className="text-[13px] font-bold text-[#27292C]">{item.title}</span>
+                  <span className="text-[10px] text-[#5F6368]">{item.timeAgo || item.time}</span>
                 </div>
-                <p className="text-xs text-[#5F6368] leading-relaxed">{item.message}</p>
+                <p className="text-[13px] text-[#5F6368] leading-relaxed">{item.message}</p>
               </div>
             ))
           )}

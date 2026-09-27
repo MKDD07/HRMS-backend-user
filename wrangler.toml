@@ -1,0 +1,25 @@
+name = "hrms-api"
+main = "server.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare D1 SQL Database Binding
+# Database ID: 05b74cd6-9516-4b8c-ac3a-d0d99d09029f
+[[d1_databases]]
+binding = "DB"
+database_name = "hrms-db"
+database_id = "4fe0e2c8-e4f0-4433-8351-6dbf73359cd7"
+migrations_dir = "./migrations"
+
+# Cloudflare R2 Object Storage Bucket Binding for Encrypted Documents
+[[r2_buckets]]
+binding = "HRMS_DOCUMENTS"
+bucket_name = "hrms-documents-vault"
+preview_bucket_name = "hrms-documents-vault-preview"
+
+# Environment Variables
+[vars]
+ENVIRONMENT = "production"
+APP_NAME = "PulseHRMS Enterprise Admin"
+STORAGE_PUBLIC_URL = "https://hrms-api.mkmkataria07.workers.dev/storage"
+ALLOWED_ORIGINS = "*"

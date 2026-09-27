@@ -31,9 +31,8 @@ export function StatCard({
         <div className="stat-card__meta">
           {trend && (
             <span
-              className={`stat-card__trend stat-card__trend--${
-                trend.direction || 'up'
-              }`}
+              className={`stat-card__trend stat-card__trend--${trend.direction || 'up'
+                }`}
             >
               {trend.direction === 'up' && <ArrowUpRight className="w-3.5 h-3.5" />}
               {trend.direction === 'down' && <ArrowDownRight className="w-3.5 h-3.5" />}
@@ -41,7 +40,7 @@ export function StatCard({
               {trend.value}
             </span>
           )}
-          {metaText && <span className="text-xs text-[#5F6368]">{metaText}</span>}
+          {metaText && <span className="text-[13px] text-[#5F6368]">{metaText}</span>}
         </div>
       )}
     </div>

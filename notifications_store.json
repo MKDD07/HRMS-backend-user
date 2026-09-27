@@ -1,0 +1,18 @@
+[
+  {
+    "id": "notif-1790175117349-k5nx",
+    "category": "Payroll",
+    "title": "Salary Disbursed",
+    "message": "September 2026 net take-home salary (₹0) credited to Mohit Kataria.",
+    "timestamp": "2026-09-23T14:51:57.349Z",
+    "timeAgo": "3d ago",
+    "unread": false,
+    "user": {
+      "name": "Mohit Kataria",
+      "userid": "TYS-1021",
+      "department": "Corporate Payroll"
+    },
+    "actionType": "salary",
+    "approved": false
+  }
+]

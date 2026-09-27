@@ -27,7 +27,7 @@ export function CardTitle({ children, className = '' }) {
 }
 
 export function CardDescription({ children, className = '' }) {
-  return <p className={`text-xs text-[#5F6368] mt-0.5 ${className}`}>{children}</p>;
+  return <p className={`text-[13px] text-[#5F6368] mt-0.5 ${className}`}>{children}</p>;
 }
 
 export function CardContent({ children, className = '' }) {
@@ -35,5 +35,5 @@ export function CardContent({ children, className = '' }) {
 }
 
 export function CardFooter({ children, className = '' }) {
-  return <div className={`mt-4 pt-3 border-t border-[#F3F4F6] flex items-center justify-between text-xs text-[#5F6368] ${className}`}>{children}</div>;
+  return <div className={`mt-4 pt-3 border-t border-[#F3F4F6] flex items-center justify-between text-[13px] text-[#5F6368] ${className}`}>{children}</div>;
 }
