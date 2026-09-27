@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import { createPayrollDatabase } from './payrollDatabase.mjs';
+import { cachedHolidays, HOLIDAY_CACHE_SCHEMA } from './holidayCache.mjs';
+const db = createPayrollDatabase({ filename: ':memory:' });
+await db.query(HOLIDAY_CACHE_SCHEMA);
+let calls = 0;
+const fetcher = async url => {
+  calls++;
+  const params = new URL(url).searchParams;
+  assert.equal(params.has('month'), false);
+  assert.equal(params.has('type'), false);
+  return { ok: true, json: async () => ({ meta: { code: 200 }, response: { holidays: [{ name: 'Test holiday', date: { iso: `${params.get('year')}-01-01` }, type: ['National holiday'] }] } }) };
+};
+const args = { db, company: 'a', country: 'IN', year: '2026', apiKey: 'test', fetcher };
+try {
+  const first = await cachedHolidays(args);
+  assert.equal(first.source, 'provider');
+  assert.equal((await cachedHolidays({ ...args, apiKey: '' })).source, 'database');
+  assert.equal(calls, 1, 'Saved year is reused without provider credentials');
+  await cachedHolidays({ ...args, company: 'b' });
+  await cachedHolidays({ ...args, country: 'US' });
+  await cachedHolidays({ ...args, year: '2027' });
+  assert.equal(calls, 4, 'Company, country and year are isolated');
+  let emptyCalls = 0;
+  const empty = { ...args, year: '2028', fetcher: async () => { emptyCalls++; return { ok: true, json: async () => ({ meta: { code: 200 }, response: { holidays: [] } }) }; } };
+  await cachedHolidays(empty); await cachedHolidays(empty);
+  assert.equal(emptyCalls, 1, 'Empty arrays are valid cached results');
+  await assert.rejects(cachedHolidays({ ...args, year: 'invalid' }), /valid country/);
+  await assert.rejects(cachedHolidays({ ...args, year: '2029', fetcher: async () => ({ ok: false, json: async () => ({}) }) }), /Unable/);
+  await cachedHolidays({ ...args, year: '2029' });
+  assert.equal(calls, 5, 'Failures release their lease and can retry');
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  let entered;
+  const started = new Promise(resolve => { entered = resolve; });
+  const concurrent = { ...args, year: '2030', fetcher: async url => { entered(); await gate; return fetcher(url); } };
+  const pending = cachedHolidays(concurrent);
+  await started;
+  await assert.rejects(cachedHolidays(concurrent), /already being fetched/);
+  release(); await pending;
+  assert.equal((await cachedHolidays(concurrent)).source, 'database');
+  assert.equal(calls, 6, 'Concurrent requests spend quota once');
+  console.log('Holiday cache tests passed: cache hits, isolation, empty results, validation, retries and concurrent leases.');
+} finally { db.close(); }

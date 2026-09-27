@@ -4,8 +4,8 @@ import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { EmployeeDirectory } from '../../components/employees/EmployeeDirectory';
 import { documentVaultApi } from '../../lib/documentVaultApi';
-import '../dashboard/DashboardPage.css';
-import './DocumentsPage.css';
+import '../dashboard/DashboardPage.scss';
+import './DocumentsPage.scss';
 
 const POLICY_CATEGORIES = ['Code of Conduct', 'Benefits & Health', 'Security & Geofence', 'Tax & Payroll', 'Compliance'];
 const DOCUMENT_CATEGORIES = ['ID Proof', 'Employment Contract', 'Tax Form', 'Education & Degree', 'Appraisal & Letter'];
@@ -155,7 +155,19 @@ export function DocumentsPage({ api, onShowToast }) {
   }).sort((a, b) => sort === 'name' ? (a.title || '').localeCompare(b.title || '') : (Date.parse(b.created_at || b.effective_date) || 0) - (Date.parse(a.created_at || a.effective_date) || 0));
   const hasFilters = search || category !== 'All' || status !== 'All';
   return <div className="tenant-dashboard document-vault">
-    <header className="tenant-header"><div><span className="tenant-eyebrow">WORKSPACE / COMPLIANCE</span><h1>Document Vault &amp; Compliance Repository<span>.</span></h1><p>Manage company policies and employee records in one place.</p></div><div className="vault-header-actions"><button className="tenant-button" onClick={() => setRefresh(v => v + 1)} disabled={busy}><RefreshCw size={15} className={busy ? 'vault-spin' : ''} />{busy ? 'Refreshing...' : 'Refresh data'}</button><button className="tenant-button vault-upload-button" onClick={() => setAdding(true)} disabled={personnel && (!employee || peopleLoading || !!peopleError)}><Plus size={15} />Upload {personnel ? 'document' : 'policy'}</button></div></header>
+    <header className="tenant-header">
+      <div>
+        <span className="tenant-eyebrow">WORKSPACE / COMPLIANCE</span>
+        <h1>Document Vault &amp; Compliance Repository<span>.</span></h1>
+        <p>Manage company policies and employee records in one place.</p>
+      </div>
+      <div className="vault-header-actions">
+        <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={busy} onClick={() => setRefresh(v => v + 1)} aria-label="Refresh data" />
+        <Button variant="colored" size="md" icon={Plus} disabled={personnel && (!employee || peopleLoading || !!peopleError)} onClick={() => setAdding(true)}>
+          Upload {personnel ? 'document' : 'policy'}
+        </Button>
+      </div>
+    </header>
     <div className="tenant-context"><span>Company document repository<small>Policies &amp; personnel records</small></span><span className="vault-access-note"><FolderLock size={14} />Company account access</span></div>
     <section className="tenant-stats" aria-label="Document repository overview">
       {[{ icon: FolderOpen, label: 'Company policies', value: loading || error ? '—' : policies.length, detail: 'Across your organization', color: 'violet' }, { icon: ShieldCheck, label: 'Acknowledgement required', value: loading || error ? '—' : mandatory, detail: 'Policies requiring employee sign-off', color: 'green' }, { icon: Users, label: 'Employee directory', value: peopleLoading || peopleError ? '—' : employees.length, detail: 'Individual personnel vaults', color: 'blue' }, { icon: personnel ? Clock : FileText, label: personnel ? 'Awaiting review' : 'Policy categories', value: personnel ? busy || loadError ? '—' : docs.length - verified : loading || error ? '—' : new Set(policies.map(p => p.category).filter(Boolean)).size, detail: personnel ? 'For the selected employee' : 'Organized for easy discovery', color: 'amber' }].map(({ icon: Icon, ...stat }) => <div className="tenant-stat" key={stat.label}><div>{stat.label}<Icon size={17} /></div><strong>{stat.value}</strong><p>{stat.detail}</p></div>)}

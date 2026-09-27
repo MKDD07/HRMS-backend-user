@@ -1,4 +1,4 @@
-import { COMPANY_API } from './companyAuth';
+import { COMPANY_API } from './companyAuth.js';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('pulse_hrms_token');

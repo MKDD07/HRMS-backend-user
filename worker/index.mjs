@@ -1,3 +1,7 @@
+import { deleteAssetList } from './deleteAssetList.mjs';
+import { assetPhotos } from './assetPhotos.mjs';
+import { talentHandle } from './talent.mjs';
+import { cachedHolidays } from '../server/holidayCache.mjs';
 import { billingHandle, billingWebhook } from './billing.mjs';
 import { dashboardAdmin, dashboardConfiguration } from './dashboardAdmin.mjs';
 import { captchaConfiguration, verifyCaptcha } from './recaptcha.mjs';
@@ -200,6 +204,7 @@ async function handle(request, env) {
   if (path.startsWith('/api/v1/billing/')) return billingHandle({ db, env, actor, path, method, body: method === 'POST' ? await bodyOf(request) : {} });
   if (path === '/api/v1/dashboard-users') return dashboardAdmin({ db, actor, path, method, body: method === 'POST' ? await bodyOf(request) : {}, hashPassword });
   if (path.startsWith('/api/v1/dashboard-configuration/')) return dashboardConfiguration({ db, actor, section: path.split('/').pop(), method, body: method === 'POST' ? await bodyOf(request) : {} });
+  actor.original_role = actor.role;
   if (actor.role !== 'company_admin' && actor.dashboard_access) {
     const allowed = routePages(path, method).some(page => parsePages(actor.dashboard_pages).includes(page));
     if (!allowed) fail('Your dashboard account does not have access to this page.', 403);
@@ -208,6 +213,11 @@ async function handle(request, env) {
     }
     actor.role = 'company_admin'; // Request-scoped elevation only after the explicit route permission check.
   }
+  const deleteListRoute = path.match(/^\/api\/v1\/talent\/asset_lists\/([^/]+)\/delete$/);
+  if (deleteListRoute) return deleteAssetList({ db, env, actor, id: deleteListRoute[1], method, body: method === 'POST' ? await bodyOf(request) : {} });
+  const photoRoute = path.match(/^\/api\/v1\/talent\/(assets|asset_issues)\/([^/]+)\/photos$/);
+  if (photoRoute) return assetPhotos({ db, env, actor, request, collection: photoRoute[1], id: photoRoute[2], url });
+  if (path.startsWith('/api/v1/talent/')) return talentHandle({ db, actor, path, method, url, body: method === 'POST' ? await bodyOf(request, 50000) : {} });
   if (path === '/api/v1/hr-connect' || path.startsWith('/api/v1/hr-connect/')) return hrConnectHandle({ db, actor, path, method, url, body: method === 'POST' ? await bodyOf(request, 20000) : {} });
   if (path.startsWith('/api/v1/workflows/')) return workflowHandle({ db, actor, path, method, url, body: method === 'POST' ? await bodyOf(request, 2000000) : {} });
   if (['/api/v1/create-user', '/api/v1/register'].includes(path) && method === 'POST') {
@@ -330,6 +340,10 @@ async function handle(request, env) {
       return config;
     }
     admin(actor);
+    if (section[0] === 'holiday-cache' && method === 'POST') {
+      const body = await bodyOf(request);
+      return cachedHolidays({ db: { query: (sql, params) => rows(db, sql, params) }, company: actor.company_id, country: body.country, year: body.year, apiKey: env.CALENDARIFIC_API_KEY });
+    }
     if (section[0] === 'assignments' && method === 'POST') {
       const body = await bodyOf(request);
       const employee = await employeeTarget(db, actor, body);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, RefreshCw, FileText, Link } from 'lucide-react';
 import { payslipApi } from '../../lib/payslipApi';
-import './PayslipStudio.css';
+import './PayslipStudio.scss';
 
 export function PayslipRecords({ employee, refreshKey = 0 }) {
   const [records, setRecords] = useState([]), [error, setError] = useState(''), [loading, setLoading] = useState(false), [busy, setBusy] = useState(''), [notice, setNotice] = useState('');

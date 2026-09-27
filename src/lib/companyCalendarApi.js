@@ -6,6 +6,7 @@ async function request(path, options = {}) {
   return body;
 }
 export const companyCalendarApi = {
+  fetchHolidays: value => request('/holiday-cache', { method: 'POST', body: JSON.stringify(value) }),
   configuration: () => request('/configuration'),
   saveLeaveType: value => request('/leave-types', { method: 'POST', body: JSON.stringify(value) }),
   deleteLeaveType: id => request('/leave-types/' + encodeURIComponent(id), { method: 'DELETE' }),

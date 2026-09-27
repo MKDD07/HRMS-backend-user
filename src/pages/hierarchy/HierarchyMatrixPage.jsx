@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ReactFlow, Background, Controls, Handle, Position, MarkerType, applyNodeChanges } from '@xyflow/react';
 import dagre from 'dagre';
 import { Search, Plus, Save, GitBranch, Table2, Network, GripVertical, X, ArrowDown, RefreshCw, Focus, Users, Trash2 } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { emptyMatrix, validateLink, visiblePeople, reconcileMatrix } from '../../lib/reportingMatrix';
 import '@xyflow/react/dist/style.css';
-import './HierarchyMatrixPage.css';
+import './HierarchyMatrixPage.scss';
 import { WorkflowSettings } from '../../components/hierarchy/WorkflowSettings';
 import { WorkflowInbox } from '../../components/hierarchy/WorkflowInbox';
 import { workflowApi } from '../../lib/workflowApi';
@@ -179,7 +180,16 @@ export function HierarchyMatrixPage({ api, currentUser, onSelectEmployee, onShow
   const roster = people.filter(person => `${person.name} ${person.id} ${person.department || ''}`.toLowerCase().includes(search.trim().toLowerCase()));
   const options = people.map(person => <option key={person.id} value={person.id}>{person.name} · {person.id}</option>);
   return <div className="hm-page" aria-busy={loading || saving}>
-    <div className="hm-heading"><div><span className="hm-eyebrow">PEOPLE & ORGANIZATION</span><h1>Organizational hierarchy <span>& reporting matrix</span></h1><p>Build a clear picture of who reports to whom.</p></div><button className="hm-button hm-button--primary" disabled={loading || saving || !dirty} onClick={save}><Save size={15} />{saving ? 'Saving…' : 'Publish changes'}</button></div>
+    <div className="hm-heading">
+      <div>
+        <span className="hm-eyebrow">PEOPLE & ORGANIZATION</span>
+        <h1>Organizational hierarchy <span>& reporting matrix</span></h1>
+        <p>Build a clear picture of who reports to whom.</p>
+      </div>
+      <Button variant="colored" size="md" icon={Save} loading={saving} disabled={loading || saving || !dirty} onClick={save}>
+        {saving ? 'Saving…' : 'Publish changes'}
+      </Button>
+    </div>
     <div className="hm-summary"><span><Users size={15} /><strong>{people.length}</strong> employees</span><span><Network size={15} /><strong>{matrix.nodes.length}</strong> on chart</span><span><i className="hm-line" /><strong>{matrix.links.filter(link => link.type === 'direct').length}</strong> direct</span><span><i className="hm-line hm-line--dashed" /><strong>{matrix.links.filter(link => link.type === 'indirect').length}</strong> indirect</span><small>{dirty ? 'Unsaved changes' : savedAt ? `Saved ${new Date(savedAt).toLocaleString()}` : 'No saved reporting relationships'}</small></div>
     {error && <div className="hm-error" role="alert">{error}<button onClick={() => setError('')} aria-label="Dismiss error"><X size={15} /></button></div>}
     <fieldset disabled={loading || saving} className="hm-workspace">

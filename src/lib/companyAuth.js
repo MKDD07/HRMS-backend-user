@@ -1,5 +1,6 @@
-import { setBrandLogo } from './brandStore';
-export const COMPANY_API = import.meta.env.VITE_COMPANY_API_URL || '/api/company-auth';
+import { clearImageCache } from './imageCache';
+import { setBrandLogo } from './brandStore.js';
+export const COMPANY_API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_COMPANY_API_URL) || '/api/company-auth';
 export async function companyRequest(path, { token, ...options } = {}) {
   const response = await fetch(COMPANY_API + path, { ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers } });
   const body = await response.json().catch(() => ({}));
@@ -23,5 +24,5 @@ export const companyAuth = {
   verify: token => companyRequest('/auth/verify', { token }),
   logout: token => companyRequest('/logout', { token, method: 'POST' }),
   save(user) { localStorage.setItem('pulse_hrms_token', user.token); localStorage.setItem('pulse_hrms_user', JSON.stringify({ ...user, first_name: user.first_name || user.name || user.username })); },
-  clear() { localStorage.removeItem('pulse_hrms_token'); localStorage.removeItem('pulse_hrms_user'); setBrandLogo(null); }
+  clear() { clearImageCache(); localStorage.removeItem('pulse_hrms_token'); localStorage.removeItem('pulse_hrms_user'); setBrandLogo(null); }
 };

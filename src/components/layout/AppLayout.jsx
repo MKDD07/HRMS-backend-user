@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './TenantLayout.css';
+import './TenantLayout.scss';
 import { subscribeNotifications, markAllNotificationsRead } from '../../lib/realtimeNotifications';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';

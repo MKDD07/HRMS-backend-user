@@ -1,15 +1,15 @@
-﻿import { WorkflowInbox } from '../../components/hierarchy/WorkflowInbox';
+import { WorkflowInbox } from '../../components/hierarchy/WorkflowInbox';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, RefreshCw, Check, X, ArrowRight } from 'lucide-react';
-import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/style.css';
+import { Button } from '../../components/ui/Button';
+import { UniversalCalendar } from '../../components/ui/UniversalCalendar';
 import { EmployeeDirectory } from '../../components/employees/EmployeeDirectory';
 import { Modal } from '../../components/ui/Modal';
 import { dateKey, leaveDates, leaveSummary, normalizeLeaveDate } from './leaveCalendarData';
 import { BezierLeaveChart } from './BezierLeaveChart';
 import { companyCalendarApi } from '../../lib/companyCalendarApi';
 import { PROFESSIONAL_LEAVE_PRESETS, eligibleFor } from '../../lib/leavePolicy';
-import './LeavePage.css';
+import './LeavePage.scss';
 
 const nameOf = person => [person?.first_name, person?.last_name].filter(Boolean).join(' ') || person?.name || person?.userid || 'Employee';
 const statusOf = leave => String(leave?.status || 'Pending').toLowerCase();
@@ -161,26 +161,34 @@ export function LeavePage({ currentUser = {}, allUsers, api, onShowToast }) {
         <h1>Leaves<span>.</span></h1>
         <p>Explore recorded time off and review employee requests.</p>
       </div>
-      <div className="leave-header-actions"><button className="leave-button" aria-expanded={showWorkflow} onClick={() => setShowWorkflow(value => !value)}>Requests & approvals</button>
-        <button
-          type="button"
-          className="leave-refresh-btn"
-          onClick={load}
-          disabled={loading}
-          title="Refresh leave records"
-          aria-label="Refresh"
+      <div className="leave-header-actions">
+        <Button
+          variant={showWorkflow ? "colored" : "outline"}
+          size="md"
+          aria-expanded={showWorkflow}
+          onClick={() => setShowWorkflow(value => !value)}
         >
-          <RefreshCw size={17} className={loading ? 'is-spinning' : ''} />
-        </button>
+          Requests & approvals
+        </Button>
+        <Button
+          variant="fadeout"
+          size="md"
+          iconOnly
+          icon={RefreshCw}
+          loading={loading}
+          onClick={load}
+          aria-label="Refresh leave records"
+        />
       </div>
     </header>
     {showWorkflow && <section className="hm-page hm-main"><WorkflowInbox currentUser={currentUser} people={people} initialKind="leave" /></section>}
     {error && <div className="leave-alert" role="alert">Leave records are unavailable: {error} <button type="button" onClick={load}>Retry</button></div>}
     <section className="leave-stats" aria-label="Leave overview"><div><span>Employees</span><strong>{loading || error ? '-' : people.length}</strong><small>Live directory</small></div><div><span>Leave requests</span><strong>{loading || error ? '-' : visibleLeaves.length}</strong><small>{calendarYear} and other recorded periods</small></div><div><span>Pending review</span><strong>{loading || error ? '-' : pending}</strong><small>Awaiting a decision</small></div><div><span>Approved</span><strong>{loading || error ? '-' : approved}</strong><small>Recorded requests</small></div></section>
     <div className="leave-layout"><main className="leave-main">
-      <section className="leave-panel" ref={calendarRef} tabIndex={-1}><div className="leave-panel-heading"><div><span className="leave-eyebrow">TIME-OFF CALENDAR</span><h2>{selectedId ? nameOf(personById.get(selectedId)) : 'Company leave schedule'}</h2><p>Select a date to see recorded leave requests.</p></div><div className="leave-controls"><select aria-label="Filter employee" value={selectedId} onChange={event => setSelectedId(event.target.value)}><option value="">All employees</option>{people.map(person => <option key={person.userid} value={person.userid}>{nameOf(person)}</option>)}</select><button type="button" aria-label="Previous month" onClick={() => setMonth(new Date(calendarYear, month.getMonth() - 1, 1))}><ChevronLeft size={16} /></button><input type="month" aria-label="Calendar month" value={`${calendarYear}-${String(month.getMonth() + 1).padStart(2, '0')}`} onChange={event => { if (event.target.value) { const [y, m] = event.target.value.split('-').map(Number); setMonth(new Date(y, m - 1, 1)); } }} /><button type="button" aria-label="Next month" onClick={() => setMonth(new Date(calendarYear, month.getMonth() + 1, 1))}><ChevronRight size={16} /></button></div></div>
-      <DayPicker mode="single" month={month} onMonthChange={setMonth} selected={new Date(`${selectedDate}T12:00:00`)} onSelect={date => { if (date) setSelectedDate(dateKey(date)); }} weekStartsOn={1} showOutsideDays={false} modifiers={{ approved: date => (byDay.get(dateKey(date)) || []).some(leave => statusOf(leave) === 'approved'), pending: date => (byDay.get(dateKey(date)) || []).some(leave => statusOf(leave) === 'pending') }} modifiersClassNames={{ approved: 'leave-day-approved', pending: 'leave-day-pending' }} footer={<div className="leave-legend"><span>Approved leave</span><span>Pending request</span></div>} />
-      <div className="leave-day-details"><h3>{new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h3>{!dailyLeaves.length && <p className="leave-empty">No recorded leave on this date.</p>}{dailyLeaves.map((leave, index) => <article key={`${leave.userid}-${leave.id || index}`}><div><strong>{nameOf(personById.get(leave.userid))}</strong><small>{leave.leave_type || 'Leave'} / {startOf(leave)} to {endOf(leave)}</small></div><span className={`leave-pill ${statusOf(leave)}`}>{leave.status || 'Pending'}</span></article>)}</div></section>
+      <section className="leave-panel leave-schedule-panel" ref={calendarRef} tabIndex={-1}><div className="leave-panel-heading"><div><span className="leave-eyebrow">TIME-OFF CALENDAR</span><h2>{selectedId ? nameOf(personById.get(selectedId)) : 'Company leave schedule'}</h2><p>Select a date to see recorded leave requests.</p></div><div className="leave-controls"><select aria-label="Filter employee" value={selectedId} onChange={event => setSelectedId(event.target.value)}><option value="">All employees</option>{people.map(person => <option key={person.userid} value={person.userid}>{nameOf(person)}</option>)}</select><button type="button" aria-label="Previous month" onClick={() => setMonth(new Date(calendarYear, month.getMonth() - 1, 1))}><ChevronLeft size={16} /></button><input type="month" aria-label="Calendar month" value={`${calendarYear}-${String(month.getMonth() + 1).padStart(2, '0')}`} onChange={event => { if (event.target.value) { const [y, m] = event.target.value.split('-').map(Number); setMonth(new Date(y, m - 1, 1)); } }} /><button type="button" aria-label="Next month" onClick={() => setMonth(new Date(calendarYear, month.getMonth() + 1, 1))}><ChevronRight size={16} /></button></div></div>
+      <div className="leave-schedule-body">
+      <UniversalCalendar size="md" mode="single" month={month} onMonthChange={setMonth} selected={new Date(`${selectedDate}T12:00:00`)} onSelect={date => { if (date) setSelectedDate(dateKey(date)); }} weekStartsOn={1} showOutsideDays={false} holidaysMap={calendarConfig?.holidays} modifiers={{ approved: date => (byDay.get(dateKey(date)) || []).some(leave => statusOf(leave) === 'approved'), pending: date => (byDay.get(dateKey(date)) || []).some(leave => statusOf(leave) === 'pending') }} modifiersClassNames={{ approved: 'leave-day-approved', pending: 'leave-day-pending' }} footer={<div className="leave-legend"><span>Approved leave</span><span>Pending request</span></div>} />
+      <div className="leave-day-details" aria-live="polite"><h3>{new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h3>{!dailyLeaves.length && <p className="leave-empty">No recorded leave on this date.</p>}{dailyLeaves.map((leave, index) => <article key={`${leave.userid}-${leave.id || index}`}><div><strong>{nameOf(personById.get(leave.userid))}</strong><small>{leave.leave_type || 'Leave'} / {startOf(leave)} to {endOf(leave)}</small></div><span className={`leave-pill ${statusOf(leave)}`}>{leave.status || 'Pending'}</span></article>)}</div></div></section>
 
       {/* Leave Types Bezier Chart Section with Type Selector and Calendar Year */}
       <div className="leave-graphs">

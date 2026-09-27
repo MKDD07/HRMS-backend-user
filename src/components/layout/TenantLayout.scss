@@ -1,0 +1,42 @@
+@use "../../styles/variables" as *;
+@use "../../styles/color" as *;
+
+.tenant-shell {
+  --tenant-header-height: 82px;
+  min-height: 100vh;
+  padding-top: var(--tenant-header-height);
+  display: flex;
+  flex-direction: column;
+  background: $color-bg-subtle;
+  color: $color-text-main;
+  font-family: var(--font-family-base, $font-family-base);
+
+  .layout-content {
+    flex: 1;
+    min-height: calc(100dvh - var(--tenant-header-height));
+    margin-left: var(--sidebar-width, 260px);
+    background: $color-bg-subtle;
+    transition: margin-left var(--ease-fast, 0.2s ease);
+
+    &--collapsed {
+      margin-left: var(--sidebar-collapsed, 76px);
+    }
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .tenant-shell {
+    --tenant-header-height: 126px;
+
+    .layout-content,
+    .layout-content--collapsed {
+      margin-left: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tenant-shell .layout-content {
+    transition: none;
+  }
+}

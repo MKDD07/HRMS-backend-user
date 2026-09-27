@@ -7,7 +7,7 @@ import { createPayslipDocument } from '../../lib/payslipDocument';
 import { payslipApi } from '../../lib/payslipApi';
 import { getMonthlySalary, saveMonthlySalary } from '../../lib/salaryStore';
 import { PayslipRecords } from './PayslipRecords';
-import './PayslipStudio.css';
+import './PayslipStudio.scss';
 
 export function PayslipStudio({ api, children }) {
   const [tab, setTab] = useState('salary'), [configuration, setConfiguration] = useState({ templates: [], groups: [], assignments: [], storage: null });

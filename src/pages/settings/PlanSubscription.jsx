@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Check, ShieldCheck, Users, CreditCard, RefreshCw, ArrowUpRight } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
 import { billingApi, loadRazorpay } from '../../lib/billingApi';
 import { Modal } from '../../components/ui/Modal';
-import './PlanSubscription.css';
+import './PlanSubscription.scss';
 const money = amount => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(amount/100);
 const day = value => new Date(value).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
 
@@ -28,7 +29,15 @@ export function PlanSubscription({ currentUser }) {
     } catch(e) {setError(e.message);setBusy(false);await load();}
   }
   const pending=data?.orders.find(o=>['pending','creating'].includes(o.status));
-  return <section className="billing-section" aria-label="Plan and subscription"><div className="billing-heading"><div><span className="tenant-eyebrow">GROW WITH YOUR TEAM</span><h2>Plan &amp; Subscription</h2><p>Choose the capacity your company needs. Your Super Admin is always included.</p></div><button className="tenant-button" disabled={busy} onClick={() => {setError('');load();}}><RefreshCw size={14} />Refresh</button></div>
+  return <section className="billing-section" aria-label="Plan and subscription">
+    <div className="billing-heading">
+      <div>
+        <span className="tenant-eyebrow">GROW WITH YOUR TEAM</span>
+        <h2>Plan &amp; Subscription</h2>
+        <p>Choose the capacity your company needs. Your Super Admin is always included.</p>
+      </div>
+      <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={busy} onClick={() => {setError('');load();}} aria-label="Refresh" />
+    </div>
     {error && <p className="ws-error" role="alert">{error}</p>}{notice && <p className="ws-notice" role="status">{notice}</p>}
     {!data ? <p className="tenant-empty">{error?'Billing is unavailable. Use Refresh to retry.':'Loading plans...'}</p> : <>
       <div className="billing-mode"><ShieldCheck size={18} /><div><strong>Test payments only</strong><p>No real money is charged. Test subscriptions do not change production limits. Monthly terms renew by a new payment, without automatic debit.</p>{!data.checkoutEnabled && <p>{data.reason}</p>}</div></div>

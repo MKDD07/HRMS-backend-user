@@ -1,0 +1,39 @@
+@use '../../styles/variables' as *;
+
+// Editor evidence cards are independent of compact table/header photo styles.
+.asset-evidence-section {
+  --evidence-image-size: var(--space-40);
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+.asset-evidence-section__heading { display: grid; gap: var(--space-2); }
+.asset-evidence-section__heading p, .asset-evidence-card__hint { color: var(--color-text-secondary); font-size: var(--font-xs); }
+.asset-evidence-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--space-40) + var(--space-8) + 2px)), 1fr)); gap: var(--space-3); align-items: stretch; }
+.asset-evidence-card { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.asset-evidence-card__header { display: grid; gap: var(--space-1); align-self: stretch; }
+.asset-evidence-card__header h4 { margin: 0; font-size: var(--font-sm); }
+.asset-evidence-card__header span { color: var(--color-text-secondary); font-size: var(--font-2xs); }
+.asset-evidence-card__hint { align-self: stretch; margin: 0; }
+.asset-evidence-gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); width: 100%; }
+.asset-evidence-gallery:empty { display: none; }
+.asset-evidence-preview, .asset-evidence-upload { position: relative; box-sizing: border-box; width: min(100%, var(--evidence-image-size)); max-width: var(--evidence-image-size); aspect-ratio: 1; flex-shrink: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--color-surface-subtle); }
+.asset-evidence-preview { display: block; height: var(--evidence-image-size); padding: 0; border: 1px solid var(--color-border); cursor: zoom-in; }
+.asset-evidence-preview > .image-with-skeleton { display: block; border-radius: inherit; }
+.asset-evidence-preview img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.asset-evidence-preview > svg { position: absolute; right: var(--space-2); bottom: var(--space-2); padding: var(--space-1); box-sizing: content-box; border-radius: var(--radius-input); background: var(--color-surface); color: var(--color-text); }
+.asset-evidence-preview:disabled { cursor: default; }
+.asset-evidence-preview:focus-visible, .asset-evidence-upload:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.asset-evidence-pending { display: grid; justify-items: center; gap: var(--space-2); width: min(100%, var(--evidence-image-size)); min-width: 0; }
+.asset-evidence-filename { max-width: 100%; overflow-wrap: anywhere; font-size: var(--font-xs); color: var(--color-text-secondary); }
+.asset-evidence-upload { display: grid; justify-items: center; align-content: center; gap: var(--space-2); padding: var(--space-3); border: 1px dashed var(--color-border); color: var(--color-primary); font-size: var(--font-xs); text-align: center; cursor: pointer; }
+.asset-evidence-upload:hover { border-color: var(--color-primary); }
+.asset-evidence-upload input[type='file'] { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+.asset-evidence-upload--disabled { opacity: .5; cursor: not-allowed; }
+.asset-evidence-upload--disabled input[type='file'] { cursor: not-allowed; }
+.asset-evidence-error { padding: var(--space-3); border-radius: var(--radius-input); color: $color-danger-dark; background: $color-danger-subtle; font-size: var(--font-xs); }
+.asset-evidence-viewer { margin: auto; padding: 0; width: min(calc(100vw - var(--space-8)), calc(var(--space-40) * 5)); max-width: none; max-height: calc(100dvh - var(--space-8)); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); color: var(--color-text); box-shadow: $shadow-xl; font: inherit; }
+.asset-evidence-viewer::backdrop { background: color-mix(in srgb, var(--color-text) 65%, transparent); }
+.asset-evidence-viewer__body { display: grid; gap: var(--space-4); padding: var(--space-4); }
+.asset-evidence-viewer__header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }

@@ -2,7 +2,8 @@ import { EmployeeDirectory } from '../../components/employees/EmployeeDirectory'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LiveEmployeeDossier } from './EmployeesPage/LiveEmployeeDossier';
 import { ArrowDownAZ, ArrowUpRight, Building2, Check, ChevronLeft, ChevronRight, Download, GitBranch, LayoutGrid, List, LoaderCircle, MapPin, Plus, RefreshCw, Search, Users, UserCheck, X, AlertCircle } from 'lucide-react';
-import './EmployeesPage.css';
+import { Button } from '../../components/ui/Button';
+import './EmployeesPage.scss';
 import { currentPresence } from './EmployeesPage/directoryData';
 
 const nameOf = (person) => [person.first_name, person.last_name].filter(Boolean).join(' ') || person.name || person.userid || 'Unnamed employee';
@@ -148,7 +149,10 @@ export function EmployeesPage({ api, onSelectEmployee, onShowToast, onNavigate }
   return <div className="people-page">
     <header className="people-header">
       <div><div className="people-eyebrow">WORKSPACE / PEOPLE</div><h1>Employees<span className="people-title-dot">.</span></h1><p>A considered space for your people and their details.</p></div>
-      <div className="people-header-actions"><button className="people-button" disabled={loading || !!error || !filtered.length} onClick={exportDirectory}><Download size={16} />Export CSV</button><button className="people-button people-button--primary" onClick={() => setAdding(true)}><Plus size={17} />Add employee</button></div>
+      <div className="people-header-actions">
+        <Button variant="outline" size="md" icon={Download} disabled={loading || !!error || !filtered.length} onClick={exportDirectory}>Export CSV</Button>
+        <Button variant="colored" size="md" icon={Plus} onClick={() => setAdding(true)}>Add employee</Button>
+      </div>
     </header>
     <section className="people-stats" aria-label="Directory overview">{stats.map(({ label, value, icon: Icon, caption }) => <div className="people-stat" key={label}><div className="people-stat-label">{label}<Icon size={17} /></div><strong>{loading || error ? '—' : value.toLocaleString()}</strong><span>{caption}</span></div>)}</section>
     <div className="people-workspace">

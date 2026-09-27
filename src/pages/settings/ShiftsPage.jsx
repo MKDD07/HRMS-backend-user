@@ -1,10 +1,11 @@
 import { cacheCompanyShifts } from '../../lib/shiftStore';
 import React, { useEffect, useState } from 'react';
 import { Clock3, Plus, RefreshCw, Moon, Sun, ArrowUpRight } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { dashboardAdminApi } from '../../lib/dashboardAdminApi';
-import '../dashboard/DashboardPage.css';
-import './WorkspaceSettings.css';
+import '../dashboard/DashboardPage.scss';
+import './WorkspaceSettings.scss';
 
 const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const templates = [
@@ -25,7 +26,20 @@ export function ShiftsPage() {
     const next = [...data.value.filter(s => s.id !== shift.id), shift].map(s => shift.isDefault ? {...s,isDefault:s.id===shift.id} : s);
     try { const result = await dashboardAdminApi.saveConfiguration('shifts',next,data.revision); setData(result); cacheCompanyShifts(result.value); setEditing(null); setNotice('Shift profile saved to your company workspace.'); } catch(e) { setError(e.message); } finally { setSaving(false); }
   }
-  return <main className="tenant-dashboard workspace-settings"><header className="tenant-header"><div><span className="tenant-eyebrow">WORKSPACE / WORK SCHEDULES</span><h1>Shifts<span>.</span></h1><p>Build reusable schedules with working days, breaks, and arrival grace.</p></div><div className="ws-actions"><button className="tenant-button" disabled={loading} onClick={load}><RefreshCw size={15} />Refresh</button><button className="tenant-button ws-primary" disabled={loading || !!error} onClick={() => edit({...templates[0],name:'',isDefault:!data.value.length,status:'Active'})}><Plus size={15} />Create shift</button></div></header>
+  return <main className="tenant-dashboard workspace-settings">
+    <header className="tenant-header">
+      <div>
+        <span className="tenant-eyebrow">WORKSPACE / WORK SCHEDULES</span>
+        <h1>Shifts<span>.</span></h1>
+        <p>Build reusable schedules with working days, breaks, and arrival grace.</p>
+      </div>
+      <div className="ws-actions">
+        <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={loading} onClick={load} aria-label="Refresh" />
+        <Button variant="colored" size="md" icon={Plus} disabled={loading || !!error} onClick={() => edit({...templates[0],name:'',isDefault:!data.value.length,status:'Active'})}>
+          Create shift
+        </Button>
+      </div>
+    </header>
     <section className="tenant-stats">{[['Shift profiles',data.value.length,'Saved company schedules'],['Active shifts',data.value.filter(s => s.status==='Active').length,'Available schedule profiles'],['Default schedule',data.value.find(s => s.isDefault)?.name || 'Not set','Your company’s reference shift']].map(([label,value,note]) => <div className="tenant-stat" key={label}><div>{label}<Clock3 size={17} /></div><strong>{loading ? '—' : value}</strong><p>{note}</p></div>)}</section>
     {notice && <p className="ws-notice" role="status">{notice}</p>}{error && !editing && <p className="ws-error" role="alert">{error}</p>}
     <section className="tenant-panel"><div className="tenant-panel-head"><div><h2>Start with a template</h2><p>Review the times and working days before saving.</p></div></div><div className="ws-template-grid">{templates.map(t => <button className="ws-template" key={t.name} disabled={loading || !!error} onClick={() => edit({...t,isDefault:!data.value.length,status:'Active'})}>{t.name==='Night shift' ? <Moon size={20} /> : <Sun size={20} />}<strong>{t.name}</strong><span>{t.startTime} – {t.endTime} · {t.breakDurationMins} min break</span><small>Use template <ArrowUpRight size={13} /></small></button>)}</div></section>

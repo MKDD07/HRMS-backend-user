@@ -14,6 +14,9 @@ sqlite.exec(readFileSync(new URL('../migrations/hrms/0004_approval_workflows.sql
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0005_hr_connect.sql', import.meta.url), 'utf8'));
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0006_dashboard_access.sql', import.meta.url), 'utf8'));
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0007_billing.sql', import.meta.url), 'utf8'));
+sqlite.exec(readFileSync(new URL('../migrations/hrms/0008_holiday_cache.sql', import.meta.url), 'utf8'));
+sqlite.exec(readFileSync(new URL('../migrations/hrms/0009_talent_operations.sql', import.meta.url), 'utf8'));
+sqlite.exec(readFileSync(new URL('../migrations/hrms/0010_asset_issues.sql', import.meta.url), 'utf8'));
 function prepare(sql, params = []) {
   return {
     bind(...values) { return prepare(sql, values); },
@@ -88,6 +91,15 @@ try {
   assert.equal(sqlite.prepare('SELECT employee_prefix FROM companies WHERE company_id=?').get(a.company_id).employee_prefix, 'A');
   assert.equal(JSON.stringify(await call('/get-user', { token: employeeA.token })).includes('password_hash'), false);
   assert.throws(() => sqlite.prepare('INSERT INTO employees(employee_id,company_id,user_id,employee_code,first_name) VALUES(?,?,?,?,?)').run('bad', b.company_id, employee.user_id, 'bad', 'Bad'), /constraint/i);
+  sqlite.prepare('INSERT INTO company_holiday_cache(company_id,country,year,holidays) VALUES(?,?,?,?)').run(a.company_id, 'IN', 2026, '[]');
+  const cached = await call('/company-calendar/holiday-cache', { token: adminA.token, body: { country: 'IN', year: 2026, company_id: b.company_id } });
+  assert.equal(cached.source, 'database');
+  assert.deepEqual(cached.holidays, []);
+  await call('/company-calendar/holiday-cache', { token: employeeA.token, body: { country: 'IN', year: 2026 }, status: 403 });
+  const talentJob = await call('/talent/jobs', { token: adminA.token, body: { title: 'Support specialist', department: 'Support', positions: 1, status: 'Open' } });
+  assert.equal((await call('/talent/jobs', { token: adminB.token })).length, 0);
+  await call('/talent/jobs', { token: employeeA.token, status: 403 });
+  await call('/talent/jobs/' + talentJob.id, { token: adminB.token, body: { ...talentJob, title: 'Other tenant' }, status: 404 });
   await call('/company-calendar/holidays', { token: adminA.token, body: { name: 'Holiday', date: '2026-10-01' } });
   assert.equal((await call('/company-calendar/configuration', { token: adminB.token })).holidays.length, 0);
   await call('/company-calendar/holidays', { token: adminA.token, body: { name: 'Invalid', date: '2026-02-30' }, status: 400 });
@@ -192,6 +204,7 @@ try {
   const delegate = await login('delegate-one', changed);
   assert.deepEqual(delegate.dashboard_pages, ['documents', 'shifts']);
   await call('/documents?scope=policies', { token: delegate.token });
+  await call('/talent/jobs', { token: delegate.token, status: 403 });
   await call('/get-salary', { token: delegate.token, status: 403 });
   await call('/dashboard-users', { token: delegate.token, status: 403 });
   await call('/dashboard-configuration/settings', { token: delegate.token, body: { revision: 0, value: {} }, status: 403 });

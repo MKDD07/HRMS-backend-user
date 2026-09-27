@@ -1,7 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Plus, Trash2, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
 import { REQUEST_TYPES, defaultPolicy, defaultResponsibilities, resolveRoute } from '../../../shared/workflowModel.mjs';
-import './WorkflowSettings.css';
+import './WorkflowSettings.scss';
 const labels = { leave: 'Leave', attendance: 'Attendance corrections', expense: 'Expenses', other: 'Other requests' };
 export function WorkflowSettings({ configuration, onChange, people, view }) {
   const [kind, setKind] = useState('leave');

@@ -7,6 +7,7 @@ export function createCompanyAuthRouter() {
   const router = express.Router();
   router.use('/billing/webhook', express.raw({ type: '*/*', limit: '256kb' }));
   router.use('/documents', express.raw({ type: req => req.method === 'POST' && req.path === '/' && !req.is('application/json'), limit: '11mb' }));
+  router.use('/talent', express.raw({ type: req => req.method === 'POST' && req.path.endsWith('/photos'), limit: '6mb' }));
   router.use(express.json({ limit: '10mb' }));
   router.use(async (req, res) => {
     try {

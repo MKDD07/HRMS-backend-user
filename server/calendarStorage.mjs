@@ -1,6 +1,8 @@
+import { HOLIDAY_CACHE_SCHEMA } from './holidayCache.mjs';
 import { Buffer } from 'node:buffer';
 
 export const CALENDAR_SCHEMA = [
+  HOLIDAY_CACHE_SCHEMA,
   `CREATE TABLE IF NOT EXISTS company_calendar (
     company_id TEXT PRIMARY KEY NOT NULL,
     holidays TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(holidays) AND json_type(holidays)='array'),

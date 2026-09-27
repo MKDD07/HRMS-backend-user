@@ -1,15 +1,53 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Download, ExternalLink, Plus, RefreshCw, Save, Trash2, Users, Check, Sparkles, Shield, Search } from 'lucide-react';
-import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/style.css';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarDays, Download, ExternalLink, Plus, RefreshCw, Save, Trash2, Upload, Users, Check, Sparkles, Shield, Search, Globe, Key } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { UniversalCalendar, HolidayLegend, detectHolidayCategory, HOLIDAY_CATEGORY_CONFIG } from '../../components/ui/UniversalCalendar';
 import { BarChart, Bar, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { EmployeeDirectory } from '../../components/employees/EmployeeDirectory';
 import { companyCalendarApi } from '../../lib/companyCalendarApi';
-import { accruedBalance, emptyLeaveType, eligibleFor, googleCalendarUrl, holidaysToIcs, PROFESSIONAL_LEAVE_PRESETS, presetLeaveType } from '../../lib/leavePolicy';
+import { accruedBalance, emptyLeaveType, eligibleFor, holidaysToIcs, icsToHolidays, PROFESSIONAL_LEAVE_PRESETS, presetLeaveType } from '../../lib/leavePolicy';
 import { shortCodeOf } from '../leave/leaveCalendarData';
-import './CompanyCalendarPage.css';
-import './CompanyCalendarHolidays.css';
-import './CompanyCalendarPolicies.css';
+import './CompanyCalendarPage.scss';
+import './CompanyCalendarHolidays.scss';
+import './CompanyCalendarPolicies.scss';
+
+const CALENDARIFIC_COUNTRIES = [
+  { code: 'IN', name: 'India' },
+  { code: 'US', name: 'United States' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'FR', name: 'France' },
+  { code: 'SG', name: 'Singapore' },
+  { code: 'AE', name: 'United Arab Emirates' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'SA', name: 'Saudi Arabia' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'BR', name: 'Brazil' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'ZA', name: 'South Africa' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'PH', name: 'Philippines' }
+];
+
+const CALENDARIFIC_MONTHS = [
+  { value: '', label: 'All Months (Full Year)' },
+  { value: '1', label: 'January' },
+  { value: '2', label: 'February' },
+  { value: '3', label: 'March' },
+  { value: '4', label: 'April' },
+  { value: '5', label: 'May' },
+  { value: '6', label: 'June' },
+  { value: '7', label: 'July' },
+  { value: '8', label: 'August' },
+  { value: '9', label: 'September' },
+  { code: '10', value: '10', label: 'October' },
+  { code: '11', value: '11', label: 'November' },
+  { code: '12', value: '12', label: 'December' }
+];
 
 const LEAVE_TYPE_COLORS = [
   '#4f772d', // Forest Olive
@@ -79,6 +117,30 @@ export function CompanyCalendarPage({ api, onShowToast }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef(null);
+
+  // Calendarific API Integration State
+  const [calendarificCountry, setCalendarificCountry] = useState('IN');
+  const [calendarificYear, setCalendarificYear] = useState(() => String(new Date().getFullYear()));
+  const [calendarificMonth, setCalendarificMonth] = useState('');
+  const [calendarificType, setCalendarificType] = useState('');
+  const [calendarificLoading, setCalendarificLoading] = useState(false);
+  const [calendarificError, setCalendarificError] = useState('');
+  const [calendarificHolidays, setCalendarificHolidays] = useState([]);
+  const [selectedCalendarificHolidays, setSelectedCalendarificHolidays] = useState([]);
+  const [calendarificPreviewMonth, setCalendarificPreviewMonth] = useState(() => new Date());
+
+  const monthlyBreakdown = useMemo(() => {
+    const counts = {};
+    for (let m = 1; m <= 12; m++) counts[m] = 0;
+    for (const h of calendarificHolidays) {
+      if (h.holiday_date) {
+        const m = parseInt(h.holiday_date.split('-')[1], 10);
+        if (m >= 1 && m <= 12) counts[m] = (counts[m] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [calendarificHolidays]);
 
   const groups = useMemo(() => [...new Set(people.flatMap(person => [person.employment_type, person.department, person.type]).filter(Boolean))].sort(), [people]);
 
@@ -149,6 +211,83 @@ export function CompanyCalendarPage({ api, onShowToast }) {
     link.download = 'company-calendar.ics';
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleImportIcs = async event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const content = await file.text();
+      const importedHolidays = icsToHolidays(content);
+      if (!importedHolidays.length) {
+        setError('No valid holiday events found in the .ics file.');
+        return;
+      }
+      run(async () => {
+        const existingList = configuration.holidays || [];
+        for (const item of importedHolidays) {
+          const match = existingList.find(h => h.holiday_date === item.holiday_date || (item.id && h.id === item.id));
+          await companyCalendarApi.saveHoliday({
+            ...item,
+            id: match ? match.id : item.id
+          });
+        }
+      }, `Imported ${importedHolidays.length} holiday${importedHolidays.length > 1 ? 's' : ''} from calendar file.`);
+    } catch (err) {
+      setError(err.message || 'Failed to parse .ics calendar file.');
+    } finally {
+      if (event.target) event.target.value = '';
+    }
+  };
+
+  async function fetchCalendarificHolidays(e) {
+    if (e) e.preventDefault();
+    if (calendarificLoading) return;
+    setCalendarificLoading(true);
+    setCalendarificError('');
+    try {
+      const data = await companyCalendarApi.fetchHolidays({ country: calendarificCountry, year: calendarificYear });
+      const typeMatchers = {
+        national: /national|public|federal|bank/i,
+        religious: /religious|christian|orthodox|muslim|hindu|buddhist|hebrew/i,
+        observance: /observance/i,
+        local: /local|regional|state/i
+      };
+      const list = data.holidays.filter(item => {
+        if (calendarificMonth && Number(item.holiday_date.slice(5, 7)) !== Number(calendarificMonth)) return false;
+        return !calendarificType || typeMatchers[calendarificType]?.test([item.type, ...(item.types || [])].join(' '));
+      });
+      setCalendarificHolidays(list);
+      setSelectedCalendarificHolidays(list.map((_, i) => i));
+      if (list.length && list[0].holiday_date) {
+        setCalendarificPreviewMonth(new Date(`${list[0].holiday_date}T12:00:00`));
+      } else if (calendarificMonth) {
+        setCalendarificPreviewMonth(new Date(parseInt(calendarificYear, 10), parseInt(calendarificMonth, 10) - 1, 1));
+      }
+    } catch (err) {
+      setCalendarificError(err.message || 'Error fetching holidays from Calendarific.');
+    } finally {
+      setCalendarificLoading(false);
+    }
+  }
+
+  const importSelectedCalendarificHolidays = () => {
+    const selectedItems = selectedCalendarificHolidays.map(idx => calendarificHolidays[idx]).filter(Boolean);
+    if (!selectedItems.length) return;
+    run(async () => {
+      const existingList = configuration.holidays || [];
+      for (const item of selectedItems) {
+        const match = existingList.find(h => h.holiday_date === item.holiday_date || h.name.toLowerCase() === item.name.toLowerCase());
+        await companyCalendarApi.saveHoliday({
+          name: item.name,
+          holiday_date: item.holiday_date,
+          type: item.type || 'Company Holiday',
+          optional_note: item.optional_note || '',
+          active: true,
+          id: match ? match.id : undefined
+        });
+      }
+    }, `Imported ${selectedItems.length} holiday${selectedItems.length > 1 ? 's' : ''} from Calendarific.`);
   };
 
   const toggleList = (key, value) => {
@@ -284,19 +423,32 @@ export function CompanyCalendarPage({ api, onShowToast }) {
           <p>Define leave entitlements, eligibility, accrual schedules and official holidays.</p>
         </div>
         <div className="cc-header-actions">
-          <button type="button" className="cc-button" onClick={load} disabled={loading}>
-            <RefreshCw size={15} className={loading ? 'cc-spin' : ''} />
-            Refresh
-          </button>
-          <button
-            type="button"
-            className="cc-button cc-button--primary"
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".ics,text/calendar"
+            style={{ display: 'none' }}
+            onChange={handleImportIcs}
+          />
+          <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={loading} onClick={load} aria-label="Refresh" />
+          <Button
+            variant="outline"
+            size="md"
+            icon={Upload}
+            loading={busy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Import calendar (.ics)
+          </Button>
+          <Button
+            variant="colored"
+            size="md"
+            icon={Download}
             onClick={exportIcs}
             disabled={!(configuration.holidays || []).length}
           >
-            <Download size={15} />
             Export calendar (.ics)
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -325,7 +477,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
           ['types', 'Leave types', (configuration.leaveTypes || []).length],
           ['eligibility', 'Eligibility preview', people.length],
           ['holidays', 'Holidays', (configuration.holidays || []).length],
-          ['sync', 'Google Calendar', null]
+          ['sync', 'Calendarific API Import', null]
         ].map(([id, label, count]) => (
           <button
             key={id}
@@ -962,26 +1114,17 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                       <p>Click any date to view, edit, or add a holiday.</p>
                     </div>
                   </header>
-                  <DayPicker
+                  <UniversalCalendar
+                    size="md"
                     mode="single"
                     month={calendarMonth}
                     onMonthChange={setCalendarMonth}
                     selected={holiday.holiday_date ? new Date(`${holiday.holiday_date}T12:00:00`) : undefined}
                     onSelect={selectHolidayDate}
                     weekStartsOn={1}
-                    modifiers={{
-                      published: date => (configuration.holidays || []).some(item => item.holiday_date === dateKey(date) && item.active),
-                      hidden: date => (configuration.holidays || []).some(item => item.holiday_date === dateKey(date) && !item.active)
-                    }}
-                    modifiersClassNames={{
-                      published: 'cc-day-published',
-                      hidden: 'cc-day-hidden'
-                    }}
+                    holidaysMap={configuration.holidays}
                     footer={
-                      <div className="cc-calendar-legend">
-                        <span>Published holiday</span>
-                        <span>Hidden holiday</span>
-                      </div>
+                      <HolidayLegend holidays={configuration.holidays} showAll />
                     }
                   />
                 </section>
@@ -1090,17 +1233,6 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                             Delete
                           </button>
                         )}
-                        {holiday.id && (
-                          <a
-                            className="cc-google-link"
-                            href={googleCalendarUrl(holiday)}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <ExternalLink size={14} />
-                            Add to Google
-                          </a>
-                        )}
                         <button
                           className="cc-button cc-button--primary"
                           type="submit"
@@ -1117,33 +1249,221 @@ export function CompanyCalendarPage({ api, onShowToast }) {
             )}
 
             {tab === 'sync' && (
-              <section className="cc-panel">
+              <section className="cc-panel cc-calendarific-panel">
                 <header>
                   <div>
-                    <span className="cc-panel-eyebrow">CALENDAR SYNC</span>
-                    <h2>Google Calendar Integration</h2>
-                    <p>Share published company holidays with employees and calendars.</p>
+                    <span className="cc-panel-eyebrow">HOLIDAY API INTEGRATION</span>
+                    <h2>Calendarific API Import</h2>
+                    <p>Fetch official public and company holidays across countries via Calendarific API.</p>
+                  </div>
+                  <div className="cc-header-tag">
+                    <Globe size={14} />
+                    <span>Global Coverage</span>
                   </div>
                 </header>
-                <div className="cc-sync">
-                  <CalendarDays size={38} />
-                  <h3>Export official calendar</h3>
-                  <p>
-                    Download the standard <code>.ics</code> calendar file to import holidays directly into Google Calendar,
-                    Apple Calendar, or Microsoft Outlook. Individual holidays can also be scheduled one-by-one in the Holidays tab.
-                  </p>
-                  <button
-                    type="button"
-                    className="cc-button cc-button--primary"
-                    onClick={exportIcs}
-                    disabled={!(configuration.holidays || []).length}
-                  >
-                    <Download size={15} />
-                    Download .ics calendar
-                  </button>
-                  <small>
-                    Published company holidays are dynamically compiled with time zone metadata and recurrence tags.
-                  </small>
+
+                <div className="cc-calendarific-layout">
+                  <div className="cc-calendarific-main">
+                    <form className="cc-calendarific-form" onSubmit={fetchCalendarificHolidays}>
+                      <div className="cc-form-grid">
+                        <label>
+                          Country
+                          <select
+                            value={calendarificCountry}
+                            onChange={e => setCalendarificCountry(e.target.value)}
+                          >
+                            {CALENDARIFIC_COUNTRIES.map(c => (
+                              <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label>
+                          Year
+                          <input
+                            type="number"
+                            min="2020"
+                            max="2035"
+                            value={calendarificYear}
+                            onChange={e => setCalendarificYear(e.target.value)}
+                            required
+                          />
+                        </label>
+
+                        <label>
+                          Month
+                          <select
+                            value={calendarificMonth}
+                            onChange={e => setCalendarificMonth(e.target.value)}
+                          >
+                            {CALENDARIFIC_MONTHS.map(m => (
+                              <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label>
+                          Holiday Type
+                          <select
+                            value={calendarificType}
+                            onChange={e => setCalendarificType(e.target.value)}
+                          >
+                            <option value="">All Holiday Types</option>
+                            <option value="national">National Holidays</option>
+                            <option value="religious">Religious Holidays</option>
+                            <option value="observance">Observances</option>
+                            <option value="local">Local / Regional</option>
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="cc-calendarific-actions">
+                        <Button
+                          variant="colored"
+                          size="md"
+                          icon={RefreshCw}
+                          type="submit"
+                          loading={calendarificLoading}
+                        >
+                          {calendarificLoading ? 'Loading holidays...' : 'Load holidays'}
+                        </Button>
+                        {calendarificHolidays.length > 0 && (
+                          <Button
+                            variant="primary"
+                            size="md"
+                            icon={Download}
+                            type="button"
+                            disabled={busy || selectedCalendarificHolidays.length === 0}
+                            onClick={importSelectedCalendarificHolidays}
+                          >
+                            Import Selected ({selectedCalendarificHolidays.length})
+                          </Button>
+                        )}
+                      </div>
+                    </form>
+
+                    {calendarificError && (
+                      <div className="cc-calendarific-error" role="alert">
+                        <span>{calendarificError}</span>
+                      </div>
+                    )}
+
+                    <div className="cc-year-calendar-section">
+                      <div className="cc-year-section-header">
+                        <div>
+                          <h3>{calendarificYear} Full Year Calendar Overview</h3>
+                          <p>12-month calendar grid with auto-categorized solid holiday highlights and hover tooltips.</p>
+                        </div>
+                        <HolidayLegend
+                          holidays={calendarificHolidays.length > 0 ? calendarificHolidays : (configuration.holidays || [])}
+                          showAll
+                        />
+                      </div>
+
+                      <div className="cc-year-calendar-grid">
+                        {Array.from({ length: 12 }, (_, monthIndex) => {
+                          const monthNum = monthIndex + 1;
+                          const monthDate = new Date(parseInt(calendarificYear, 10) || new Date().getFullYear(), monthIndex, 1);
+                          const activeHolidays = calendarificHolidays.length > 0 ? calendarificHolidays : (configuration.holidays || []);
+                          const monthLabel = monthDate.toLocaleDateString('en-US', { month: 'long' });
+
+                          return (
+                            <div
+                              key={monthNum}
+                              className={`cc-year-month-card ${calendarificMonth === String(monthNum) ? 'is-highlighted' : ''}`}
+                            >
+                              <div className="cc-month-card-header">
+                                <strong>{monthLabel}</strong>
+                              </div>
+                              <UniversalCalendar
+                                size="sm"
+                                mode="single"
+                                hideNavigation
+                                month={monthDate}
+                                holidaysMap={activeHolidays}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {calendarificHolidays.length > 0 && (
+                      <div className="cc-calendarific-results">
+                        <div className="cc-results-header">
+                          <div>
+                            <strong>Found {calendarificHolidays.length} Holidays</strong>
+                            <span>
+                              {CALENDARIFIC_COUNTRIES.find(c => c.code === calendarificCountry)?.name || calendarificCountry} · {calendarificYear}
+                              {calendarificMonth && ` · ${CALENDARIFIC_MONTHS.find(m => m.value === calendarificMonth)?.label}`}
+                            </span>
+                          </div>
+                          <div className="cc-selection-buttons">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCalendarificHolidays(calendarificHolidays.map((_, i) => i))}
+                            >
+                              Select All
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCalendarificHolidays([])}
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="cc-holiday-items-list">
+                          {calendarificHolidays.map((item, idx) => {
+                            const isSelected = selectedCalendarificHolidays.includes(idx);
+                            const alreadyInDb = (configuration.holidays || []).some(h => h.holiday_date === item.holiday_date);
+                            const cat = detectHolidayCategory(item);
+                            return (
+                              <label
+                                key={`${item.holiday_date}-${item.name}-${idx}`}
+                                className={`cc-holiday-item-card ${isSelected ? 'is-selected' : ''}`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => {
+                                    setSelectedCalendarificHolidays(prev =>
+                                      prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+                                    );
+                                  }}
+                                />
+                                <div className="cc-holiday-item-info">
+                                  <div className="cc-holiday-item-row">
+                                    <span className="cc-holiday-date-badge">{item.holiday_date}</span>
+                                    <strong>{item.name}</strong>
+                                    {alreadyInDb && <span className="cc-tag-existing">Already configured</span>}
+                                  </div>
+                                  <div className="cc-holiday-item-meta">
+                                    <span
+                                      className="cc-tag-type"
+                                      style={{
+                                        backgroundColor: cat.color,
+                                        color: '#ffffff',
+                                        padding: '2px 8px',
+                                        borderRadius: '4px',
+                                        fontWeight: 600,
+                                        display: 'inline-block',
+                                        width: 'fit-content'
+                                      }}
+                                    >
+                                      {item.type || cat.label}
+                                    </span>
+                                    {item.optional_note && <p className="cc-holiday-note">{item.optional_note}</p>}
+                                  </div>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
             )}

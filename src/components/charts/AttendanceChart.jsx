@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './charts.css';
+import './charts.scss';
 
 export function AttendanceChart({
   data = [

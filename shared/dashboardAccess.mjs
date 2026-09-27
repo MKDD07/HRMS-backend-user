@@ -1,9 +1,10 @@
+import { TALENT_COLLECTIONS } from './talentModel.mjs';
 export const DASHBOARD_PAGES = [
   ['dashboard', 'Dashboard'], ['employees', 'Employee directory'], ['hierarchy', 'Organization & approvals'],
   ['attendance', 'Attendance & logs'], ['geofence-rules', 'Geofence & photo rules'], ['shifts', 'Shifts'],
   ['leave', 'Leaves'], ['company-calendar', 'Company calendar'], ['payroll', 'Payroll'],
   ['salary-structure', 'Salary structures'], ['recruitment', 'Recruitment'], ['performance', 'Goals & performance'],
-  ['assets', 'Assets'], ['documents', 'Document vault'], ['helpdesk', 'HR Connect'], ['reports', 'Reports'], ['settings', 'Settings']
+  ['onboarding', 'Onboarding'], ['offboarding', 'Offboarding'], ['learning', 'Learning & Development'], ['assets', 'Assets'], ['documents', 'Document vault'], ['helpdesk', 'HR Connect'], ['reports', 'Reports'], ['settings', 'Settings']
 ];
 export const canUsePage = (user, page) => user?.role === 'company_admin' || Boolean(user?.dashboard_access && user?.dashboard_pages?.includes(page === 'employee-detail' ? 'employees' : page));
 export const canUseDashboard = user => user?.role === 'company_admin' || Boolean(user?.dashboard_access);
@@ -12,6 +13,11 @@ export function parsePages(value) { try { const pages = typeof value === 'string
 // A delegated account receives elevated company access only for these explicitly mapped routes.
 export function routePages(path, method) {
   const read = method === 'GET';
+  if (path.startsWith('/api/v1/talent/')) {
+    const collection = path.split('/')[4];
+    const config = Object.hasOwn(TALENT_COLLECTIONS, collection) ? TALENT_COLLECTIONS[collection] : null;
+    return config ? [config.page, ...(read ? ['reports'] : [])] : [];
+  }
   if (path === '/api/v1/get-all-users' && read) return DASHBOARD_PAGES.map(([id]) => id).filter(id => !['settings', 'shifts'].includes(id));
   if (path === '/api/v1/get-user' && read) return ['employees'];
   if (['/api/v1/create-user', '/api/v1/register', '/api/v1/update-user'].includes(path)) return ['employees'];

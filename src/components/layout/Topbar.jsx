@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Menu, Search, LogOut, ChevronDown, CalendarDays, X, ArrowUpRight, Users, PanelLeftClose } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { NotificationDropdown } from './NotificationDropdown';
-import './Topbar.css';
+import './Topbar.scss';
 import { getBrandLogo, onBrandLogoChange } from '../../lib/brandStore';
 
 export function Topbar({

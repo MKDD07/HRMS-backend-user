@@ -1,3 +1,4 @@
+import { TalentWorkspace } from './pages/talent/TalentWorkspace';
 import { dashboardAdminApi } from './lib/dashboardAdminApi';
 import { cacheCompanyShifts } from './lib/shiftStore';
 ﻿import React, { useState, useEffect, useCallback } from 'react';
@@ -295,6 +296,8 @@ export default function App() {
         />
       )}
 
+      {['onboarding', 'offboarding', 'learning'].includes(activePage) && <TalentWorkspace key={activePage} module={activePage} onShowToast={showToast} />}
+
       {activePage === 'performance' && (
         <PerformancePage
           api={hrmsApi}
@@ -305,6 +308,7 @@ export default function App() {
 
       {activePage === 'assets' && (
         <AssetsPage
+          currentUser={currentUser}
           api={hrmsApi}
           onShowToast={showToast}
         />
@@ -321,6 +325,7 @@ export default function App() {
 
       {activePage === 'reports' && (
         <ReportsPage
+          currentUser={currentUser}
           api={hrmsApi}
           onShowToast={showToast}
         />

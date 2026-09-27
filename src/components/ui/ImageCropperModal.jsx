@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { RotateCw, RotateCcw, ZoomIn, ZoomOut, Check, X, Move, Sparkles, RefreshCw, FlipHorizontal, Maximize2, Minimize2 } from 'lucide-react';
-import './ImageCropperModal.css';
+import './ImageCropperModal.scss';
 
 export function ImageCropperModal({
   isOpen,

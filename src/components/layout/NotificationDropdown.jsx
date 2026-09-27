@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bell, Check, CheckCheck, Clock, ShieldCheck, FileText, X, ArrowUpRight, Users, Inbox } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { subscribeNotifications, markNotificationRead, markAllNotificationsRead, approveNotificationAction } from '../../lib/realtimeNotifications';
-import './NotificationDropdown.css';
+import './NotificationDropdown.scss';
 
 const categories = ['All', 'Approvals', 'Payroll', 'Personnel', 'System'];
 const categoryIcons = { Approvals: CheckCheck, Payroll: FileText, Personnel: Users, System: ShieldCheck };

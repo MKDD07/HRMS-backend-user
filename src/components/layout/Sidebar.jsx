@@ -1,6 +1,7 @@
 import { canUsePage } from '../../../shared/dashboardAccess.mjs';
 import React, { useEffect } from 'react';
 import { LayoutDashboard, Users, Clock, CalendarDays, CreditCard, Briefcase, UserPlus, UserMinus, Target, GraduationCap, FolderLock, MessagesSquare, Sliders, MapPin, DollarSign, GitBranch, ChevronRight, X, PanelsTopLeft } from 'lucide-react';
+import './Sidebar.scss';
 
 const NAV_SECTIONS = [
   {

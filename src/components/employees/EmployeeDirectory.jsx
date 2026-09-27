@@ -1,8 +1,9 @@
+import { ImageWithSkeleton } from '../ui/ImageWithSkeleton';
 import React, { useEffect, useState } from 'react';
 import { Check, ChevronLeft, ChevronRight, RefreshCw, Users } from 'lucide-react';
 import { profileImage } from '../../pages/employees/EmployeesPage/directoryData';
 import { useAvatarImage } from '../../lib/avatarImage';
-import './EmployeeDirectory.css';
+import './EmployeeDirectory.scss';
 const fullName = person => [person.first_name, person.last_name].filter(Boolean).join(' ') || person.name || person.userid || 'Unnamed employee';
 function Photo({ person }) {
   const [liveSrc, setLiveSrc] = useState(profileImage(person));
@@ -28,7 +29,7 @@ function Photo({ person }) {
   }, [person]);
 
   return imageSrc && imageSrc !== failed ? (
-    <img className="employee-directory-avatar" src={imageSrc} alt="" loading="lazy" onError={() => setFailed(imageSrc)} />
+    <ImageWithSkeleton className="employee-directory-avatar" src={imageSrc} alt="" width={40} height={40} shape="circle" onError={() => setFailed(imageSrc)} />
   ) : (
     <span className="employee-directory-avatar" aria-hidden="true">
       {fullName(person).split(/\s+/).slice(0, 2).map(part => part[0]).join('')}

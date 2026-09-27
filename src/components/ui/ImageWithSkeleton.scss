@@ -1,0 +1,9 @@
+.image-with-skeleton { position: relative; display: inline-block; flex-shrink: 0; overflow: hidden; vertical-align: middle; border-radius: var(--radius-card); background: var(--color-surface-subtle); }
+.image-with-skeleton--circle { border-radius: 50%; }
+.image-with-skeleton > .image-with-skeleton__image { display: block; width: 100%; height: 100%; border-radius: inherit; }
+.image-with-skeleton__image--pending { opacity: 0; }
+.image-with-skeleton__placeholder { position: absolute; inset: 0; display: block; border-radius: inherit; background: var(--color-surface-subtle); overflow: hidden; }
+.image-with-skeleton__placeholder::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--color-border), transparent); transform: translateX(-100%); animation: image-skeleton-shimmer 1.5s ease-in-out infinite; }
+.image-with-skeleton__fallback { display: grid; place-items: center; height: 100%; padding: var(--space-2); box-sizing: border-box; color: var(--color-text-secondary); font-size: var(--font-xs); text-align: center; }
+@keyframes image-skeleton-shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .image-with-skeleton__placeholder::after { animation: none; transform: none; opacity: .4; } }

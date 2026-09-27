@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Megaphone, Mail, MessageSquare, Bell, ShieldCheck, Plus, Search, RefreshCw, ArrowUpRight, FileText, CalendarDays, Users, CheckCheck, Download, Inbox } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { hrConnectApi } from '../../lib/hrConnectApi';
 import { subscribeNotifications, markNotificationRead, markAllNotificationsRead } from '../../lib/realtimeNotifications';
-import '../dashboard/DashboardPage.css';
-import './HRConnectPage.css';
+import '../dashboard/DashboardPage.scss';
+import './HRConnectPage.scss';
 
 const sections = [ ['overview', 'Overview', LayoutIcon], ['announcement', 'Announcements', Megaphone], ['message', 'Employee messages', MessageSquare], ['email', 'Email drafts', Mail], ['grievance', 'Grievance reviews', ShieldCheck], ['notifications', 'Notifications', Bell] ];
 function LayoutIcon(props) { return <Inbox {...props} />; }
@@ -87,7 +88,19 @@ export function HRConnectPage({ api, onShowToast, onNavigate }) {
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'hr-email-draft.eml'; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   return <main className="tenant-dashboard hr-connect">
-    <header className="tenant-header"><div><span className="tenant-eyebrow">WORKSPACE / PEOPLE &amp; COMMUNICATIONS</span><h1>HR Connect<span>.</span></h1><p>Keep employees informed, listen to concerns, and bring every conversation closer.</p></div><div className="hr-header-actions"><button className="tenant-button" onClick={refresh} disabled={loading}><RefreshCw size={15} className={loading ? 'tenant-spin' : ''} />Refresh data</button><button className="tenant-button hr-primary" disabled={loading || !!peopleError || !!error} onClick={() => setCompose('announcement')}><Plus size={15} />Create announcement</button></div></header>
+    <header className="tenant-header">
+      <div>
+        <span className="tenant-eyebrow">WORKSPACE / PEOPLE &amp; COMMUNICATIONS</span>
+        <h1>HR Connect<span>.</span></h1>
+        <p>Keep employees informed, listen to concerns, and bring every conversation closer.</p>
+      </div>
+      <div className="hr-header-actions">
+        <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={loading} onClick={refresh} aria-label="Refresh data" />
+        <Button variant="colored" size="md" icon={Plus} disabled={loading || !!peopleError || !!error} onClick={() => setCompose('announcement')}>
+          Create announcement
+        </Button>
+      </div>
+    </header>
     <div className="tenant-context"><span>Your people. One connected workplace.</span><span className="hr-context-note"><ShieldCheck size={14} />Employee communication &amp; HR care</span></div>
     <section className="tenant-stats" aria-label="HR Connect overview">{stats.map(([Icon, label, value, note, next]) => <button className="tenant-stat" key={label} onClick={() => switchTab(next)}><div>{label}<Icon size={17} /></div><strong>{next === 'notifications' ? connected ? value : '—' : loading || error ? '—' : value}</strong><p>{note}<ArrowUpRight size={13} /></p></button>)}</section>
     <nav className="hr-tabs" aria-label="HR Connect sections">{sections.map(([id, label, Icon]) => <button key={id} aria-pressed={tab === id} onClick={() => switchTab(id)}><Icon size={15} />{label}{id === 'grievance' && grievances.length > 0 && <span>{grievances.length}</span>}</button>)}</nav>

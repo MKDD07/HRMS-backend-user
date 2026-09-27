@@ -2,7 +2,7 @@ import { canUseDashboard } from '../../../shared/dashboardAccess.mjs';
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { companyAuth, companyRequest, COMPANY_API } from '../../lib/companyAuth';
-import './LoginPage.css';
+import './LoginPage.scss';
 import { LoginArt } from './LoginArt';
 import { LoginHeadline } from './LoginHeadline';
 

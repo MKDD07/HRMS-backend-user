@@ -1,3 +1,4 @@
+import { cachedHolidays } from './holidayCache.mjs';
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { payrollAuthorization } from './payrollRoutes.mjs';
@@ -78,6 +79,9 @@ export function createCompanyCalendarRouter({ database, filename, authorize = pa
     } catch (error) { res.status(503).json({ message: error.message }); }
   });
   const route = handler => async (req, res) => { try { await handler(req, res); } catch (error) { res.status(400).json({ message: error.message }); } };
+  router.post('/holiday-cache', route(async (req, res) => {
+    res.json(await cachedHolidays({ db, company: res.locals.actor.company_id, country: req.body.country, year: req.body.year, apiKey: process.env.CALENDARIFIC_API_KEY || process.env.VITE_CALENDARIFIC_API_KEY }));
+  }));
   router.get('/configuration', route(async (req, res) => res.json(await store.configuration(res.locals.actor.company_id))));
   router.post('/leave-types', route(async (req, res) => { const id = text(req.body.id, 100) || randomUUID(); const value = { ...validateLeaveType(req.body), id }; await store.change(res.locals.actor.company_id, 'leave_types', id, value); res.json(value); }));
   router.delete('/leave-types/:id', route(async (req, res) => { await store.change(res.locals.actor.company_id, 'leave_types', text(req.params.id, 100)); res.json({ success: true }); }));

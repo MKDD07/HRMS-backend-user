@@ -1,0 +1,779 @@
+@use "../../styles/variables" as *;
+@use "../../styles/color" as *;
+
+.geofence-console {
+  --gf-line: #{$color-border};
+  --gf-muted: #{$color-text-muted};
+  --gf-ink: #{$color-text};
+  --gf-accent: #{$color-primary};
+  color: var(--gf-ink);
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: var(--space-xs, 8px) 0 var(--space-lg, 24px);
+
+  .geofence-header {
+    gap: var(--space-lg, 20px);
+    margin-bottom: 28px;
+
+    nav {
+      color: $color-text-muted;
+      font-size: var(--font-xs, 10px);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-md, 12px);
+    }
+
+    h1 {
+      color: var(--gf-ink);
+      font-size: clamp(24px, 3vw, 32px);
+      letter-spacing: -0.045em;
+      font-weight: 600;
+
+      &::after {
+        content: ".";
+        color: $color-primary;
+      }
+    }
+
+    p {
+      color: var(--gf-muted);
+      font-size: var(--font-sm, 12px);
+      margin-top: var(--space-xs, 8px);
+    }
+  }
+
+  .btn {
+    min-height: 38px;
+    padding: 10px 13px;
+    border-radius: var(--radius-sm, 8px);
+    font-size: var(--font-xs, 11px);
+    font-weight: 500;
+    box-shadow: none;
+
+    &--primary {
+      background: var(--gf-accent);
+      border-color: var(--gf-accent);
+      color: $color-surface;
+
+      &:hover {
+        background: $color-primary-dark;
+      }
+    }
+
+    &--secondary {
+      background: $color-surface;
+      color: $color-text-secondary;
+      border: 1px solid $color-border;
+
+      &:hover {
+        background: $color-surface-subtle;
+      }
+    }
+  }
+
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 3px;
+  }
+
+  form {
+    input:not([type="checkbox"]):not([type="range"]),
+    select,
+    textarea {
+      color: $color-text;
+      background: $color-surface;
+      border: 1px solid $color-border;
+      border-radius: var(--radius-sm, 7px);
+      font-size: var(--font-sm, 12px);
+      box-shadow: none;
+    }
+
+    input:not([type="checkbox"]):not([type="range"]),
+    select {
+      min-height: 38px;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: $color-text-muted;
+    }
+
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid $color-primary;
+      outline-offset: 2px;
+    }
+
+    input[type="range"],
+    input[type="checkbox"] {
+      accent-color: $color-primary;
+    }
+  }
+
+  .geofence-stats {
+    gap: 0;
+    border: 1px solid var(--gf-line);
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+    background: $color-surface;
+
+    > div {
+      padding: 19px 23px;
+      border: 0;
+      border-radius: 0;
+      background: $color-surface;
+
+      + div {
+        border-left: 1px solid var(--gf-line);
+      }
+
+      > span:first-child {
+        font-size: var(--font-xs, 11px);
+        color: $color-text-secondary;
+        font-weight: 400;
+      }
+
+      > span:nth-child(2) {
+        font-size: var(--font-2xl, 27px);
+        color: var(--gf-ink);
+        font-weight: 500;
+        letter-spacing: -0.04em;
+        margin-top: var(--space-md, 12px);
+      }
+
+      > span:last-child {
+        font-size: var(--font-xs, 10px);
+        color: $color-text-muted;
+        margin-top: 7px;
+      }
+    }
+  }
+
+  .font-bold,
+  .font-semibold {
+    font-weight: 600;
+  }
+
+  .geofence-empty {
+    padding: 36px 24px;
+    border: 1px solid var(--gf-line);
+    border-radius: var(--radius-md, 12px);
+    background: $color-surface;
+    text-align: center;
+    color: var(--gf-muted);
+    font-size: var(--font-sm, 12px);
+    grid-column: 1 / -1;
+  }
+
+  .modal {
+    border: 1px solid var(--gf-line);
+    border-radius: var(--radius-md, 12px);
+
+    &__header {
+      border-color: var(--gf-line);
+    }
+
+    &__title {
+      color: var(--gf-ink);
+      font-weight: 600;
+    }
+  }
+
+  /* Utility recolors locally */
+  [class~="text-[#27292C]"],
+  [class~="text-[#000000]"] {
+    color: var(--gf-ink);
+  }
+
+  [class~="text-[#5F6368]"] {
+    color: var(--gf-muted);
+  }
+
+  [class~="text-[#2563EB]"],
+  [class~="text-[#4F46E5]"],
+  [class~="text-[#1E3A8A]"],
+  [class~="text-[#059669]"],
+  [class~="text-[#065F46]"] {
+    color: $color-primary;
+  }
+
+  [class~="border-[#E5E7EB]"],
+  [class~="border-[#D1D5DB]"],
+  [class~="border-[#F3F4F6]"] {
+    border-color: var(--gf-line);
+  }
+
+  [class~="bg-[#F9FAFB]"],
+  [class~="bg-[#FAFAFA]"],
+  [class~="bg-[#F3F4F6]"] {
+    background-color: $color-surface-subtle;
+  }
+
+  [class~="bg-[#EFF6FF]"],
+  [class~="bg-[#EEF2FF]"],
+  [class~="bg-[#ECFDF5]"],
+  [class~="bg-[#EEF2FF]/40"] {
+    background-color: $color-primary-subtle;
+  }
+
+  [class~="border-[#2563EB]"],
+  [class~="border-[#4F46E5]"],
+  [class~="border-[#BFDBFE]"],
+  [class~="border-[#C7D2FE]"],
+  [class~="border-[#A7F3D0]"] {
+    border-color: $color-primary-light;
+  }
+
+  [class~="ring-[#4F46E5]/20"] {
+    --tw-ring-color: rgba(87, 123, 80, 0.15);
+  }
+
+  [class~="bg-[#27292C]"] {
+    background-color: var(--gf-accent);
+  }
+
+  .peer:checked ~ [class~="peer-checked:bg-[#000000]"] {
+    background-color: var(--gf-accent);
+  }
+}
+
+/* Employee rule editor */
+.geofence-editor {
+  min-width: 0;
+  border: 1px solid $color-border;
+  border-radius: var(--radius-md, 12px);
+  background: $color-surface;
+  overflow: hidden;
+
+  &-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md, 16px);
+    padding: 24px 26px 22px;
+
+    h3 {
+      font-size: var(--font-lg, 18px);
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      color: $color-text;
+    }
+
+    p {
+      font-size: var(--font-xs, 11px);
+      line-height: 1.6;
+      color: $color-text-muted;
+      margin-top: 7px;
+    }
+  }
+
+  .geofence-text-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 0;
+    background: none;
+    color: $color-primary;
+    font-size: var(--font-xs, 11px);
+    padding: 4px 0;
+    cursor: pointer;
+
+    &:hover {
+      color: $color-primary-dark;
+      text-decoration: underline;
+    }
+  }
+
+  &-section {
+    padding: 24px 26px;
+    border-bottom: 1px solid $color-border;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  &-error {
+    padding: 0 26px 16px;
+    color: $color-danger;
+    font-size: var(--font-sm, 12px);
+  }
+
+  &-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 26px;
+    border-top: 1px solid $color-border;
+
+    p {
+      color: $color-text-muted;
+      font-size: var(--font-2xs, 9px);
+      line-height: 1.7;
+    }
+
+    > div {
+      display: flex;
+      gap: var(--space-xs, 8px);
+      flex-shrink: 0;
+    }
+  }
+
+  .geofence-field {
+    display: block;
+    color: $color-text-secondary;
+    font-size: var(--font-xs, 11px);
+    font-weight: 500;
+
+    input,
+    select,
+    textarea {
+      display: block;
+      width: 100%;
+      margin-top: var(--space-xs, 8px);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm, 7px);
+      border-color: $color-border;
+      font-size: var(--font-sm, 12px);
+      color: $color-text;
+      background: $color-surface;
+      min-height: 41px;
+    }
+  }
+
+  input.geofence-switch {
+    appearance: none;
+    width: 34px;
+    height: 20px;
+    padding: 2px;
+    border: 1px solid $color-border;
+    border-radius: 20px;
+    background: $color-surface-subtle;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:checked {
+      background: $color-primary;
+      border-color: $color-primary;
+
+      &::before {
+        transform: translateX(14px);
+      }
+    }
+  }
+}
+
+.geofence-section-label {
+  display: block;
+  font-size: var(--font-2xs, 9px);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: $color-text-muted;
+  margin-bottom: var(--space-xs, 9px);
+}
+
+.geofence-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 12px);
+  padding: 16px 26px;
+  background: $color-surface-subtle;
+  border-block: 1px solid $color-border;
+
+  > div {
+    min-width: 0;
+  }
+
+  strong {
+    font-size: var(--font-sm, 13px);
+    font-weight: 600;
+    color: $color-text;
+  }
+
+  p {
+    font-size: var(--font-xs, 10px);
+    color: $color-text-muted;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+  }
+}
+
+.geofence-status {
+  margin-left: auto;
+  border: 1px solid $color-border;
+  border-radius: var(--radius-sm, 5px);
+  padding: 4px 8px;
+  background: $color-surface;
+  font-size: var(--font-xs, 10px);
+  color: $color-text-secondary;
+}
+
+.geofence-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md, 12px);
+  margin-bottom: 20px;
+
+  > span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    flex-shrink: 0;
+    background: $color-surface-subtle;
+    border-radius: var(--radius-sm, 7px);
+    color: $color-primary;
+    font-size: var(--font-xs, 10px);
+  }
+
+  h4 {
+    font-size: var(--font-sm, 13px);
+    color: $color-text;
+    font-weight: 600;
+  }
+
+  p {
+    font-size: var(--font-xs, 11px);
+    color: $color-text-muted;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+}
+
+.geofence-mode-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm, 10px);
+}
+
+.geofence-mode-option {
+  display: flex;
+  gap: var(--space-sm, 10px);
+  align-items: center;
+  text-align: left;
+  padding: 16px 13px;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: var(--radius-sm, 8px);
+  color: $color-text-secondary;
+  cursor: pointer;
+
+  > svg {
+    flex-shrink: 0;
+  }
+
+  > span:not(.geofence-radio) {
+    flex: 1;
+  }
+
+  strong {
+    display: block;
+    color: $color-text;
+    font-size: var(--font-xs, 11px);
+    font-weight: 600;
+  }
+
+  small {
+    display: block;
+    font-size: var(--font-xs, 10px);
+    line-height: 1.5;
+    margin-top: 5px;
+    color: $color-text-muted;
+  }
+
+  &:hover {
+    background: $color-surface-subtle;
+  }
+
+  &[aria-pressed="true"] {
+    background: $color-primary-subtle;
+    border-color: $color-primary-light;
+
+    .geofence-radio {
+      border: 4px solid $color-primary;
+      background: $color-surface;
+    }
+  }
+}
+
+.geofence-radio {
+  width: 14px;
+  height: 14px;
+  border: 1px solid $color-border;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.geofence-location-fields {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.geofence-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.geofence-field-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-xs, 10px);
+  color: $color-text-muted;
+  line-height: 1.6;
+}
+
+.geofence-radius {
+  padding-top: 16px;
+  border-top: 1px dashed $color-border;
+
+  label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--font-xs, 11px);
+    color: $color-text-secondary;
+
+    strong {
+      font-size: var(--font-sm, 12px);
+      font-weight: 600;
+      color: $color-primary;
+    }
+  }
+
+  input {
+    width: 100%;
+    margin: 14px 0;
+  }
+
+  &-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+
+    button {
+      border: 1px solid $color-border;
+      background: $color-surface;
+      border-radius: var(--radius-sm, 5px);
+      padding: 5px 10px;
+      font-size: var(--font-xs, 10px);
+      color: $color-text-secondary;
+
+      &[aria-pressed="true"] {
+        background: $color-primary-subtle;
+        border-color: $color-primary-light;
+        color: $color-primary-dark;
+      }
+    }
+
+    > span {
+      margin-left: auto;
+      color: $color-text-muted;
+      font-size: var(--font-2xs, 9px);
+    }
+  }
+}
+
+.geofence-setting-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md, 12px);
+  padding: 15px 0;
+  cursor: pointer;
+
+  + .geofence-setting-row {
+    border-top: 1px solid $color-border;
+  }
+
+  > svg {
+    color: $color-primary;
+    flex-shrink: 0;
+  }
+
+  > span {
+    flex: 1;
+  }
+
+  strong {
+    display: block;
+    font-size: var(--font-sm, 12px);
+    font-weight: 500;
+    color: $color-text;
+  }
+
+  small {
+    display: block;
+    font-size: var(--font-xs, 10px);
+    color: $color-text-muted;
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+}
+
+.geofence-switch::before {
+  content: "";
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: $color-surface;
+  box-shadow: 0 1px 3px rgba(38, 55, 28, 0.12);
+  transition: transform 0.15s;
+}
+
+.geofence-policy-fields {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(0, 2fr);
+  gap: 20px;
+}
+
+.geofence-optional {
+  float: right;
+  color: $color-text-muted;
+  font-size: var(--font-xs, 10px);
+  font-weight: 400;
+}
+
+.geofence-rule-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm, 10px);
+  background: $color-surface-subtle;
+  border: 1px solid $color-border;
+  border-radius: var(--radius-sm, 8px);
+  margin: 20px 26px;
+  padding: 15px;
+  color: $color-primary;
+
+  > svg {
+    flex-shrink: 0;
+  }
+
+  > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  strong {
+    display: block;
+    font-size: var(--font-xs, 11px);
+    font-weight: 500;
+    color: $color-text;
+    overflow-wrap: anywhere;
+  }
+
+  p {
+    font-size: var(--font-xs, 10px);
+    color: $color-text-muted;
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-xs, 10px);
+    white-space: nowrap;
+    color: $color-primary;
+  }
+}
+
+@media (max-width: 1100px) {
+  .geofence-console .geofence-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 650px) {
+  .geofence-editor {
+    &-heading,
+    &-section,
+    &-footer {
+      padding: 18px;
+    }
+
+    &-heading h3 {
+      font-size: var(--font-lg, 16px);
+    }
+
+    &-footer {
+      flex-wrap: wrap;
+
+      > div {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+  }
+
+  .geofence-identity {
+    padding: 18px;
+  }
+
+  .geofence-mode-options,
+  .geofence-policy-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .geofence-rule-preview {
+    margin: 18px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 600px) {
+  .geofence-console {
+    .geofence-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+
+      > div {
+        padding: 15px;
+
+        &:nth-child(3) {
+          border-left: 0;
+        }
+
+        &:nth-child(n + 3) {
+          border-top: 1px solid var(--gf-line);
+        }
+
+        > span:nth-child(2) {
+          font-size: var(--font-2xl, 23px);
+        }
+      }
+    }
+
+    .modal {
+      width: calc(100vw - 24px);
+    }
+  }
+
+  .geofence-header {
+    > div:last-child,
+    > div:last-child > div {
+      width: 100%;
+    }
+
+    .btn {
+      flex: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .geofence-switch::before,
+  .geofence-console .geofence-editor input.geofence-switch {
+    transition: none;
+  }
+}

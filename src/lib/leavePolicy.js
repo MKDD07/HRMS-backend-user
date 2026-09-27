@@ -54,3 +54,54 @@ export function holidaysToIcs(holidays) {
   });
   return `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//PulseHRMS//Company Calendar//EN\r\nCALSCALE:GREGORIAN\r\n${rows.join('\r\n')}\r\nEND:VCALENDAR\r\n`;
 }
+
+export function icsToHolidays(icsContent) {
+  if (!icsContent || typeof icsContent !== 'string') return [];
+  const unfolded = icsContent.replace(/\r?\n[ \t]/g, '');
+  const events = unfolded.split(/BEGIN:VEVENT/i).slice(1);
+  const unescape = str => (str || '').replace(/\\([,;\\nN])/g, (_, ch) => ch.toLowerCase() === 'n' ? '\n' : ch).trim();
+
+  const results = [];
+  for (const block of events) {
+    const eventBody = block.split(/END:VEVENT/i)[0];
+    if (!eventBody) continue;
+
+    const summaryMatch = eventBody.match(/(?:^|\r?\n)SUMMARY(?:;[^:\r\n]*)?:(.*)/i);
+    const summary = summaryMatch ? unescape(summaryMatch[1]) : '';
+
+    const dtstartMatch = eventBody.match(/(?:^|\r?\n)DTSTART(?:;[^:\r\n]*)?:[^\d]*(\d{4})(\d{2})(\d{2})/i);
+    if (!summary || !dtstartMatch) continue;
+
+    const holiday_date = `${dtstartMatch[1]}-${dtstartMatch[2]}-${dtstartMatch[3]}`;
+
+    const descMatch = eventBody.match(/(?:^|\r?\n)DESCRIPTION(?:;[^:\r\n]*)?:(.*)/i);
+    const description = descMatch ? unescape(descMatch[1]) : '';
+
+    const uidMatch = eventBody.match(/(?:^|\r?\n)UID(?:;[^:\r\n]*)?:(.*)/i);
+    const uid = uidMatch ? unescape(uidMatch[1]) : '';
+
+    let type = 'Company Holiday';
+    let optional_note = '';
+    if (description) {
+      if (description.includes(' - ')) {
+        const parts = description.split(' - ');
+        type = parts[0].trim() || 'Company Holiday';
+        optional_note = parts.slice(1).join(' - ').trim();
+      } else {
+        type = description;
+      }
+    }
+
+    const cleanId = uid.endsWith('@pulsehrms') ? uid.replace(/@pulsehrms$/, '') : (uid || undefined);
+
+    results.push({
+      ...(cleanId ? { id: cleanId } : {}),
+      name: summary,
+      holiday_date,
+      type,
+      optional_note,
+      active: true
+    });
+  }
+  return results;
+}

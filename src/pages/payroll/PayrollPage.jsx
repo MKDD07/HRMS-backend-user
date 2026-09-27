@@ -1,4 +1,4 @@
-import './PayrollPage.css';
+import './PayrollPage.scss';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Calendar, Download, Lock, Sparkles } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';

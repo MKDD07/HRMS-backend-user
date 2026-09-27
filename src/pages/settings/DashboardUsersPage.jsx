@@ -1,11 +1,12 @@
 import { billingApi } from '../../lib/billingApi';
 import React, { useEffect, useState } from 'react';
 import { Users, ShieldCheck, KeyRound, RefreshCw } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
 import { DASHBOARD_PAGES } from '../../../shared/dashboardAccess.mjs';
 import { dashboardAdminApi } from '../../lib/dashboardAdminApi';
 import { Modal } from '../../components/ui/Modal';
-import '../dashboard/DashboardPage.css';
-import './WorkspaceSettings.css';
+import '../dashboard/DashboardPage.scss';
+import './WorkspaceSettings.scss';
 
 export function DashboardUsersPage() {
   const [capacity, setCapacity] = useState(null);
@@ -19,7 +20,15 @@ export function DashboardUsersPage() {
     event.preventDefault(); setSaving(true); setError('');
     try { const form = Object.fromEntries(new FormData(event.currentTarget)); await dashboardAdminApi.saveUser({ ...form, employee_id: selected.employee_id, dashboard_access: enabled, dashboard_pages: pages }); setSelected(null); setNotice('Access saved. Existing sessions were signed out; a temporary password requires a password change at next sign-in.'); await load(); } catch (e) { setError(e.message); } finally { setSaving(false); }
   }
-  return <main className="tenant-dashboard workspace-settings"><header className="tenant-header"><div><span className="tenant-eyebrow">WORKSPACE / SUPER ADMIN</span><h1>Dashboard users<span>.</span></h1><p>Give employees access to the pages they need. Additional users are limited by your company plan.</p></div><button className="tenant-button" disabled={loading} onClick={load}><RefreshCw size={15} />Refresh</button></header>
+  return <main className="tenant-dashboard workspace-settings">
+    <header className="tenant-header">
+      <div>
+        <span className="tenant-eyebrow">WORKSPACE / SUPER ADMIN</span>
+        <h1>Dashboard users<span>.</span></h1>
+        <p>Give employees access to the pages they need. Additional users are limited by your company plan.</p>
+      </div>
+      <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={loading} onClick={load} aria-label="Refresh" />
+    </header>
     <section className="tenant-stats">{[[Users,'Dashboard users',`${count} / ${capacity?.dashboard_limit ?? '?'}`,'Existing Super Admin excluded'],[ShieldCheck,'Permission model','By page','Selected pages include their management actions'],[KeyRound,'First login','Required','Temporary passwords must be changed']].map(([Icon,label,value,note]) => <div className="tenant-stat" key={label}><div>{label}<Icon size={17} /></div><strong>{value}</strong><p>{note}</p></div>)}</section>
     {notice && <p className="ws-notice" role="status">{notice}</p>}{error && !selected && <p className="ws-error" role="alert">{error}</p>}
     <section className="tenant-panel"><div className="tenant-panel-head"><div><h2>Employee dashboard access</h2><p>Choose an employee, set their login ID, and select allowed pages.</p></div></div><div className="ws-table-wrap"><table className="ws-table"><thead><tr><th>Employee</th><th>Login ID</th><th>Dashboard access</th><th>Allowed pages</th><th>Action</th></tr></thead><tbody>{users.map(u => <tr key={u.employee_id}><td><strong>{u.first_name} {u.last_name}</strong><small>{u.employee_code}</small></td><td>{u.username}<small>{u.must_change_password ? 'Password change required' : 'Password set'}</small></td><td>{u.dashboard_access ? 'Yes' : 'No'}</td><td>{u.dashboard_access ? u.dashboard_pages.map(id => DASHBOARD_PAGES.find(p => p[0] === id)?.[1]).join(', ') : 'No console access'}</td><td><button className="tenant-button" disabled={(!u.dashboard_access && (u.status !== 'active' || !capacity || capacity.expired || count >= capacity.dashboard_limit))} onClick={() => edit(u)}>{u.dashboard_access ? 'Manage access' : 'Grant access'}</button></td></tr>)}</tbody></table>{loading && <p className="tenant-empty">Loading employees...</p>}{!loading && !users.length && <p className="tenant-empty">Create an employee in the directory before granting dashboard access.</p>}</div></section>

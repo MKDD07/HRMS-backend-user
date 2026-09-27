@@ -1,0 +1,103 @@
+// ============================================================================
+// PulseHRMS Color Tokens & Variables
+// ============================================================================
+
+// Primary Accent Greens
+$color-primary: #577b50;
+$color-primary-dark: #3e5836;
+$color-primary-light: #81956e;
+$color-primary-subtle: #edf3e6;
+
+// Surface & Background
+$color-surface: #ffffff;
+$color-surface-subtle: #f8faf4;
+$color-bg: #ffffff;
+$color-bg-subtle: #fafcf7;
+$color-bg-muted: #f4f6ef;
+$color-bg-alt: #f8faf4;
+$color-bg-hover: #f5f8f1;
+$color-bg-secondary: #f2f5ea;
+
+// Text & Typography
+$color-text: #293225;
+$color-text-main: #293225;
+$color-text-dark: #34482a;
+$color-text-primary: #3e5432;
+$color-text-secondary: #4c5c42;
+$color-text-muted: #858e7e;
+$color-text-subtle: #939b8e;
+$color-text-caption: #a0a794;
+$color-text-disabled: #a0a794;
+$color-text-accent: #577b50;
+$color-text-link: #647956;
+$color-text-link-hover: #253e20;
+
+// Borders & Dividers
+$color-border: #e7ebe3;
+$color-border-light: #eef1e8;
+$color-border-dark: #dce3d5;
+$color-border-hover: #d0d8c8;
+$color-border-input: #dfe7d6;
+
+// Accents & Focus
+$color-focus: #517158;
+$color-accent-green: #81956e;
+$color-accent-gold: #8b915e;
+
+// Status & Accents
+$color-success: #34846a;
+$color-success-dark: #276551;
+$color-success-light: #b4dfd1;
+$color-success-subtle: #eaf7f0;
+
+$color-danger: #b3392c;
+$color-danger-dark: #8c291e;
+$color-danger-light: #f1b9b1;
+$color-danger-subtle: #fff0ee;
+
+$color-warning: #c08d32;
+$color-warning-dark: #966c22;
+$color-warning-light: #f3deb1;
+$color-warning-subtle: #fff5e5;
+$color-warning-text: #92773c;
+$color-warning-bg: #fffbef;
+$color-warning-border: #f1e5bd;
+
+$color-info: #5686d9;
+$color-info-dark: #3b66b2;
+$color-info-light: #bfdaf1;
+$color-info-subtle: #edf3ff;
+
+$color-brand: #7965d9;
+$color-brand-subtle: #f0edff;
+
+// Shadows
+$shadow-sm: 0 1px 3px rgba(41, 50, 37, 0.06);
+$shadow-md: 0 4px 14px rgba(41, 50, 37, 0.08);
+$shadow-lg: 0 8px 24px rgba(41, 50, 37, 0.12);
+$shadow-xl: 0 20px 60px rgba(41, 50, 37, 0.16);
+
+:root {
+  --td-line: #{$color-border};
+  --td-line-light: #{$color-border-light};
+  --td-muted: #{$color-text-muted};
+  --td-subtle: #{$color-text-subtle};
+  --td-accent: #{$color-text-accent};
+  --td-focus: #{$color-focus};
+  --td-bg-subtle: #{$color-bg-subtle};
+  --td-bg-muted: #{$color-bg-muted};
+  --color-primary: #{$color-primary};
+  --color-primary-dark: #{$color-primary-dark};
+  --color-primary-light: #{$color-primary-light};
+  --color-primary-subtle: #{$color-primary-subtle};
+  --color-surface: #{$color-surface};
+  --color-surface-subtle: #{$color-surface-subtle};
+  --color-text: #{$color-text};
+  --color-text-secondary: #{$color-text-secondary};
+  --color-text-muted: #{$color-text-muted};
+  --color-border: #{$color-border};
+  --color-success: #{$color-success};
+  --color-danger: #{$color-danger};
+  --color-warning: #{$color-warning};
+  --color-info: #{$color-info};
+}

@@ -4,8 +4,8 @@ import { ShieldCheck, Users, Clock3, MapPin, CalendarDays, GitBranch, FileText, 
 import { canUsePage } from '../../../shared/dashboardAccess.mjs';
 import { dashboardAdminApi } from '../../lib/dashboardAdminApi';
 import { companyAuth } from '../../lib/companyAuth';
-import '../dashboard/DashboardPage.css';
-import './WorkspaceSettings.css';
+import '../dashboard/DashboardPage.scss';
+import './WorkspaceSettings.scss';
 
 const links = [[Users,'dashboard-users','Dashboard users','Grant employees access within your company plan limit.'],[Clock3,'shifts','Shift profiles','Working hours, breaks, grace periods and templates.'],[MapPin,'geofence-rules','Geofence & photo rules','Campus sites, location boundaries and photo requirements.'],[CalendarDays,'company-calendar','Calendar & leave policies','Holidays, leave entitlements and company dates.'],[GitBranch,'hierarchy','Approval workflows','Responsibilities, approvers and escalation settings.'],[FileText,'documents','Company documents','Policies, employee records and verification.'],[Mail,'helpdesk','HR communications','Announcements, messages and private grievance reviews.']];
 export function WorkspaceSettingsPage({ currentUser, onNavigate, onLogout }) {

@@ -1,4 +1,4 @@
-import './GeofenceRulesPage.css';
+import './GeofenceRulesPage.scss';
 import React, { useState, useEffect } from 'react';
 import {
   MapPin,
@@ -216,16 +216,16 @@ export function GeofenceRulesPage({ api, onShowToast, onSelectEmployee }) {
         actions={
           <div className="flex items-center gap-2">
             <Button
-              variant={activeTab === 'individual' ? 'primary' : 'secondary'}
-              size="sm"
+              variant={activeTab === 'individual' ? 'colored' : 'outline'}
+              size="md"
               icon={Users}
               onClick={() => setActiveTab('individual')}
             >
               Employee rules
             </Button>
             <Button
-              variant={activeTab === 'groups' ? 'primary' : 'secondary'}
-              size="sm"
+              variant={activeTab === 'groups' ? 'colored' : 'outline'}
+              size="md"
               icon={Building}
               onClick={() => setActiveTab('groups')}
             >

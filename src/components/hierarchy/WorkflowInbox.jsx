@@ -1,8 +1,8 @@
-﻿import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, Send, Check, X } from 'lucide-react';
 import { workflowApi } from '../../lib/workflowApi';
 import { companyRequest } from '../../lib/companyAuth';
-import './WorkflowSettings.css';
+import './WorkflowSettings.scss';
 export function WorkflowInbox({ currentUser, people = [], initialKind = 'attendance' }) {
   const isAdmin = currentUser?.role === 'company_admin';
   const [view,setView] = useState('mine');

@@ -1,0 +1,188 @@
+@use "../../styles/variables" as *;
+@use "../../styles/color" as *;
+
+.tenant-sidebar {
+  position: fixed;
+  top: var(--tenant-header-height, 82px);
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  width: var(--sidebar-width, 260px);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid $color-border;
+  background: $color-surface-subtle;
+  font-family: var(--nav-font-family, var(--font-family-base, $font-family-base));
+  transition: width var(--ease-fast, 0.2s ease), transform var(--ease-fast, 0.2s ease);
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid $color-focus;
+      outline-offset: -2px;
+    }
+  }
+
+  &__nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--space-4, 16px) var(--space-3, 12px) var(--space-6, 24px);
+    font-family: var(--nav-font-family, var(--font-family-base, $font-family-base));
+    scrollbar-width: thin;
+    scrollbar-color: $color-border-dark transparent;
+  }
+
+  &__section {
+    margin-top: var(--space-4, 16px);
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &+.tenant-sidebar__section {
+      margin-top: var(--space-5, 20px);
+      padding-top: var(--space-4, 16px);
+      border-top: 1px solid $color-border-light;
+    }
+
+    h2 {
+      font-family: var(--heading-font-family, var(--font-family-display, $font-family-display));
+      font-size: var(--font-3xs, 9px);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: $color-text-muted;
+      font-weight: var(--weight-bold, 600);
+      margin: 0 var(--space-2-5, 10px) var(--space-2, 8px);
+    }
+  }
+
+  &__link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5, 10px);
+    width: 100%;
+    min-height: 40px;
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    margin-bottom: 3px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md, 10px);
+    background: transparent;
+    color: $color-text-secondary;
+    font-family: var(--nav-font-family, var(--font-family-base, $font-family-base));
+    text-align: left;
+    transition: background var(--ease-fast, 0.15s), color var(--ease-fast, 0.15s), border-color var(--ease-fast, 0.15s);
+
+    &>svg {
+      flex-shrink: 0;
+      stroke-width: 1.65;
+    }
+
+    &>span {
+      flex: 1;
+      font-family: inherit;
+      font-size: var(--font-2sm, 13px);
+      line-height: 1.4;
+      font-weight: var(--weight-medium, 500);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &:hover {
+      background: $color-primary-subtle;
+      color: $color-primary-dark;
+    }
+
+    &.is-active {
+      background: $color-primary-subtle;
+      color: $color-primary-dark;
+      border-color: $color-border-dark;
+      box-shadow: 0 1px 3px rgba(41, 50, 37, 0.04);
+
+      &>span {
+        font-weight: var(--weight-bold, 600);
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        width: 3px;
+        height: 18px;
+        left: -1px;
+        top: calc(50% - 9px);
+        border-radius: 0 3px 3px 0;
+        background: $color-primary;
+      }
+    }
+  }
+
+  &__active-arrow {
+    color: $color-primary-light;
+    flex-shrink: 0;
+  }
+
+  &--collapsed {
+    width: var(--sidebar-collapsed, 76px);
+
+    .tenant-sidebar__section h2,
+    .tenant-sidebar__link>span,
+    .tenant-sidebar__active-arrow {
+      display: none;
+    }
+
+    .tenant-sidebar__nav {
+      padding-left: var(--space-2, 8px);
+      padding-right: var(--space-2, 8px);
+    }
+
+    .tenant-sidebar__link {
+      justify-content: center;
+      min-height: 42px;
+      padding: var(--space-2, 8px);
+    }
+  }
+}
+
+.tenant-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: $breakpoint-md) {
+  .tenant-sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    width: min(280px, calc(100vw - 48px));
+
+    &--open {
+      transform: translateX(0);
+      visibility: visible;
+      box-shadow: $shadow-xl;
+    }
+  }
+
+  .tenant-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: var(--tenant-header-height, 126px);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 29;
+    border: 0;
+    background: rgba(41, 50, 37, 0.35);
+    backdrop-filter: blur(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .tenant-sidebar,
+  .tenant-sidebar__link {
+    transition: none;
+  }
+}

@@ -1,0 +1,212 @@
+@use "../../styles/variables" as *;
+@use "../../styles/color" as *;
+
+.billing-section {
+  margin: var(--space-7, 28px) 0;
+}
+
+.billing-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4-5, 18px);
+  align-items: center;
+  margin-bottom: var(--space-5, 20px);
+
+  h2 {
+    font-family: var(--heading-font-family, Inter, sans-serif);
+    font-size: 23px;
+    letter-spacing: -0.04em;
+    font-weight: var(--weight-bold, 600);
+    color: $color-text-main;
+  }
+
+  p {
+    font-size: var(--font-2sm, 13px);
+    color: $color-text-muted;
+    margin-top: var(--space-1-5, 7px);
+  }
+}
+
+.billing-mode {
+  display: flex;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  border: 1px solid #e8eadb;
+  border-radius: 10px;
+  background: #f7f8ef;
+  margin-bottom: var(--space-4-5, 18px);
+  color: #73835f;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  strong {
+    font-size: var(--font-2sm, 13px);
+    font-weight: var(--weight-bold, 600);
+  }
+
+  p {
+    font-size: var(--font-2xs, 11px);
+    line-height: 1.8;
+    margin-top: var(--space-1, 4px);
+  }
+}
+
+.billing-current {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5, 20px);
+  background: $color-bg;
+  border: 1px solid var(--td-line, $color-border);
+  border-radius: var(--radius-card, 12px);
+  padding: var(--space-5-5, 22px);
+  margin-bottom: var(--space-5-5, 22px);
+
+  span {
+    font-size: var(--font-3xs, 10px);
+    color: $color-text-subtle;
+  }
+
+  strong {
+    display: block;
+    font-size: var(--font-base, 16px);
+    font-weight: var(--weight-medium, 500);
+    color: $color-text-secondary;
+    margin: var(--space-2, 8px) 0;
+  }
+
+  small {
+    display: block;
+    font-size: var(--font-3xs, 10px);
+    color: $color-text-muted;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+}
+
+.billing-plans {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3-5, 15px);
+}
+
+.billing-plan {
+  display: flex;
+  flex-direction: column;
+  background: $color-bg;
+  border: 1px solid var(--td-line, $color-border);
+  border-radius: var(--radius-card, 12px);
+  padding: var(--space-5-5, 23px) var(--space-5, 20px);
+  min-width: 0;
+
+  &--featured {
+    border-color: $color-accent-green;
+    background: #fcfdf9;
+  }
+
+  &-top {
+    min-height: 42px;
+
+    h3 {
+      font-family: var(--heading-font-family, Inter, sans-serif);
+      font-size: 17px;
+      font-weight: var(--weight-bold, 600);
+      color: #35432d;
+    }
+
+    span {
+      display: inline-block;
+      color: #527357;
+      font-size: var(--font-3xs, 9px);
+      margin-top: var(--space-1-5, 5px);
+    }
+  }
+
+  &>p {
+    color: $color-text-muted;
+    font-size: var(--font-2xs, 11px);
+    line-height: 1.8;
+    margin: var(--space-3-5, 13px) 0 var(--space-5, 20px);
+    min-height: 40px;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3-5, 13px);
+    margin: var(--space-6, 24px) 0;
+    padding: 0;
+    list-style: none;
+    flex: 1;
+  }
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2, 8px);
+    color: #738069;
+    font-size: var(--font-2xs, 11px);
+    line-height: 1.6;
+
+    svg {
+      flex-shrink: 0;
+      color: $color-accent-green;
+    }
+  }
+
+  button {
+    justify-content: center;
+    white-space: normal;
+  }
+}
+
+.billing-price {
+  color: $color-text-main;
+  font-size: 30px;
+  font-weight: var(--weight-medium, 500);
+  letter-spacing: -0.05em;
+
+  small {
+    font-size: var(--font-3xs, 10px);
+    color: $color-text-subtle;
+    letter-spacing: 0;
+    margin-left: 5px;
+  }
+}
+
+.billing-tax {
+  font-size: var(--font-3xs, 10px);
+  color: $color-text-subtle;
+  margin-top: var(--space-1-5, 6px);
+}
+
+.billing-footnote {
+  margin: var(--space-4, 16px) 0 var(--space-6, 24px);
+  font-size: var(--font-3xs, 10px);
+  color: $color-text-subtle;
+  line-height: 1.8;
+}
+
+.billing-history .tenant-empty {
+  min-height: 90px;
+}
+
+@media (max-width: 1200px) {
+  .billing-plans {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: $breakpoint-sm) {
+
+  .billing-plans,
+  .billing-current {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
