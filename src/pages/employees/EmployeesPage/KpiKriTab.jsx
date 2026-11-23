@@ -41,12 +41,7 @@ export function KpiKriTab({ employee, onShowToast }) {
         title="Key Performance & Risk Indicator Scorecard"
         subtitle={`Cycle: ${data.review_period} • Status: ${data.rating_category}`}
       >
-        <Button
-          variant={isEditing ? 'secondary' : 'primary'}
-          size="xs"
-          icon={isEditing ? CheckCircle2 : Edit}
-          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-        >
+        <Button variant={isEditing ? 'secondary' : 'primary'} size="xs" icon={isEditing ? CheckCircle2 : Edit} onClick={() => isEditing ? handleSave() : setIsEditing(true)}>
           {isEditing ? 'Save Scores' : 'Edit Evaluation'}
         </Button>
       </PanelHeader>

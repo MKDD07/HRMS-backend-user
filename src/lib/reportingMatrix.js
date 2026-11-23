@@ -1,11 +1,27 @@
 ﻿export const MAX_DEPTH = 6;
 export const emptyMatrix = () => ({ nodes: [], links: [] });
+
+/** Preserve department policy/roles while placing every current member on the chart. */
+export function placeDepartment(matrix, record, position, expanded) {
+  const groups = matrix.departmentChart || [];
+  const existing = groups.find(group => group.name === record.name);
+  const occupied = [...matrix.nodes.map(node => node.position?.x || 0), ...groups.map(group => group.position.x)];
+  const point = position || existing?.position || { x: occupied.length ? Math.max(...occupied) + 660 : 0, y: 0 };
+  const head = record.head || (record.members.length === 1 ? record.members[0].id : '');
+  const ordered = [...record.members].sort((a, b) => Number(b.id === head) - Number(a.id === head));
+  const positions = new Map(ordered.map((person, index) => [person.id, { x: point.x + (index === 0 ? 25 : ((index - 1) % 3) * 300 - 275), y: point.y + (index === 0 ? 310 : 520 + Math.floor((index - 1) / 3) * 210) }]));
+  const nodes = matrix.nodes.map(node => expanded && positions.has(node.id) ? { ...node, position: positions.get(node.id) } : node);
+  for (const person of ordered) if (!nodes.some(node => node.id === person.id)) nodes.push({ id: person.id, position: positions.get(person.id) });
+  const { members, ...settings } = record;
+  return { ...matrix, nodes, departments: [...(matrix.departments || []).filter(item => item.name !== record.name), { ...settings, head }], departmentChart: [...groups.filter(item => item.name !== record.name), { ...existing, name: record.name, position: point, expanded: expanded ?? existing?.expanded ?? false }] };
+}
 export function validateLink(links, link, excluding) {
   if (!link.manager || !link.employee) return 'Choose a manager and an employee.';
   if (link.manager === link.employee) return 'An employee cannot report to themselves.';
   if (!['direct', 'indirect'].includes(link.type)) return 'Choose direct or indirect reporting.';
   const rest = links.filter(item => item.id !== excluding);
   if (rest.some(item => item.manager === link.manager && item.employee === link.employee)) return 'This reporting relationship already exists.';
+  if (link.type === 'indirect') return '';
   const visited = new Set();
   const pending = [link.employee];
   while (pending.length) {
@@ -13,7 +29,7 @@ export function validateLink(links, link, excluding) {
     if (id === link.manager) return 'This connection would create a reporting loop.';
     if (visited.has(id)) continue;
     visited.add(id);
-    rest.filter(item => item.manager === id).forEach(item => pending.push(item.employee));
+    rest.filter(item => item.type === 'direct' && item.manager === id).forEach(item => pending.push(item.employee));
   }
   return '';
 }

@@ -18,13 +18,13 @@
 .asset-evidence-card__hint { align-self: stretch; margin: 0; }
 .asset-evidence-gallery { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); width: 100%; }
 .asset-evidence-gallery:empty { display: none; }
-.asset-evidence-preview, .asset-evidence-upload { position: relative; box-sizing: border-box; width: min(100%, var(--evidence-image-size)); max-width: var(--evidence-image-size); aspect-ratio: 1; flex-shrink: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--color-surface-subtle); }
-.asset-evidence-preview { display: block; height: var(--evidence-image-size); padding: 0; border: 1px solid var(--color-border); cursor: zoom-in; }
+.asset-evidence-upload { position: relative; box-sizing: border-box; width: min(100%, var(--evidence-image-size)); max-width: var(--evidence-image-size); aspect-ratio: 1; flex-shrink: 0; border-radius: var(--radius-card); overflow: hidden; background: var(--color-surface-subtle); }
+.asset-evidence-preview { position: relative; box-sizing: border-box; width: min(100%, var(--evidence-image-size)); max-width: var(--evidence-image-size); aspect-ratio: 1; flex-shrink: 0; overflow: hidden; }
+.asset-evidence-preview { display: block; height: var(--evidence-image-size); padding: 0; }
 .asset-evidence-preview > .image-with-skeleton { display: block; border-radius: inherit; }
 .asset-evidence-preview img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 .asset-evidence-preview > svg { position: absolute; right: var(--space-2); bottom: var(--space-2); padding: var(--space-1); box-sizing: content-box; border-radius: var(--radius-input); background: var(--color-surface); color: var(--color-text); }
-.asset-evidence-preview:disabled { cursor: default; }
-.asset-evidence-preview:focus-visible, .asset-evidence-upload:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.asset-evidence-upload:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 .asset-evidence-pending { display: grid; justify-items: center; gap: var(--space-2); width: min(100%, var(--evidence-image-size)); min-width: 0; }
 .asset-evidence-filename { max-width: 100%; overflow-wrap: anywhere; font-size: var(--font-xs); color: var(--color-text-secondary); }
 .asset-evidence-upload { display: grid; justify-items: center; align-content: center; gap: var(--space-2); padding: var(--space-3); border: 1px dashed var(--color-border); color: var(--color-primary); font-size: var(--font-xs); text-align: center; cursor: pointer; }

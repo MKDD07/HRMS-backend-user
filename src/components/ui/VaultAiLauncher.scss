@@ -1,0 +1,21 @@
+@use '../../styles/asterActivity' as aster;
+@use '../../styles/floatingAction' as floating;
+.aster-chat-anchor { position:fixed;right:94px;bottom:24px;z-index:995; }
+.aster-chat-trigger.btn { @include floating.floating-action;&.is-working svg { animation:aster-chat-pulse 1.2s infinite; } }
+.aster-chat-panel { position:absolute;bottom:64px;right:-66px;width:min(400px,calc(100vw - 32px));height:min(640px,calc(100dvh - 120px));display:flex;flex-direction:column;border:1px solid var(--color-border,#e4e7ec);border-radius:22px;background:var(--color-surface,#fff);color:var(--color-text,#27292c);box-shadow:0 20px 70px #25232d25;overflow:hidden;opacity:0;visibility:hidden;transform:translateY(18px) scale(.96);transform-origin:bottom right;transition:transform .23s ease,opacity .23s ease,visibility .23s;
+&.is-open { opacity:1;visibility:visible;transform:translateY(0) scale(1); }
+>header { display:flex;align-items:center;gap:10px;padding:16px;background:linear-gradient(125deg,#f1edf9,#fff4f8);border-bottom:1px solid var(--color-border,#e4e7ec);div { flex:1; } strong,small { display:block; } small { margin-top:3px;font-size:11px;color:var(--color-text-muted,#667085); } }
+>form { display:flex;align-items:flex-end;gap:8px;padding:12px 14px;border-top:1px solid var(--color-border,#e4e7ec);textarea { flex:1;min-width:0;max-height:100px;padding:10px;resize:vertical;font:inherit;font-size:13px;border:1px solid var(--color-border,#e4e7ec);border-radius:12px;background:var(--color-surface,#fff);color:inherit; } }
+>footer { display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px 10px;font-size:10px;color:var(--color-text-muted,#667085); } }
+.aster-chat-avatar { display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(140deg,#ded3f4,#f8d8e7);color:#7350a1; }
+.aster-chat-messages { flex:1;overflow:auto;min-height:0;padding:16px;overscroll-behavior:contain; }
+.aster-chat-welcome { padding:20px 4px;svg { color:#8662ad; } h3 { margin:12px 0 6px; } p { font-size:13px;line-height:1.6;color:var(--color-text-muted,#667085); } div { display:grid;gap:8px;margin-top:20px; } button { display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--color-border,#e4e7ec);border-radius:12px;background:var(--color-surface,#fff);color:inherit;text-align:left;cursor:pointer; } }
+.aster-chat-message { padding:12px 14px;margin-bottom:14px;border-radius:16px 16px 16px 4px;background:var(--color-bg-subtle,#f5f6f8);overflow-wrap:anywhere;small { display:block;color:var(--color-text-muted,#667085);font-size:10px;margin-bottom:6px; } strong { display:block;font-size:13px; } p { white-space:pre-wrap;font-size:13px;line-height:1.65;margin:4px 0; } footer { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;font-size:10px;color:var(--color-text-muted,#667085); } &.is-user { margin-left:36px;border-radius:16px 16px 4px 16px;background:#efe9f7; } &.is-error { background:#fff0ee; } }
+.aster-chat-thinking { display:flex;gap:5px;padding:10px 0;i { width:6px;height:6px;border-radius:50%;background:#9878b7;animation:aster-chat-pulse 1s infinite;&:nth-child(2) { animation-delay:.15s; } &:nth-child(3) { animation-delay:.3s; } } }
+.aster-chat-typewriter:after { content:'▍';color:#9878b7; }
+@keyframes aster-chat-pulse { 0%,100% { opacity:.4;transform:translateY(0); } 50% { opacity:1;transform:translateY(-3px); } }
+@media(max-width:600px) { .aster-chat-panel { right:-66px; } }
+@media(prefers-reduced-motion:reduce) { .aster-chat-panel { transition:none; } .aster-chat-thinking i,.aster-chat-trigger.btn.is-working svg { animation:none; } }
+
+.aster-chat-employee { display:grid;gap:6px;padding:10px 16px;border-bottom:1px solid var(--color-border,#e4e7ec);font-size:11px;color:var(--color-text-muted,#667085); select { width:100%;padding:8px;border:1px solid var(--color-border,#e4e7ec);border-radius:10px;color:var(--color-text,#27292c);background:var(--color-surface,#fff); } }
+.aster-chat-panel { @include aster.activity-frame; position:absolute; }

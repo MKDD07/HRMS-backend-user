@@ -9,6 +9,7 @@ async function request(path, options = {}) {
   return body;
 }
 export const payslipApi = {
+  appraisalAdjustments: (userid, year, month) => request(`/appraisal-adjustments/${encodeURIComponent(userid)}?year=${encodeURIComponent(year)}&month=${encodeURIComponent(month)}`),
   async configuration() {
     const data = await request('/configuration');
     if (!['templates', 'groups', 'assignments'].every(key => Array.isArray(data[key]) && data[key].every(item => item && typeof item === 'object'))) {
@@ -25,6 +26,7 @@ export const payslipApi = {
     if (!Array.isArray(data) || data.some(item => !item || typeof item !== 'object')) throw new Error('Payslip records are unavailable. Please retry.');
     return data;
   },
+  send: id => request('/records/' + encodeURIComponent(id) + '/send', { method: 'POST', body: '{}' }),
   generate: id => request('/records/' + encodeURIComponent(id) + '/generate', { method: 'POST', body: '{}' }),
   downloadLink: id => request('/records/' + encodeURIComponent(id) + '/download'),
   async download(id) {

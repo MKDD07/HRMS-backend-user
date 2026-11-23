@@ -1,15 +1,27 @@
+import { SectionSkeleton } from '../../components/ui/SectionSkeleton';
+import { MetricOverview, MetricCard } from '../../components/ui/MetricOverview';
+import { MultiSelect } from '../../components/ui/MultiSelect';
+import { Toggle } from '../../components/ui/Toggle';
+import { ViewTabs } from '../../components/ui/ViewTabs';
+import { Card } from '../../components/ui/Card';
+import { TenantPanelHeader } from '../../components/ui/TenantPanel';
+import { TenantHeader } from '../../components/ui/TenantHeader';
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, Download, ExternalLink, Plus, RefreshCw, Save, Trash2, Upload, Users, Check, Sparkles, Shield, Search, Globe, Key } from 'lucide-react';
+import { CalendarDays, Download, ExternalLink, Plus, RefreshCw, Save, Trash2, Upload, Users, Check, Sparkles, Shield, Search, Globe, Key, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { UniversalCalendar, HolidayLegend, detectHolidayCategory, HOLIDAY_CATEGORY_CONFIG } from '../../components/ui/UniversalCalendar';
+import { HolidayLegend, detectHolidayCategory, HOLIDAY_CATEGORY_CONFIG } from '../../components/ui/UniversalCalendar';
 import { BarChart, Bar, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { EmployeeDirectory } from '../../components/employees/EmployeeDirectory';
 import { companyCalendarApi } from '../../lib/companyCalendarApi';
 import { accruedBalance, emptyLeaveType, eligibleFor, holidaysToIcs, icsToHolidays, PROFESSIONAL_LEAVE_PRESETS, presetLeaveType } from '../../lib/leavePolicy';
 import { shortCodeOf } from '../leave/leaveCalendarData';
+import { HolidayCalendar } from './HolidayCalendar';
+import { HolidayEditorPopover } from './HolidayEditorPopover';
 import './CompanyCalendarPage.scss';
 import './CompanyCalendarHolidays.scss';
 import './CompanyCalendarPolicies.scss';
+import './CompanyCalendarTheme.scss';
 
 const CALENDARIFIC_COUNTRIES = [
   { code: 'IN', name: 'India' },
@@ -49,20 +61,7 @@ const CALENDARIFIC_MONTHS = [
   { code: '12', value: '12', label: 'December' }
 ];
 
-const LEAVE_TYPE_COLORS = [
-  '#4f772d', // Forest Olive
-  '#d97706', // Amber
-  '#2563eb', // Royal Blue
-  '#7c3aed', // Purple Violet
-  '#db2777', // Vivid Pink
-  '#059669', // Emerald
-  '#ea580c', // Coral Orange
-  '#0891b2', // Deep Cyan
-  '#475569', // Slate
-  '#9333ea', // Electric Purple
-  '#ca8a04', // Bronze Yellow
-  '#e11d48'  // Crimson Rose
-];
+const LEAVE_TYPE_COLORS = ['var(--color-primary)', 'var(--color-text-secondary)', 'var(--color-text-muted)', 'var(--color-primary-light)'];
 
 function MatrixChartTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
@@ -70,14 +69,14 @@ function MatrixChartTooltip({ active, payload }) {
   return (
     <div className="cc-matrix-chart-tooltip">
       <div className="cc-matrix-chart-tooltip-header">
-        <span className="cc-matrix-chart-tooltip-badge" style={{ background: item.color || '#4e6b3d' }}>
+        <span className="cc-matrix-chart-tooltip-badge" style={{ background: item.color || 'var(--color-primary)' }}>
           {item.code}
         </span>
         <strong>{item.name}</strong>
       </div>
       <div className="cc-matrix-chart-tooltip-body">
-        <span>Entitlement Quota:</span>
-        <b>{item.days} days / yr</b>
+        <span>Initial allocation</span>
+        <b>{item.days} days</b>
       </div>
     </div>
   );
@@ -107,6 +106,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
   const [people, setPeople] = useState([]);
   const [leaveType, setLeaveType] = useState(emptyLeaveType());
   const [holiday, setHoliday] = useState(emptyHoliday());
+  const [holidayEditor, setHolidayEditor] = useState(null);
   const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [selectedIds, setSelectedIds] = useState([]);
   const [peopleSearch, setPeopleSearch] = useState('');
@@ -198,6 +198,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
     run(async () => {
       const saved = await companyCalendarApi.saveHoliday(holiday);
       setHoliday(saved);
+      setHolidayEditor(null);
     }, 'Holiday saved.');
   };
 
@@ -387,7 +388,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
       const days = assignment.mode === 'custom' && override.initial_days !== undefined
         ? Number(override.initial_days)
         : Number(type.initial_days || 0);
-      const color = (type.color && !['#66864f', '#ffffff', '#000000', ''].includes(type.color))
+      const color = /^#[0-9a-f]{6}$/i.test(type.color || '')
         ? type.color
         : LEAVE_TYPE_COLORS[index % LEAVE_TYPE_COLORS.length];
       return {
@@ -416,189 +417,97 @@ export function CompanyCalendarPage({ api, onShowToast }) {
 
   return (
     <div className="company-calendar-page">
-      <header className="cc-header">
-        <div>
-          <span className="cc-eyebrow">GOVERNANCE / COMPANY CALENDAR</span>
-          <h1>Company Calendar<span className="cc-title-dot">.</span></h1>
-          <p>Define leave entitlements, eligibility, accrual schedules and official holidays.</p>
-        </div>
-        <div className="cc-header-actions">
-          <input
+      <TenantHeader
+        settings={{
+          subheading: "GOVERNANCE / COMPANY CALENDAR",
+          heading: "Company Calendar",
+          paragraph: "Define leave entitlements, eligibility, accrual schedules and official holidays.",
+          refresh: { label: "Refresh" },
+          buttons: [
+            { id: 'action1', label: "Import calendar (.ics)", variant: "outline" },
+            { id: 'action2', label: "Export calendar (.ics)", variant: "colored" }
+          ]
+        }}
+        actions={{
+          refresh: { "icon": RefreshCw, "loading": loading, "onClick": load },
+          action1: { "icon": Upload, "loading": busy, "onClick": () => fileInputRef.current?.click() },
+          action2: { "icon": Download, "onClick": exportIcs, "disabled": !(configuration.holidays || []).length }
+        }}
+      />
+      <input
             type="file"
             ref={fileInputRef}
             accept=".ics,text/calendar"
             style={{ display: 'none' }}
             onChange={handleImportIcs}
           />
-          <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={loading} onClick={load} aria-label="Refresh" />
-          <Button
-            variant="outline"
-            size="md"
-            icon={Upload}
-            loading={busy}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Import calendar (.ics)
-          </Button>
-          <Button
-            variant="colored"
-            size="md"
-            icon={Download}
-            onClick={exportIcs}
-            disabled={!(configuration.holidays || []).length}
-          >
-            Export calendar (.ics)
-          </Button>
-        </div>
-      </header>
 
       {error && (
         <div className="cc-error" role="alert">
           <span>{error}</span>
-          <button type="button" onClick={load}>Retry</button>
+          <Button size="sm" variant="outline" type="button" onClick={load}>Retry</Button>
         </div>
       )}
 
-      <section className="cc-stats" aria-label="Company calendar overview">
+      <MetricOverview loading={loading} aria-label="Company calendar overview">
         {stats.map(({ label, value, icon: Icon, caption }) => (
-          <div className="cc-stat" key={label}>
-            <div className="cc-stat-label">
-              <span>{label}</span>
-              <Icon size={16} />
-            </div>
-            <strong>{loading ? '—' : value.toLocaleString()}</strong>
-            <small>{caption}</small>
-          </div>
+          <MetricCard key={label} loading={loading} label={<><div>{label}</div></>} icon={Icon} value={loading ? '—' : value.toLocaleString()} caption={caption} />
         ))}
-      </section>
+      </MetricOverview>
 
-      <nav className="cc-tabs" aria-label="Company Calendar sections">
-        {[
-          ['types', 'Leave types', (configuration.leaveTypes || []).length],
-          ['eligibility', 'Eligibility preview', people.length],
-          ['holidays', 'Holidays', (configuration.holidays || []).length],
-          ['sync', 'Calendarific API Import', null]
-        ].map(([id, label, count]) => (
-          <button
-            key={id}
-            type="button"
-            className={tab === id ? 'is-active' : ''}
-            aria-pressed={tab === id}
-            onClick={() => setTab(id)}
-          >
-            {label}
-            {count != null && <small>{count}</small>}
-          </button>
-        ))}
-      </nav>
+      <ViewTabs label="Company Calendar views" value={tab} onChange={setTab} tabs={[{id:'types',label:'Leave types',count:configuration.leaveTypes.length},{id:'eligibility',label:'Eligibility preview',count:people.length},{id:'holidays',label:'Holidays',count:configuration.holidays.length},{id:'sync',label:'Import holidays'}]}/>
 
-      {loading ? (
+      <SectionSkeleton loading={loading}>{loading ? (
         <div className="cc-empty">
           <RefreshCw size={24} className="cc-spin" />
           <p>Loading Company Calendar configuration...</p>
         </div>
       ) : (
-        <div className={['cc-workspace', !['types', 'eligibility'].includes(tab) && 'is-full', tab === 'holidays' && 'is-holidays'].filter(Boolean).join(' ')}>
+        <div className={['cc-workspace', tab === 'types' && 'cc-leave-workspace', !['types', 'eligibility'].includes(tab) && 'is-full', tab === 'holidays' && 'is-holidays'].filter(Boolean).join(' ')}>
           <main>
             {tab === 'types' && (
               <>
-                <section className="cc-panel">
-                  <header>
-                    <div>
-                      <span className="cc-panel-eyebrow">PROFESSIONAL PRESETS</span>
-                      <h2>Ready-made leave types</h2>
-                      <p>Choose a common professional policy, review its values, then save it.</p>
-                    </div>
-                  </header>
-                  <div className="cc-preset-grid">
-                    {(() => {
-                      const availablePresets = PROFESSIONAL_LEAVE_PRESETS.filter(
-                        preset => !(configuration.leaveTypes || []).some(
-                          item => String(item.code || '').trim().toUpperCase() === String(preset.code || '').trim().toUpperCase()
-                            || String(item.name || '').trim().toLowerCase() === String(preset.name || '').trim().toLowerCase()
-                        )
-                      );
-                      return availablePresets.length ? (
-                        availablePresets.map(preset => (
-                          <button
-                            key={preset.code}
-                            type="button"
-                            onClick={() => usePreset(preset)}
-                          >
-                            <i style={{ background: preset.color }} />
-                            <span>
-                              <strong>{preset.name}</strong>
-                              <small>{preset.initial_days} initial days{preset.accrual_frequency === 'monthly' ? ` + ${preset.accrual_amount}/month` : ''}</small>
-                            </span>
-                            <em>Use preset</em>
-                          </button>
-                        ))
-                      ) : (
-                        <p className="cc-empty-inline" style={{ gridColumn: '1 / -1' }}>
-                          All ready-made presets have been added to your leave library.
-                        </p>
-                      );
-                    })()}
-                  </div>
-                </section>
 
-                <section className="cc-panel">
-                  <header>
-                    <div>
-                      <span className="cc-panel-eyebrow">CUSTOM LEAVE LIBRARY</span>
-                      <h2>Saved and custom leave types</h2>
-                      <p>Your saved presets remain editable, and custom types can be created below.</p>
-                    </div>
-                    <button type="button" className="cc-button" onClick={createCustomLeave}>
-                      <Plus size={14} />
+
+                <Card className="tenant-panel cc-panel">
+                  <TenantPanelHeader title={<>Leave library</>} subtitle={<>Choose a policy to view or edit.</>} actions={[{id:'action0',label:<>
+
                       Custom leave
-                    </button>
-                  </header>
+                    </>,icon:Plus,onClick:createCustomLeave}]}/>
                   <div className="cc-type-grid">
                     {(configuration.leaveTypes || []).length ? (
                       configuration.leaveTypes.map(item => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          className={leaveType.id === item.id ? 'is-selected' : ''}
-                          onClick={() => {
-                            setLeaveType(item);
-                            setSelectedIds(item.userids || []);
-                          }}
-                        >
-                          <i style={{ background: item.color }} />
+                        <Button wrapContent={false} size="sm" variant={leaveType.id === item.id ? "colored" : "fadeout"} key={item.id} type="button" style={{
+  '--cc-policy-color': /^#[0-9a-f]{6}$/i.test(item.color || '') ? item.color : 'var(--color-primary)'
+}} className={['cc-selection', leaveType.id === item.id ? 'is-selected' : ''].filter(Boolean).join(' ')} onClick={() => {
+  setLeaveType(item);
+  setSelectedIds(item.userids || []);
+}}>
+
                           <span>
                             <strong>{item.name}</strong>
-                            <small>{item.code} · {item.active ? 'Active' : 'Off'}</small>
+                            <small><i className={item.active ? 'cc-policy-active-dot' : 'cc-policy-off-dot'} aria-hidden="true" />{item.code} · {item.active ? 'Active' : 'Off'}</small>
                           </span>
-                          <em>{accruedBalance(item)} days now</em>
-                        </button>
+                          <em><b>{accruedBalance(item)}</b><span>days</span></em>
+                        </Button>
                       ))
                     ) : (
                       <p className="cc-empty-inline">No leave types saved. Choose a preset or create a custom type.</p>
                     )}
                   </div>
-                </section>
+                </Card>
 
-                <section className="cc-panel cc-entitlement-builder">
-                  <header>
-                    <div>
-                      <span className="cc-panel-eyebrow">ENTITLEMENT BUILDER</span>
-                      <h2>{leaveType.id ? `Edit ${leaveType.name}` : 'Create leave type'}</h2>
-                      <p>Set allowance, monthly increments, effective dates and who can use it.</p>
-                    </div>
-                    <label className="cc-switch">
-                      <input
-                        type="checkbox"
-                        checked={leaveType.active}
-                        onChange={e => setLeaveType({ ...leaveType, active: e.target.checked })}
-                      />
-                      <span />
-                      {leaveType.active ? 'Active' : 'Disabled'}
-                    </label>
-                  </header>
+                <Card className="tenant-panel cc-panel cc-entitlement-builder">
+                  <TenantPanelHeader title={<>{leaveType.id ? `Edit ${leaveType.name}` : 'Create leave type'}</>} subtitle={<>Manage allowance, eligibility and accrual.</>} controls={
+                    <select className="cc-template-select" aria-label="Choose leave template" value={leaveType.id?'':PROFESSIONAL_LEAVE_PRESETS.some(preset=>preset.code===leaveType.code)?leaveType.code:''} disabled={busy} onChange={e=>{const preset=PROFESSIONAL_LEAVE_PRESETS.find(item=>item.code===e.target.value);if(preset)usePreset(preset);}}>
+                      <option value="">Choose template</option>
+                      {PROFESSIONAL_LEAVE_PRESETS.filter(preset=>!configuration.leaveTypes.some(item=>String(item.code||'').trim().toUpperCase()===String(preset.code).toUpperCase()||String(item.name||'').trim().toLowerCase()===preset.name.toLowerCase())).map(preset=><option key={preset.code} value={preset.code}>{preset.name}</option>)}
+                    </select>
+                  }/>
                   <form onSubmit={saveType}>
                     <fieldset disabled={busy}>
+                      <section className="cc-builder-section" aria-labelledby="cc-type-details">
+                        <div className="cc-builder-section-head"><h3 id="cc-type-details">Policy details</h3><p>Name, appearance and eligible employees.</p></div>
                       <div className="cc-form-grid">
                         <label>
                           Leave name
@@ -715,7 +624,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                                       onChange={() => setSelectedIds(ids => ids.includes(person.userid) ? ids.filter(id => id !== person.userid) : [...ids, person.userid])}
                                     />
                                     <span>{nameOf(person)}</span>
-                                    <small>{person.userid} · {person.department || 'General'}</small>
+                                    <small>{person.department}</small>
                                   </label>
                                 );
                               })}
@@ -723,6 +632,9 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                         </div>
                       )}
 
+                      </section>
+                      <section className="cc-builder-section" aria-labelledby="cc-type-allowance">
+                        <div className="cc-builder-section-head"><h3 id="cc-type-allowance">Allowance & effective dates</h3><p>Set the starting balance and how leave builds over time.</p></div>
                       <div className="cc-rule-grid">
                         <label>
                           Initial allocation
@@ -795,69 +707,48 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                           />
                         </label>
                         <div className="cc-balance">
-                          <span>Calculated today</span>
+                          <span>Balance today<small>Based on this policy's allocation and accrual</small></span>
                           <strong>{accruedBalance(leaveType)} days</strong>
                         </div>
                       </div>
+                      </section>
 
-                      <div className="cc-checks">
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={leaveType.carry_forward}
-                            onChange={e => setLeaveType({ ...leaveType, carry_forward: e.target.checked })}
-                          />
-                          Carry unused balance forward
-                        </label>
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={leaveType.allow_half_day}
-                            onChange={e => setLeaveType({ ...leaveType, allow_half_day: e.target.checked })}
-                          />
-                          Allow half day requests
-                        </label>
+                      <section className="cc-builder-section" aria-labelledby="cc-type-options">
+                        <div className="cc-builder-section-head"><h3 id="cc-type-options">Request options</h3></div>
+                      <div className="cc-builder-options">
+                        <div><label htmlFor="cc-carry-forward">Carry forward<small>Keep unused leave for the next cycle.</small></label><Toggle id="cc-carry-forward" checked={leaveType.carry_forward} disabled={busy} onChange={checked => setLeaveType({ ...leaveType, carry_forward: checked })} /></div>
+                        <div><label htmlFor="cc-half-day">Half day requests<small>Allow employees to request half a day.</small></label><Toggle id="cc-half-day" checked={leaveType.allow_half_day} disabled={busy} onChange={checked => setLeaveType({ ...leaveType, allow_half_day: checked })} /></div>
                       </div>
+                      </section>
 
                       <footer>
+                        <div className="cc-builder-status"><label htmlFor="cc-type-active">{leaveType.active ? 'Policy active' : 'Policy disabled'}</label><Toggle id="cc-type-active" checked={leaveType.active} disabled={busy} onChange={checked => setLeaveType({ ...leaveType, active: checked })} /></div>
                         {leaveType.id && (
-                          <button
-                            type="button"
-                            className="cc-button cc-button--danger"
-                            onClick={() => run(async () => {
-                              await companyCalendarApi.deleteLeaveType(leaveType.id);
-                              setLeaveType(emptyLeaveType());
-                            }, 'Leave type removed.')}
-                          >
-                            <Trash2 size={14} />
+                          <Button size="sm" variant="danger" type="button" icon={Trash2} wrapContent={false} onClick={() => run(async () => {
+  await companyCalendarApi.deleteLeaveType(leaveType.id);
+  setLeaveType(emptyLeaveType());
+}, 'Leave type removed.')}>
                             Delete
-                          </button>
+                          </Button>
                         )}
-                        <button className="cc-button cc-button--primary" type="submit" disabled={busy}>
-                          <Save size={14} />
+                        <Button size="sm" variant="colored" type="submit" icon={Save} wrapContent={false} disabled={busy}>
                           {busy ? 'Saving...' : 'Save leave type'}
-                        </button>
+                        </Button>
                       </footer>
                     </fieldset>
                   </form>
-                </section>
+                </Card>
               </>
             )}
 
             {tab === 'eligibility' && (
-              <section className="cc-panel cc-matrix-panel">
-                <header>
-                  <div>
-                    <span className="cc-panel-eyebrow">INDIVIDUAL ELIGIBILITY MATRIX</span>
-                    <h2>{selectedPerson ? nameOf(selectedPerson) : 'Select an employee'}</h2>
-                    <p>Assign one policy group or customize every leave type for this individual.</p>
-                  </div>
-                </header>
+              <Card className="tenant-panel cc-panel cc-matrix-panel">
+                <TenantPanelHeader title={<>{selectedPerson ? nameOf(selectedPerson) : 'Select an employee'}</>} subtitle={<>Manage leave eligibility and allowance.</>} />
                 {selectedPerson ? (
                   <form onSubmit={saveAssignment}>
                     <fieldset disabled={busy}>
                       <div className="cc-assignment-mode">
-                        <label>
+                        <label className={assignment.mode === 'group' ? 'is-selected' : ''}>
                           <input
                             type="radio"
                             name="assignmentMode"
@@ -868,9 +759,9 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                               overrides: {}
                             })}
                           />
-                          Use policy group
+                          Policy group
                         </label>
-                        <label>
+                        <label className={assignment.mode === 'custom' ? 'is-selected' : ''}>
                           <input
                             type="radio"
                             name="assignmentMode"
@@ -890,10 +781,10 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                               )
                             })}
                           />
-                          Custom individual matrix
+                          Individual settings
                         </label>
                         {assignment.mode === 'group' && (
-                          <select
+                          <select aria-label="Policy group"
                             required
                             value={assignment.group_id}
                             onChange={e => setAssignment({ ...assignment, group_id: e.target.value })}
@@ -909,22 +800,16 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                       </div>
 
                       {eligibleTypesForChart.length > 0 && (
-                        <div className="cc-matrix-chart-card">
-                          <div className="cc-matrix-chart-header">
-                            <div>
-                              <strong>Eligible Leave Types</strong>
-                              <p>All leaves eligible for {nameOf(selectedPerson)} ({eligibleTypesForChart.length} categories).</p>
-                            </div>
-                            <span className="cc-chip">{eligibleTypesForChart.length} eligible</span>
-                          </div>
-                          <div className="cc-matrix-chart-body" style={{ height: Math.max(140, eligibleTypesForChart.length * 28) }}>
+                        <Card className="tenant-panel cc-matrix-chart-card">
+                          <TenantPanelHeader title="Leave allocation" subtitle={`Initial days across ${eligibleTypesForChart.length} eligible leave types.`} icon={CalendarDays} controls={<span className="cc-chip">{eligibleTypesForChart.length} eligible</span>} />
+                          <div className="cc-matrix-chart-body" style={{ height: Math.max(180, eligibleTypesForChart.length * 42 + 36) }}>
                             <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={eligibleTypesForChart} layout="vertical" margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
-                                <CartesianGrid stroke="#f0f4ec" horizontal={false} />
-                                <XAxis type="number" allowDecimals={false} tickLine={false} axisLine={{ stroke: '#e4eadc' }} tick={{ fontSize: 10, fill: '#809273' }} />
-                                <YAxis type="category" dataKey="code" width={38} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#3d5231', fontWeight: 700 }} />
-                                <Tooltip content={<MatrixChartTooltip />} cursor={{ fill: 'rgba(96, 127, 73, 0.06)' }} />
-                                <Bar dataKey="days" barSize={12} radius={[0, 6, 6, 0]}>
+                              <BarChart data={eligibleTypesForChart} layout="vertical" margin={{ left: 4, right: 16, top: 8, bottom: 4 }}>
+                                <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 5" horizontal={false} />
+                                <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: 'var(--color-text-muted)' }} />
+                                <YAxis type="category" dataKey="code" width={44} tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'var(--color-text-secondary)', fontWeight: 500 }} />
+                                <Tooltip content={<MatrixChartTooltip />} cursor={{ fill: 'var(--color-surface-subtle)' }} />
+                                <Bar dataKey="days" barSize={18} radius={[0, 6, 6, 0]} background={{ fill: 'var(--color-surface-subtle)', radius: 6 }}>
                                   {eligibleTypesForChart.map((entry, index) => (
                                     <Cell key={index} fill={entry.color} />
                                   ))}
@@ -934,15 +819,15 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                           </div>
                           <div className="cc-matrix-chart-tags">
                             {eligibleTypesForChart.map((type, index) => (
-                              <span key={index} className="cc-matrix-chart-tag" title={`${type.name} · ${type.days} days/year`}>
+                              <span key={index} className="cc-matrix-chart-tag" style={{ '--cc-policy-color': type.color }} title={`${type.name} · ${type.days} initial days`}>
                                 <span className="cc-matrix-chart-dot" style={{ background: type.color }} />
-                                <strong style={{ color: type.color }}>{type.code}</strong>
+                                <strong>{type.code}</strong>
                                 <span>{type.name}</span>
                                 <b className="cc-matrix-chart-days">{type.days}d</b>
                               </span>
                             ))}
                           </div>
-                        </div>
+                        </Card>
                       )}
 
                       <div className="cc-matrix">
@@ -964,30 +849,30 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                           const isEnabled = custom ? override.enabled : Boolean(row);
 
                           return (
-                            <div className={!isEnabled ? 'is-disabled' : ''} key={type.id}>
+                            <div className={`cc-matrix-row ${!isEnabled ? 'is-disabled' : ''}`} key={type.id} style={{ '--cc-policy-color': /^#[0-9a-f]{6}$/i.test(type.color || '') ? type.color : 'var(--color-primary)' }}>
                               <span>
                                 <i style={{ background: type.color }} />
                                 <b>{type.name}</b>
                                 <small>{type.code}</small>
                               </span>
-                              <label className="cc-switch">
-                                <input
-                                  type="checkbox"
-                                  disabled={!custom}
+                              <div className="cc-matrix-toggle">
+                                <label htmlFor={`cc-leave-enabled-${type.id}`} className="cc-visually-hidden">Enable {type.name}</label>
+                                <Toggle
+                                  id={`cc-leave-enabled-${type.id}`}
+                                  disabled={busy || !custom}
                                   checked={isEnabled}
-                                  onChange={e => setAssignment({
+                                  onChange={checked => setAssignment({
                                     ...assignment,
                                     overrides: {
                                       ...(assignment.overrides || {}),
                                       [type.id]: {
                                         ...override,
-                                        enabled: e.target.checked
+                                        enabled: checked
                                       }
                                     }
                                   })}
                                 />
-                                <span />
-                              </label>
+                              </div>
                               <input
                                 aria-label={`${type.name} days`}
                                 type="number"
@@ -1006,7 +891,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                                   }
                                 })}
                               />
-                              <div>
+                              <div className="cc-matrix-increment">
                                 <input
                                   aria-label={`${type.name} increment`}
                                   type="number"
@@ -1043,98 +928,37 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                             ? 'Values apply only to this specific employee.'
                             : 'The selected policy group governs enabled leave types.'}
                         </span>
-                        <button className="cc-button cc-button--primary" type="submit" disabled={busy}>
-                          <Save size={14} />
+                        <Button size="sm" variant="colored" type="submit" icon={Save} wrapContent={false} disabled={busy}>
                           {busy ? 'Saving...' : 'Save assignment'}
-                        </button>
+                        </Button>
                       </footer>
                     </fieldset>
                   </form>
                 ) : (
                   <div className="cc-empty-inline">Select an employee from the directory to review and customize their leave entitlement matrix.</div>
                 )}
-              </section>
+              </Card>
             )}
 
             {tab === 'holidays' && (
-              <section className="cc-holiday-workspace">
-                <section className="cc-panel cc-official-days">
-                  <header>
-                    <div>
-                      <span className="cc-panel-eyebrow">OFFICIAL DAYS</span>
-                      <h2>Company holidays</h2>
-                      <p>Select an existing date to inspect or update it.</p>
-                    </div>
-                    <button type="button" className="cc-button" onClick={() => setHoliday(emptyHoliday())}>
-                      <Plus size={14} />
-                      New
-                    </button>
-                  </header>
-                  <div className="cc-holidays">
-                    {(configuration.holidays || []).length ? (
-                      [...configuration.holidays]
-                        .sort((a, b) => a.holiday_date.localeCompare(b.holiday_date))
-                        .map(item => (
-                          <button
-                            type="button"
-                            className={holiday.id === item.id ? 'is-selected' : ''}
-                            key={item.id}
-                            onClick={() => {
-                              setHoliday(item);
-                              if (/^\d{4}-\d{2}-\d{2}$/.test(item.holiday_date)) {
-                                setCalendarMonth(new Date(`${item.holiday_date}T12:00:00`));
-                              }
-                            }}
-                          >
-                            <time>
-                              {new Date(`${item.holiday_date}T12:00:00`).toLocaleDateString('en-IN', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                              })}
-                            </time>
-                            <span>
-                              <strong>{item.name}</strong>
-                              <small>{item.type} · {item.active ? 'Published' : 'Hidden'}</small>
-                              {item.optional_note && <small>{item.optional_note}</small>}
-                            </span>
-                          </button>
-                        ))
-                    ) : (
-                      <p className="cc-empty-inline">No official holidays added yet.</p>
-                    )}
-                  </div>
-                </section>
-
-                <section className="cc-panel cc-calendar-card">
-                  <header>
-                    <div>
-                      <span className="cc-panel-eyebrow">DATE SELECTOR</span>
-                      <h2>{calendarMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</h2>
-                      <p>Click any date to view, edit, or add a holiday.</p>
-                    </div>
-                  </header>
-                  <UniversalCalendar
-                    size="md"
-                    mode="single"
+              <section className="workspace-grid cc-holiday-layout">
+                <Card className="tenant-panel cc-panel cc-holiday-calendar-card">
+                <section className="cc-calendar-card">
+                  <TenantPanelHeader title={<>{calendarMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</>} subtitle={<>Click a date to add a holiday, or a holiday to edit. Hover to see the day?s details.</>} controls={<div className="cc-month-navigation"><Button type="button" variant="fadeout" iconOnly size="sm" icon={ChevronLeft} aria-label="Previous month" onClick={() => setCalendarMonth(value => new Date(value.getFullYear(), value.getMonth() - 1, 1))} /><Button type="button" variant="fadeout" iconOnly size="sm" icon={ChevronRight} aria-label="Next month" onClick={() => setCalendarMonth(value => new Date(value.getFullYear(), value.getMonth() + 1, 1))} /></div>} />
+                  <HolidayCalendar
                     month={calendarMonth}
-                    onMonthChange={setCalendarMonth}
-                    selected={holiday.holiday_date ? new Date(`${holiday.holiday_date}T12:00:00`) : undefined}
+                    selected={holiday.holiday_date ? new Date(holiday.holiday_date + 'T12:00:00') : undefined}
                     onSelect={selectHolidayDate}
-                    weekStartsOn={1}
-                    holidaysMap={configuration.holidays}
-                    footer={
-                      <HolidayLegend holidays={configuration.holidays} showAll />
-                    }
+                    onEventSelect={item => setHoliday(item)}
+                    onOpen={(date, item, anchor) => { selectHolidayDate(date); if (item) setHoliday(item); setHolidayEditor({ anchor }); }}
+                    holidays={configuration.holidays}
                   />
+                  <HolidayLegend holidays={configuration.holidays} showAll />
                 </section>
 
-                <section className="cc-panel cc-holiday-editor">
-                  <header>
-                    <div>
-                      <span className="cc-panel-eyebrow">HOLIDAY EDITOR</span>
-                      <h2>{holiday.id ? 'Edit holiday' : 'Add holiday'}</h2>
-                      <p>
+                {holidayEditor && <HolidayEditorPopover anchor={holidayEditor.anchor} color={detectHolidayCategory(holiday).color} onClose={() => { if (!busy) setHolidayEditor(null); }}>
+                <section className="cc-holiday-editor">
+                  <TenantPanelHeader title={<>{holiday.id ? 'Edit holiday' : 'Add holiday'}</>} subtitle={<>
                         {holiday.holiday_date
                           ? new Date(`${holiday.holiday_date}T12:00:00`).toLocaleDateString('en-IN', {
                             weekday: 'long',
@@ -1143,9 +967,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                             year: 'numeric'
                           })
                           : 'Select a date on the calendar or enter one below.'}
-                      </p>
-                    </div>
-                  </header>
+                      </>} />
                   <form onSubmit={saveHoliday}>
                     <fieldset disabled={busy}>
                       <div className="cc-holiday-form">
@@ -1211,56 +1033,62 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                       </div>
 
                       <footer>
-                        <label className="cc-switch cc-footer-switch" title={holiday.active ? 'Holiday active (published)' : 'Holiday inactive'}>
-                          <input
-                            type="checkbox"
-                            checked={holiday.active}
-                            onChange={e => setHoliday({ ...holiday, active: e.target.checked })}
-                          />
-                          <span />
-                          <span className="cc-switch-text">{holiday.active ? 'On' : 'Off'}</span>
-                        </label>
+                        <div className="cc-holiday-published"><Toggle id="cc-holiday-published" checked={holiday.active} disabled={busy} onChange={active => setHoliday({ ...holiday, active })} /><label htmlFor="cc-holiday-published">{holiday.active ? 'On' : 'Off'}</label></div>
                         {holiday.id && (
-                          <button
-                            type="button"
-                            className="cc-button cc-button--danger"
-                            onClick={() => run(async () => {
-                              await companyCalendarApi.deleteHoliday(holiday.id);
-                              setHoliday(emptyHoliday());
-                            }, 'Holiday removed.')}
-                          >
-                            <Trash2 size={14} />
+                          <Button size="sm" variant="danger" type="button" icon={Trash2} wrapContent={false} onClick={() => run(async () => {
+  await companyCalendarApi.deleteHoliday(holiday.id);
+  setHoliday(emptyHoliday());
+  setHolidayEditor(null);
+}, 'Holiday removed.')}>
                             Delete
-                          </button>
+                          </Button>
                         )}
-                        <button
-                          className="cc-button cc-button--primary"
-                          type="submit"
-                          disabled={busy || !holiday.holiday_date || !holiday.name.trim()}
-                        >
-                          <Save size={14} />
+                        <Button wrapContent={false} icon={Save} size="sm" variant="colored" type="submit" disabled={busy || !holiday.holiday_date || !holiday.name.trim()}>
                           {busy ? 'Saving...' : 'Save holiday'}
-                        </button>
+                        </Button>
                       </footer>
                     </fieldset>
                   </form>
                 </section>
+                </HolidayEditorPopover>}
+                </Card>
+                <Card className="tenant-panel cc-panel cc-official-days">
+                  <TenantPanelHeader title={<>Company holidays</>} subtitle={<>Browse and manage holiday dates.</>} actions={[{id:'action0',variant:'colored',iconOnly:true,icon:Plus,'aria-label':'Add holiday',title:'Add holiday',onClick:() => { setHoliday(emptyHoliday()); setHolidayEditor({ anchor: null }); }}]}/>
+                  <div className="cc-holidays">
+                    {(configuration.holidays || []).length ? (
+                      [...configuration.holidays]
+                        .sort((a, b) => a.holiday_date.localeCompare(b.holiday_date))
+                        .map(item => (
+                          <Button wrapContent={false} size="sm" variant={holiday.id === item.id ? "colored" : "fadeout"} type="button" className={['cc-selection', holiday.id === item.id ? 'is-selected' : ''].filter(Boolean).join(' ')} key={item.id} onClick={() => {
+  setHoliday(item);
+  setHolidayEditor({ anchor: null });
+  if (/^\d{4}-\d{2}-\d{2}$/.test(item.holiday_date)) {
+    setCalendarMonth(new Date(`${item.holiday_date}T12:00:00`));
+  }
+}}>
+                            <time dateTime={item.holiday_date} className="cc-holiday-date" title={item.holiday_date}>
+                              <b>{new Date(`${item.holiday_date}T12:00:00`).getDate()}</b>
+                              <span>{new Date(`${item.holiday_date}T12:00:00`).toLocaleDateString('en-IN', { month: 'short' })}</span>
+                            </time>
+                            <span>
+                              <strong>{item.name}</strong>
+                              <small>{item.type} · {item.active ? 'Published' : 'Hidden'}</small>
+                              {item.optional_note && <small>{item.optional_note}</small>}
+                            </span>
+                          </Button>
+                        ))
+                    ) : (
+                      <p className="cc-empty-inline">No official holidays added yet.</p>
+                    )}
+                  </div>
+                </Card>
+
               </section>
             )}
 
             {tab === 'sync' && (
-              <section className="cc-panel cc-calendarific-panel">
-                <header>
-                  <div>
-                    <span className="cc-panel-eyebrow">HOLIDAY API INTEGRATION</span>
-                    <h2>Calendarific API Import</h2>
-                    <p>Fetch official public and company holidays across countries via Calendarific API.</p>
-                  </div>
-                  <div className="cc-header-tag">
-                    <Globe size={14} />
-                    <span>Global Coverage</span>
-                  </div>
-                </header>
+              <Card className="tenant-panel cc-panel cc-calendarific-panel">
+                <TenantPanelHeader title={<>Import official holidays</>} subtitle={<>Choose a location, preview dates and import holidays.</>} />
 
                 <div className="cc-calendarific-layout">
                   <div className="cc-calendarific-main">
@@ -1318,25 +1146,12 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                       </div>
 
                       <div className="cc-calendarific-actions">
-                        <Button
-                          variant="colored"
-                          size="md"
-                          icon={RefreshCw}
-                          type="submit"
-                          loading={calendarificLoading}
-                        >
+                        <Button variant="colored" size="md" icon={RefreshCw} type="submit" loading={calendarificLoading}>
                           {calendarificLoading ? 'Loading holidays...' : 'Load holidays'}
                         </Button>
                         {calendarificHolidays.length > 0 && (
-                          <Button
-                            variant="primary"
-                            size="md"
-                            icon={Download}
-                            type="button"
-                            disabled={busy || selectedCalendarificHolidays.length === 0}
-                            onClick={importSelectedCalendarificHolidays}
-                          >
-                            Import Selected ({selectedCalendarificHolidays.length})
+                          <Button variant="primary" size="md" icon={Download} type="button" disabled={busy || selectedCalendarificHolidays.length === 0} onClick={importSelectedCalendarificHolidays}>
+                            Import selected ({selectedCalendarificHolidays.length})
                           </Button>
                         )}
                       </div>
@@ -1351,13 +1166,10 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                     <div className="cc-year-calendar-section">
                       <div className="cc-year-section-header">
                         <div>
-                          <h3>{calendarificYear} Full Year Calendar Overview</h3>
-                          <p>12-month calendar grid with auto-categorized solid holiday highlights and hover tooltips.</p>
+                          <h3>{calendarificYear} holiday calendar</h3>
+                          <p>Preview holiday dates before importing.</p>
                         </div>
-                        <HolidayLegend
-                          holidays={calendarificHolidays.length > 0 ? calendarificHolidays : (configuration.holidays || [])}
-                          showAll
-                        />
+                        <div className="cc-import-legend" aria-label="Holiday categories">{Object.values(HOLIDAY_CATEGORY_CONFIG).map(category => <span key={category.key} style={{ '--holiday-color': category.color }}><i aria-hidden="true" />{category.label}</span>)}</div>
                       </div>
 
                       <div className="cc-year-calendar-grid">
@@ -1375,13 +1187,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                               <div className="cc-month-card-header">
                                 <strong>{monthLabel}</strong>
                               </div>
-                              <UniversalCalendar
-                                size="sm"
-                                mode="single"
-                                hideNavigation
-                                month={monthDate}
-                                holidaysMap={activeHolidays}
-                              />
+                              <HolidayCalendar compact month={monthDate} holidays={activeHolidays} />
                             </div>
                           );
                         })}
@@ -1399,18 +1205,12 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                             </span>
                           </div>
                           <div className="cc-selection-buttons">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedCalendarificHolidays(calendarificHolidays.map((_, i) => i))}
-                            >
+                            <Button size="sm" variant="outline" type="button" onClick={() => setSelectedCalendarificHolidays(calendarificHolidays.map((_, i) => i))}>
                               Select All
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedCalendarificHolidays([])}
-                            >
+                            </Button>
+                            <Button size="sm" variant="outline" type="button" onClick={() => setSelectedCalendarificHolidays([])}>
                               Clear
-                            </button>
+                            </Button>
                           </div>
                         </div>
 
@@ -1465,23 +1265,14 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                     )}
                   </div>
                 </div>
-              </section>
+              </Card>
             )}
           </main>
 
           {tab === 'types' && (
             <aside className="cc-group-column">
-              <section className="cc-panel">
-                <header>
-                  <div>
-                    <span className="cc-panel-eyebrow">LEAVE POLICY GROUPS</span>
-                    <h2>{group.id ? `Edit ${group.name}` : 'Create a group'}</h2>
-                    <p>Bundle up to ten leave types, then apply the group to teams or people.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className="cc-button"
-                    onClick={() => {
+              <Card className="tenant-panel cc-panel cc-group-editor">
+                <TenantPanelHeader title={<>{group.id ? `Edit ${group.name}` : 'Create a group'}</>} subtitle={<>Bundle policies and assign them to your people.</>} actions={[{id:'action0',variant:'colored',iconOnly:true,icon:<Plus size={22} aria-hidden="true" />,'aria-label':'Create new policy group',title:'Create new policy group',disabled:busy,onClick:() => {
                       setGroup({
                         name: '',
                         description: '',
@@ -1492,12 +1283,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                         userids: []
                       });
                       setGroupPeople([]);
-                    }}
-                  >
-                    <Plus size={14} />
-                    New
-                  </button>
-                </header>
+                    }}]}/>
                 <form onSubmit={saveGroup}>
                   <fieldset disabled={busy}>
                     <div className="cc-group-form">
@@ -1519,132 +1305,54 @@ export function CompanyCalendarPage({ api, onShowToast }) {
                           placeholder="Group coverage description..."
                         />
                       </label>
-                      <strong>Included leave types ({(group.leave_type_ids || []).length}/10)</strong>
-                      <div className="cc-group-types">
-                        {(configuration.leaveTypes || []).map(type => (
-                          <label key={type.id}>
-                            <input
-                              type="checkbox"
-                              disabled={!(group.leave_type_ids || []).includes(type.id) && (group.leave_type_ids || []).length >= 10}
-                              checked={(group.leave_type_ids || []).includes(type.id)}
-                              onChange={() => toggleGroupList('leave_type_ids', type.id)}
-                            />
-                            <i style={{ background: type.color }} />
-                            <span>{type.name}</span>
-                          </label>
-                        ))}
-                      </div>
-
-                      <label>
-                        Assign policy group to
-                        <select
-                          value={group.assignment_mode}
-                          onChange={e => setGroup({ ...group, assignment_mode: e.target.value })}
-                        >
-                          <option value="teams">Teams & Departments</option>
-                          <option value="people">Specific Employees</option>
-                        </select>
-                      </label>
-
-                      {group.assignment_mode === 'teams' ? (
-                        <div className="cc-group-types">
-                          {groups.map(value => (
-                            <label key={value}>
-                              <input
-                                type="checkbox"
-                                checked={(group.teams || []).includes(value)}
-                                onChange={() => toggleGroupList('teams', value)}
-                              />
-                              <span>{value}</span>
-                            </label>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="cc-group-people">
-                          {people.map(person => (
-                            <label key={person.userid}>
-                              <input
-                                type="checkbox"
-                                checked={groupPeople.includes(person.userid)}
-                                onChange={() => setGroupPeople(ids => ids.includes(person.userid) ? ids.filter(id => id !== person.userid) : [...ids, person.userid])}
-                              />
-                              <span>{nameOf(person)}</span>
-                              <small>{person.userid}</small>
-                            </label>
-                          ))}
-                        </div>
-                      )}
+                      <MultiSelect label="Included leave types" maxSelected={10} value={group.leave_type_ids||[]} options={configuration.leaveTypes.map(type=>({value:type.id,label:type.name,description:type.code}))} onChange={ids=>setGroup({...group,leave_type_ids:ids})} disabled={busy} placeholder="Choose leave policies" empty="Save a leave type first to include it in a group."/>
+                      <label>Assign group to<select value={group.assignment_mode} onChange={e=>setGroup({...group,assignment_mode:e.target.value})}><option value="teams">Teams & departments</option><option value="people">Specific employees</option></select></label>
+                      {group.assignment_mode==='teams'?<MultiSelect label="Teams & departments" value={group.teams||[]} options={groups.map(value=>({value,label:value}))} onChange={teams=>setGroup({...group,teams})} disabled={busy} placeholder="Choose teams or departments"/>:<MultiSelect label="Employees" value={groupPeople} options={people.map(person=>({value:person.userid,label:nameOf(person),description:person.department}))} onChange={setGroupPeople} disabled={busy} placeholder="Choose employees"/>}
 
                     </div>
 
                     <footer>
-                      <label className="cc-switch cc-footer-switch" title={group.active ? 'Group enabled' : 'Group disabled'}>
-                        <input
-                          type="checkbox"
-                          checked={group.active}
-                          onChange={e => setGroup({ ...group, active: e.target.checked })}
-                        />
-                        <span />
-                        <span className="cc-switch-text">{group.active ? 'On' : 'Off'}</span>
-                      </label>
+                      <div className="cc-group-status"><div><strong>Group enabled</strong><small>{group.active?'Available for leave assignments':'Paused for new assignments'}</small></div><Toggle id="cc-group-enabled" checked={group.active} disabled={busy} onChange={active=>setGroup({...group,active})}/><label htmlFor="cc-group-enabled" className="cc-visually-hidden">Enable policy group</label></div>
                       {group.id && (
-                        <button
-                          type="button"
-                          className="cc-button cc-button--danger"
-                          onClick={() => run(async () => {
-                            await companyCalendarApi.deleteGroup(group.id);
-                            setGroup({
-                              name: '',
-                              description: '',
-                              active: true,
-                              leave_type_ids: [],
-                              assignment_mode: 'teams',
-                              teams: [],
-                              userids: []
-                            });
-                          }, 'Policy group removed.')}
-                        >
-                          <Trash2 size={14} />
+                        <Button size="sm" variant="danger" type="button" icon={Trash2} wrapContent={false} onClick={() => run(async () => {
+  await companyCalendarApi.deleteGroup(group.id);
+  setGroup({
+    name: '',
+    description: '',
+    active: true,
+    leave_type_ids: [],
+    assignment_mode: 'teams',
+    teams: [],
+    userids: []
+  });
+}, 'Policy group removed.')}>
                           Delete
-                        </button>
+                        </Button>
                       )}
-                      <button className="cc-button cc-button--primary" type="submit" disabled={busy}>
-                        <Save size={14} />
-                        {busy ? 'Saving...' : 'Save group'}
-                      </button>
+                      <Button size="sm" variant="colored" type="submit" icon={Save} loading={busy}>Save group</Button>
                     </footer>
                   </fieldset>
                 </form>
-              </section>
+              </Card>
 
-              <section className="cc-panel">
-                <header>
-                  <div>
-                    <span className="cc-panel-eyebrow">SAVED GROUPS</span>
-                    <h2>{(configuration.groups || []).length} policy groups</h2>
-                  </div>
-                </header>
+              <Card className="tenant-panel cc-panel">
+                <TenantPanelHeader title={<>{(configuration.groups || []).length} policy groups</>}  />
                 <div className="cc-saved-groups">
                   {(configuration.groups || []).length ? (
                     (configuration.groups || []).map(item => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={group.id === item.id ? 'is-selected' : ''}
-                        onClick={() => {
-                          setGroup(item);
-                          setGroupPeople(item.userids || []);
-                        }}
-                      >
+                      <Button size="sm" variant={group.id === item.id ? "colored" : "fadeout"} key={item.id} type="button" className={['cc-selection', group.id === item.id ? 'is-selected' : ''].filter(Boolean).join(' ')} onClick={() => {
+  setGroup(item);
+  setGroupPeople(item.userids || []);
+}} layout="row">
                         <strong>{item.name}</strong>
                         <small>{(item.leave_type_ids || []).length} leave types · {item.active ? 'Active' : 'Off'}</small>
-                      </button>
+                      </Button>
                     ))
                   ) : (
                     <p className="cc-empty-inline">No policy groups created yet.</p>
                   )}
                 </div>
-              </section>
+              </Card>
             </aside>
           )}
 
@@ -1660,7 +1368,7 @@ export function CompanyCalendarPage({ api, onShowToast }) {
             </aside>
           )}
         </div>
-      )}
+      )}</SectionSkeleton>
     </div>
   );
 }

@@ -1,11 +1,11 @@
+import { isAvatarStorageKey } from '../../../../shared/avatarStorage.mjs';
 import { R2_STORAGE_BASE, R2_PROFILE_IMAGES } from '../../../lib/api';
 
 export function profileImage(person) {
   const uid = person?.userid || person?.user_id || person?.employee_code || person?.id;
-  const cached = uid && typeof window !== 'undefined' ? (localStorage.getItem(`pulse_avatar_${uid}`) || R2_PROFILE_IMAGES[uid]) : null;
-  const path = cached || person?.profile_pic_url || person?.profile?.profile_pic_url || person?.avatar_url;
+  const path = person?.profile_pic_url || person?.profile?.profile_pic_url || person?.avatar_url || R2_PROFILE_IMAGES[uid];
   if (!path || typeof path !== 'string') return '';
-  if (/^\/?(?:storage\/)?profile\//.test(path.trim())) return path.trim();
+  if (isAvatarStorageKey(path.trim().replace(/^\/?storage\//, '').replace(/^\//, ''))) return path.trim();
   if (path.startsWith('data:') || path.startsWith('blob:')) return path;
   if (/^https?:\/\//i.test(path)) return path;
   try {

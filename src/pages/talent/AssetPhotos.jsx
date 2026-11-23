@@ -1,3 +1,4 @@
+import { ModalFrame } from '../../components/ui/Modal';
 import { cachedImage } from '../../lib/imageCache';
 import { ImageWithSkeleton } from '../../components/ui/ImageWithSkeleton';
 import { compressAssetImage } from '../../lib/assetImageCompression';
@@ -54,8 +55,11 @@ function PhotoContent({ collection, recordId, stage, photo, file, staticPreview 
   const preview = <ImageWithSkeleton src={src} loading={!src && !error} fallback={error || 'Image unavailable'} alt={staticPreview ? 'Product photo' : stage + ' photo'} fit="cover" />;
   if (staticPreview) return <div className="asset-photo-heading-image">{preview}</div>;
   if (!enlarge) return <div className="asset-photo-preview asset-photo-preview--static">{preview}</div>;
-  return <><button className="asset-evidence-preview" type="button" disabled={!src || !!error} aria-label={'Enlarge ' + stage + ' photo'} onClick={() => { setExpanded(true); dialog.current.showModal(); }}>{preview}<Maximize2 size={14} aria-hidden="true" /></button>
-    <dialog ref={dialog} className="asset-evidence-viewer" aria-label="Enlarged asset photo" onClose={() => setExpanded(false)}><div className="asset-evidence-viewer__body"><header className="asset-evidence-viewer__header"><strong>Photo preview</strong><Button variant="fadeout" iconOnly icon={X} aria-label="Close photo" onClick={() => dialog.current.close()} /></header><ImageWithSkeleton src={file ? src : fullSrc} loading={!(file ? src : fullSrc) && !error} fallback={error || 'Image unavailable'} alt={stage + ' photo enlarged'} height="min(65dvh, 600px)" fit="cover" /></div></dialog>
+  return <><Button className="asset-evidence-preview" type="button" disabled={!src || !!error} aria-label={'Enlarge ' + stage + ' photo'} onClick={() => {
+  setExpanded(true);
+  dialog.current.showModal();
+}} variant="outline" wrapContent={false} layout="row">{preview}<Maximize2 size={14} aria-hidden="true" /></Button>
+    <ModalFrame ref={dialog} className="asset-evidence-viewer" aria-label="Enlarged asset photo" onClose={() => setExpanded(false)}><div className="asset-evidence-viewer__body"><header className="asset-evidence-viewer__header"><strong>Photo preview</strong><Button variant="fadeout" iconOnly icon={X} aria-label="Close photo" onClick={() => dialog.current.close()} /></header><ImageWithSkeleton src={file ? src : fullSrc} loading={!(file ? src : fullSrc) && !error} fallback={error || 'Image unavailable'} alt={stage + ' photo enlarged'} height="min(65dvh, 600px)" fit="cover" /></div></ModalFrame>
   </>;
 }
 export function AssetHeaderPhoto({ record, file }) {

@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button';
 import React from 'react';
 import {
   Calendar,
@@ -118,26 +119,16 @@ export function EmployeeDossier({
           </a>
 
           {/* Download Payslip Button (Solid Slate/Gray, No Border) */}
-          <button
-            type="button"
-            onClick={() => onOpenSlipModal(employee)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#111827] bg-[#F3F4F6] hover:bg-[#E5E7EB] rounded-[50px] shadow-2xs transition-all cursor-pointer"
-            title="Download Payslip PDF"
-          >
+          <Button type="button" onClick={() => onOpenSlipModal(employee)} className="inline-flex items-center gap-1.5  " title="Download Payslip PDF" variant="outline" wrapContent={false}>
             <Download className="w-3.5 h-3.5 text-[#374151]" />
             <span>Payslip</span>
-          </button>
+          </Button>
 
           {/* Quick Manage Button (Solid Black/Dark, No Border) */}
-          <button
-            type="button"
-            onClick={() => onOpenManageModal(employee)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#111827] hover:bg-black rounded-[50px] shadow-2xs transition-all cursor-pointer"
-            title="Quick Manage"
-          >
+          <Button type="button" onClick={() => onOpenManageModal(employee)} className="inline-flex items-center gap-1.5  " title="Quick Manage" variant="outline" wrapContent={false}>
             <Calendar className="w-3.5 h-3.5 text-white/90" />
             <span>Manage</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -148,18 +139,10 @@ export function EmployeeDossier({
             const Icon = tab.icon;
             const isActive = dossierTab === tab.id;
             return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => onTabChange(tab.id)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[50px] transition-all cursor-pointer ${isActive
-                  ? 'bg-[#111827] text-white shadow-2xs'
-                  : 'text-[#4B5563] hover:text-[#111827] hover:bg-[#F3F4F6]'
-                  }`}
-              >
+              <Button key={tab.id} type="button" onClick={() => onTabChange(tab.id)} className={`inline-flex items-center gap-1.5      ${isActive ? "" : ""}`} variant="outline" wrapContent={false}>
                 <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
-              </button>
+              </Button>
             );
           })}
         </nav>

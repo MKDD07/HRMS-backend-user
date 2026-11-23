@@ -47,7 +47,7 @@ export function saveEmployeeCustomComponents(userid, components) {
 
 // Create a real template based on official band structure when initializing a new month
 export function getInitialMonthlyRecord(userid, year = String(new Date().getFullYear()), month = MONTHS[new Date().getMonth()]) {
-  const custom = getEmployeeCustomComponents(userid);
+  const custom = { earnings: [], deductions: [] };
   const earnings = custom?.earnings || [], deductions = custom?.deductions || [];
   const gross = earnings.reduce((sum, row) => sum + Number(row.amount || 0), 0);
   const totalDeductions = deductions.reduce((sum, row) => sum + Number(row.amount || 0), 0);
@@ -128,7 +128,7 @@ export function saveMonthlySalary(userid, year, month, data) {
   const normalized = normalizeSalary(data);
   const recordToSave = {
     ...data, ...normalized, id: data.id || 'SAL-' + userid + '-' + year + '-' + month,
-    user_id: userid, year, month, annual_ctc: normalized.monthly_gross * 12,
+    user_id: userid, year, month, annual_ctc: normalized.annual_ctc,
     updated_at: new Date().toISOString()
   };
 
@@ -141,7 +141,7 @@ export function saveMonthlySalary(userid, year, month, data) {
       `pulse_salary_${userid}`,
       JSON.stringify({
         ...recordToSave,
-        annual_ctc: recordToSave.monthly_gross * 12
+        annual_ctc: recordToSave.annual_ctc
       })
     );
   } catch (e) {
@@ -256,3 +256,4 @@ export function deleteSalarySchema(salary_id) {
   }
   return list;
 }
+

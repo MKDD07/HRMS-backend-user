@@ -1,3 +1,4 @@
+import { createMailRouter } from './server/internalMailRoutes.mjs';
 import { legacyDashboardGuard } from './server/dashboardAuthorization.mjs';
 ﻿import 'dotenv/config';
 import { createCompanyAuthRouter } from './server/companyAuthRoutes.mjs';
@@ -15,8 +16,14 @@ app.use('/api/company-auth', createCompanyAuthRouter());
 const PORT = 3000;
 const server = http.createServer(app);
 
+app.use('/api/mail', createMailRouter());
 app.use('/api/payroll-studio', createPayrollRouter());
 app.use('/api/company-calendar', createCompanyCalendarRouter());
+// All business records use company-scoped Cloudflare APIs. These legacy routes
+// used machine-local JSON stores and must not accept new reads or writes.
+app.use(['/api/notifications', '/api/hierarchy', '/api/attendance'], (_req, res) => {
+  res.status(410).json({ success: false, message: 'Local storage is disabled. Use the company-scoped Cloudflare API.' });
+});
 app.use(express.json());
 app.use('/api', legacyDashboardGuard());
 
@@ -156,12 +163,10 @@ function broadcast(event: { type: string; [key: string]: any }): void {
 }
 
 // Handle HTTP upgrade for /ws/notifications
-server.on('upgrade', (request, socket, head) => {
+server.on('upgrade', (request, socket) => {
   const pathname = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`).pathname;
   if (pathname === '/ws/notifications' || pathname === '/ws') {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
-    });
+    socket.destroy();
   }
 });
 
@@ -1013,7 +1018,7 @@ app.post('/api/attendance/regularize/:id', (req, res) => {
 // Start Server & Vite Middleware
 // --------------------------------------------------------------------------
 async function startServer() {
-  await initializeNotifications();
+  // Do not read or seed the retired machine-local notification store.
 
   // In development, hook up Vite middleware
   if (process.env.NODE_ENV !== 'production') {

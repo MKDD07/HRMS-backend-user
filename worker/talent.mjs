@@ -1,4 +1,6 @@
+import { saveRecruitmentRecord } from './recruitmentService.mjs';
 import { TALENT_COLLECTIONS, fieldIsVisible } from '../shared/talentModel.mjs';
+import { validateContent, documentText, missingFields, hasBodyContent } from '../shared/lifecycleDocuments.mjs';
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const statement = (db, sql, params = []) => db.prepare(sql).bind(...params);
 const unpack = row => ({ ...JSON.parse(row.payload), id: row.id, revision: row.revision, created_at: row.created_at, updated_at: row.updated_at });
@@ -23,16 +25,39 @@ async function validate(db, company, collection, body, previous) {
       value[field.key] = Number(raw);
       if (field.key === 'positions' && !Number.isInteger(value[field.key])) fail('Open positions must be a whole number.');
     } else {
-      value[field.key] = cleanText(raw, field.label, field.type === 'textarea' ? 5000 : 300);
+      value[field.key] = cleanText(raw, field.label, field.maxLength || (field.type === 'textarea' ? 5000 : 300));
       if (field.required && !value[field.key]) fail(`${field.label} is required.`);
       if (field.type === 'select' && !field.options.includes(value[field.key])) fail(`Invalid ${field.label.toLowerCase()}.`);
       if (field.type === 'date' && (!/^\d{4}-\d{2}-\d{2}$/.test(raw) || !Number.isFinite(Date.parse(raw)) || new Date(raw).toISOString().slice(0, 10) !== raw)) fail(`Invalid ${field.label.toLowerCase()}.`);
+      if (field.type === 'time' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(raw)) fail(`Invalid ${field.label.toLowerCase()}.`);
       if (field.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) fail('Enter a valid email address.');
       if (field.type === 'url') { try { if (!['https:', 'http:'].includes(new URL(raw).protocol)) fail('Use an HTTP or HTTPS course link.'); } catch { fail('Use a valid HTTP or HTTPS course link.'); } }
       if (field.type === 'employee' && !await statement(db, 'SELECT user_id FROM employees WHERE company_id=? AND user_id=?', [company, raw]).first()) fail('Employee does not belong to this company.');
       if (field.type === 'reference' && !await statement(db, 'SELECT id FROM talent_records WHERE company_id=? AND collection=? AND id=?', [company, field.collection, raw]).first()) fail(`${field.label} does not belong to this company.`);
     }
   }
+  if (config.documentContent) {
+    let content;
+    try { content = validateContent(value.content); } catch (error) { fail(error.message); }
+    if (previous && collection.endsWith('_documents') && JSON.parse(previous.payload).status === 'Finalized') fail('Finalized documents are immutable. Create a new draft version.', 409);
+    if (value.status === 'Finalized' && (missingFields(content).length || /\{\{[^}]+\}\}/.test(documentText(content)))) fail('Complete all required letter fields before finalizing.');
+    if (value.status === 'Finalized' && !hasBodyContent(content)) fail('Add document body content before finalizing.');
+    if (collection.endsWith('_documents')) {
+      value.source_key = previous ? JSON.parse(previous.payload).source_key || '' : '';
+      if (previous) value.delivery = JSON.parse(previous.payload).delivery || null;
+    }
+  }
+  if (collection === 'onboarding' && value.probation_months !== '' && !Number.isInteger(value.probation_months)) fail('Probation duration must be a whole number of months.');
+  if (collection === 'onboarding' && previous) {
+    const old = JSON.parse(previous.payload);
+    if (old.source_offer_id) {
+      if (old.employee_id !== value.employee_id) fail('A recruitment-created plan cannot move to another employee.',409);
+      if (old.start_date !== value.start_date) fail('The joining date is fixed by the accepted offer.',409);
+      value.source_offer_id = old.source_offer_id;
+      if (old.joined_at) value.joined_at = old.joined_at;
+    }
+  }
+  if (value.probation_end_date && value.start_date && value.probation_end_date < value.start_date) fail('Probation end cannot precede joining.');
   if (value.start_date && value.due_date < value.start_date) fail('Due date must be on or after the start date.');
   if (config.checklist) {
     if (!Array.isArray(body.checklist) || !body.checklist.length || body.checklist.length > 50) fail('Provide between 1 and 50 checklist tasks.');
@@ -80,11 +105,18 @@ async function validate(db, company, collection, body, previous) {
 }
 export async function talentHandle({ db, actor, path, method, body, url }) {
   if (actor.role !== 'company_admin') fail('Dashboard administrator access required.', 403);
-  const [collection, id, extra] = path.slice('/api/v1/talent/'.length).split('/');
-  if (!Object.hasOwn(TALENT_COLLECTIONS, collection) || extra) fail('Module not found.', 404);
+  const [collection, encodedId, extra] = path.slice('/api/v1/talent/'.length).split('/');
+  const id = encodedId ? decodeURIComponent(encodedId) : '';
+  if (!Object.hasOwn(TALENT_COLLECTIONS, collection) || (extra && !(extra === 'audit' && ['requisitions','jobs','candidates','interviews','offers'].includes(collection) && method === 'GET' && id))) fail('Module not found.', 404);
+  if (extra === 'audit') {
+    if (!await statement(db,'SELECT id FROM talent_records WHERE company_id=? AND collection=? AND id=?',[actor.company_id,collection,id]).first()) fail('Record not found.',404);
+    const offset = Math.max(0,Math.floor(Number(url.searchParams.get('offset')) || 0));
+    return (await statement(db,'SELECT id,actor_id,action,before_json,after_json,created_at FROM talent_audit WHERE company_id=? AND collection=? AND record_id=? ORDER BY created_at DESC,id LIMIT 100 OFFSET ?',[actor.company_id,collection,id,offset]).all()).results;
+  }
   const financialAdmin = (actor.original_role || actor.role) === 'company_admin';
   const publicRecord = row => {
     const record = unpack(row);
+    delete record.last_change_id;
     if (collection === 'assets' && !financialAdmin) for (const field of TALENT_COLLECTIONS.assets.fields) if (field.adminOnly) delete record[field.key];
     return record;
   };
@@ -94,8 +126,11 @@ export async function talentHandle({ db, actor, path, method, body, url }) {
     return result.results.map(publicRecord);
   }
   if (method !== 'POST') fail('Route not found.', 404);
-  const previous = id ? await statement(db, 'SELECT * FROM talent_records WHERE company_id=? AND collection=? AND id=?', [actor.company_id, collection, id]).first() : null;
-  if (id && !previous) fail('Record not found.', 404);
+  const singleton = TALENT_COLLECTIONS[collection].singleton;
+  if (singleton && id && id !== 'company-letterhead') fail('Letter settings record not found.', 404);
+  const lookupId = id || (singleton ? 'company-letterhead' : '');
+  const previous = lookupId ? await statement(db, 'SELECT * FROM talent_records WHERE company_id=? AND collection=? AND id=?', [actor.company_id, collection, lookupId]).first() : null;
+  if (id && !previous && !singleton) fail('Record not found.', 404);
   if (previous && (!Number.isInteger(body.revision) || body.revision !== previous.revision)) fail('This record changed. Refresh and open it again before saving.', 409);
   if (collection === 'assets' && !financialAdmin) {
     const old = previous ? JSON.parse(previous.payload) : {};
@@ -107,8 +142,12 @@ export async function talentHandle({ db, actor, path, method, body, url }) {
   }
   const value = await validate(db, actor.company_id, collection, body, previous);
   if (['assets', 'asset_issues'].includes(collection)) value.photos = previous ? JSON.parse(previous.payload).photos || {} : {};
-  const now = new Date().toISOString(), recordId = id || crypto.randomUUID();
+  const now = new Date().toISOString(), recordId = lookupId || crypto.randomUUID();
   value.history = [...(previous ? JSON.parse(previous.payload).history || [] : []), { at: now, actor: actor.user_id, status: value.status }].slice(-100);
+  if (['requisitions','jobs','candidates','interviews','offers'].includes(collection)) {
+    try { return publicRecord(await saveRecruitmentRecord({db,actor,collection,value,previous,id:recordId,now})); }
+    catch(error) { if (/UNIQUE constraint/i.test(error.message)) fail('This candidate already applied to this job, or an active offer already exists.',409); throw error; }
+  }
   let guard = '', guardParams = [];
   if (collection === 'asset_issues' && value.status !== 'Returned') {
     guard = " AND EXISTS (SELECT 1 FROM talent_records inventory WHERE inventory.company_id=? AND inventory.collection='assets' AND inventory.id=? AND json_extract(inventory.payload,'$.status')='Available')";

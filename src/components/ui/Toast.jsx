@@ -1,3 +1,4 @@
+import { Button } from './Button';
 import React from 'react';
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
 
@@ -22,14 +23,9 @@ export function Toast({
         {message && <div className="toast__message">{message}</div>}
       </div>
       {onClose && (
-        <button
-          type="button"
-          className="toast__close"
-          onClick={onClose}
-          aria-label="Dismiss toast"
-        >
+        <Button type="button" className="toast__close" onClick={onClose} aria-label="Dismiss toast" variant="fadeout" wrapContent={false} iconOnly={true} size="sm">
           <X className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -1,3 +1,5 @@
+import { createD1RestDatabase } from './d1RestDatabase.mjs';
+import { applyActorPolicy, workspacePolicy, seatAccess } from '../worker/planPolicy.mjs';
 import { createHash } from 'node:crypto';
 import { existingCloudflareConfig } from './payrollDatabase.mjs';
 import { parsePages } from '../shared/dashboardAccess.mjs';
@@ -14,7 +16,11 @@ export async function dashboardAuthorization(req, env = process.env) {
   const result = await response.json();
   const actor = result.success && result.result?.[0]?.results?.[0];
   if (!actor) return null;
-  return { ...actor, userid: actor.user_id, dashboard_pages: parsePages(actor.dashboard_pages), admin: actor.role === 'company_admin' };
+  const policyDb=createD1RestDatabase({account:env.CLOUDFLARE_ACCOUNT_ID,token:env.CLOUDFLARE_API_TOKEN,databaseId});
+  const resolved=await applyActorPolicy(policyDb,actor);
+  const seats=await seatAccess(policyDb,actor.company_id,await workspacePolicy(policyDb,actor.company_id));
+  const allowed=[...seats.values()].filter(seat=>!seat.plan_locked);
+  return { ...resolved, plan_user_ids:allowed.map(seat=>seat.user_id), plan_employee_codes:allowed.map(seat=>seat.employee_code), userid: actor.user_id, dashboard_pages: parsePages(actor.dashboard_pages), admin: actor.role === 'company_admin' };
 }
 
 export function legacyDashboardGuard(verify = dashboardAuthorization) {
@@ -25,6 +31,10 @@ export function legacyDashboardGuard(verify = dashboardAuthorization) {
       if (!actor) return res.status(401).json({ success: false, message: 'Verified sign-in required.' });
       // Legacy handlers are not company-scoped. Delegated accounts must use company APIs.
       if (!actor.admin) return res.status(403).json({ success: false, message: 'Use the company-scoped API for this dashboard account.' });
+      const page=req.path.includes('salar')?'payroll':req.path.startsWith('/hierarchy')?'departments':null;
+      if(page && actor.plan_pages && !actor.plan_pages.includes(page))return res.status(403).json({success:false,message:'This feature is not included in your workspace plan.'});
+      const target=req.body?.userid || req.query?.userid;
+      if(target && actor.plan_user_ids && !actor.plan_user_ids.includes(target) && !actor.plan_employee_codes.includes(target))return res.status(403).json({success:false,message:'This employee is outside your current plan capacity.'});
       next();
     } catch { res.status(503).json({ success: false, message: 'Unable to verify dashboard permissions.' }); }
   };

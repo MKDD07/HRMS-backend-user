@@ -1,0 +1,12 @@
+﻿import assert from 'node:assert/strict';
+import {buildBankSalaryLetter} from './bankSalaryLetter.mjs';
+const args={users:[{userid:'EMP-1',first_name:'A <script>',last_name:'Singh'}],periodRecords:{'EMP-1':{status:'Finalized',monthly_gross:50000,total_deductions:3000,monthly_net:47000,paid:7000,pending:40000}},accounts:{'EMP-1':{account_holder:'A Singh',account_no:'001234567890',bank_name:'Example Bank',ifsc_code:'ABCD0123456',preferred_payment_method:'Bank transfer'}},month:'October',year:'2026',company:'Company Ltd',bank:'Bank',branch:'Branch',debitAccount:'000111',signatory:'HR',date:'2026-10-13'};
+const letter=buildBankSalaryLetter(args);
+assert.ok(letter.includes('40,000.00'));
+assert.ok(letter.includes('001234567890'));
+assert.ok(letter.includes('A &lt;script&gt; Singh'));
+assert.ok(!letter.includes('A <script>'));
+assert.throws(()=>buildBankSalaryLetter({...args,accounts:{}}),/beneficiary/);
+assert.throws(()=>buildBankSalaryLetter({...args,periodRecords:{'EMP-1':{status:'Draft',pending:40000}}}),/No finalized/);
+assert.throws(()=>buildBankSalaryLetter({...args,periodRecords:{'EMP-1':{status:'Finalized',pending:0}}}),/No finalized/);
+console.log('Bank salary letter checks passed');

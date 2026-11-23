@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const PAYROLL_SCHEMA = [
@@ -9,16 +9,19 @@ export const PAYROLL_SCHEMA = [
   `CREATE TABLE IF NOT EXISTS payslip_records (id TEXT PRIMARY KEY, userid TEXT NOT NULL, year TEXT NOT NULL, month TEXT NOT NULL, created_at TEXT NOT NULL, status TEXT NOT NULL, object_key TEXT, error TEXT, payload TEXT NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS payslip_employee_period ON payslip_records(userid, year, month)`
 ];
-export function existingCloudflareConfig() {
-  let config = ''; try { config = readFileSync(join(process.cwd(), 'wrangler.toml'), 'utf8'); } catch {}
-  return { databaseId: process.env.CLOUDFLARE_D1_DATABASE_ID || config.match(/database_id\s*=\s*"([^"]+)"/)?.[1], bucket: process.env.R2_BUCKET_NAME || config.match(/bucket_name\s*=\s*"([^"]+)"/)?.[1] };
+export function existingCloudflareConfig(env = process.env) {
+  let config = '', companyConfig = '';
+  try { config = readFileSync(join(process.cwd(), 'wrangler.toml'), 'utf8'); } catch {}
+  try { companyConfig = readFileSync(join(process.cwd(), 'wrangler.company.toml'), 'utf8'); } catch {}
+  return { databaseId: env.CLOUDFLARE_D1_DATABASE_ID || config.match(/database_id\s*=\s*"([^"]+)"/)?.[1] || companyConfig.match(/database_id\s*=\s*"([^"]+)"/)?.[1], bucket: env.R2_BUCKET_NAME || config.match(/bucket_name\s*=\s*"([^"]+)"/)?.[1] || companyConfig.match(/binding\s*=\s*"HRMS_DOCUMENTS"\s*\r?\n\s*bucket_name\s*=\s*"([^"]+)"/)?.[1] };
 }
 export function createPayrollDatabase({ filename, env = process.env } = {}) {
-  const cloud = existingCloudflareConfig();
+  const cloud = existingCloudflareConfig(env);
   const configured = Boolean(env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_API_TOKEN && cloud.databaseId);
-  if (env.NODE_ENV === 'production' && !configured && !filename) throw new Error('Configure Cloudflare D1 before enabling production payroll.');
+  if (!configured && !filename) throw new Error('Configure Cloudflare D1. Local database fallback is disabled.');
   let local;
-  if (!configured || filename) { if (!filename) mkdirSync(join(process.cwd(), 'data'), { recursive: true }); local = new DatabaseSync(filename || join(process.cwd(), 'data', 'payroll.sqlite')); local.exec('PRAGMA journal_mode = WAL;'); }
+  // An explicit filename remains available to tests and offline migration tools only.
+  if (filename) { local = new DatabaseSync(filename); local.exec('PRAGMA journal_mode = WAL;'); }
   async function query(sql, params = []) {
     if (local) {
       const stmt = local.prepare(sql);

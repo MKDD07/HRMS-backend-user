@@ -2,6 +2,12 @@ import { clearImageCache } from './imageCache';
 import { companyRequest } from './companyAuth';
 const call = (path, options = {}) => companyRequest(path, { token: localStorage.getItem('pulse_hrms_token'), ...options });
 export const talentApi = {
+  sendOffer: record => call(`/talent/offers/${encodeURIComponent(record.id)}/send`,{method:'POST',body:JSON.stringify({revision:record.revision})}),
+  hireOffer: (record,details) => call(`/talent/offers/${encodeURIComponent(record.id)}/hire`,{method:'POST',body:JSON.stringify({...details,revision:record.revision})}),
+  activateJoiner: (record,temporary_password) => call(`/talent/onboarding/${encodeURIComponent(record.id)}/activate`,{method:'POST',body:JSON.stringify({revision:record.revision,temporary_password})}),
+  audit: (collection,id) => call(`/talent/${collection}/${encodeURIComponent(id)}/audit`),
+  generateDocuments: page => call(`/talent/${page}_documents/generate`, { method: 'POST', body: '{}' }),
+  sendDocument: (page, record) => call(`/talent/${page}_documents/${encodeURIComponent(record.id)}/send`, { method: 'POST', body: JSON.stringify({ revision: record.revision }) }),
   async list(collection) {
     const result = [];
     for (let offset = 0; ; offset += 100) {

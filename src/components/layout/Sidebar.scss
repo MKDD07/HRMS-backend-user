@@ -15,16 +15,6 @@
   font-family: var(--nav-font-family, var(--font-family-base, $font-family-base));
   transition: width var(--ease-fast, 0.2s ease), transform var(--ease-fast, 0.2s ease);
 
-  button {
-    font-family: inherit;
-    cursor: pointer;
-
-    &:focus-visible {
-      outline: 2px solid $color-focus;
-      outline-offset: -2px;
-    }
-  }
-
   &__nav {
     flex: 1;
     min-height: 0;
@@ -69,13 +59,7 @@
     min-height: 40px;
     padding: var(--space-2, 8px) var(--space-3, 12px);
     margin-bottom: 3px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md, 10px);
-    background: transparent;
-    color: $color-text-secondary;
-    font-family: var(--nav-font-family, var(--font-family-base, $font-family-base));
     text-align: left;
-    transition: background var(--ease-fast, 0.15s), color var(--ease-fast, 0.15s), border-color var(--ease-fast, 0.15s);
 
     &>svg {
       flex-shrink: 0;
@@ -93,16 +77,7 @@
       white-space: nowrap;
     }
 
-    &:hover {
-      background: $color-primary-subtle;
-      color: $color-primary-dark;
-    }
-
     &.is-active {
-      background: $color-primary-subtle;
-      color: $color-primary-dark;
-      border-color: $color-border-dark;
-      box-shadow: 0 1px 3px rgba(41, 50, 37, 0.04);
 
       &>span {
         font-weight: var(--weight-bold, 600);
@@ -115,8 +90,6 @@
         height: 18px;
         left: -1px;
         top: calc(50% - 9px);
-        border-radius: 0 3px 3px 0;
-        background: $color-primary;
       }
     }
   }
@@ -152,6 +125,33 @@
   display: none;
 }
 
+// Quiet icon rail; hovering or keyboard focus reveals the navigation labels.
+.tenant-sidebar {
+  width: var(--sidebar-collapsed, 76px);
+  .tenant-sidebar__nav { padding-left: 8px; padding-right: 8px; }
+  .tenant-sidebar__section h2 { display: none; }
+  .tenant-sidebar__link.btn {
+    justify-content: flex-start; padding: 12px 20px; min-height: 44px;
+    > span { display: none; }
+  }
+  .tenant-sidebar__active-arrow { display: none; }
+  &:not(.tenant-sidebar--collapsed), &:hover, &:focus-within {
+    width: var(--sidebar-width, 260px);
+    box-shadow: 8px 0 24px rgba(25, 38, 30, .06);
+    .tenant-sidebar__link.btn > span { display: block; }
+    .tenant-sidebar__section h2 { display: block; }
+  }
+}
+.layout-content { margin-left: var(--sidebar-collapsed, 76px); }
+@media (max-width: $breakpoint-md) {
+  .layout-content { margin-left: 0; }
+  .tenant-sidebar--open {
+    width: min(280px, calc(100vw - 48px));
+    .tenant-sidebar__link.btn > span { display: block; }
+    .tenant-sidebar__section h2 { display: block; }
+  }
+}
+
 @media (max-width: $breakpoint-md) {
   .tenant-sidebar {
     transform: translateX(-100%);
@@ -167,22 +167,118 @@
 
   .tenant-sidebar-backdrop {
     display: block;
+    background: rgb(39 41 44 / 35%);
     position: fixed;
     top: var(--tenant-header-height, 126px);
     bottom: 0;
     left: 0;
     right: 0;
     z-index: 29;
-    border: 0;
-    background: rgba(41, 50, 37, 0.35);
     backdrop-filter: blur(2px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
 
-  .tenant-sidebar,
-  .tenant-sidebar__link {
+  .tenant-sidebar {
     transition: none;
   }
 }
+
+// Theme-matched grouped navigation with quiet surfaces and a clear active page.
+#tenant-admin-sidebar {
+  background: $color-surface;
+  border-right: 1px solid $color-border-light;
+  .tenant-sidebar__nav { padding-top: 18px; padding-bottom: 24px; }
+  .tenant-sidebar__section {
+    margin-top: 14px;
+    &:first-child { margin-top: 0; }
+    & + .tenant-sidebar__section {
+      margin-top: 16px; padding-top: 16px;
+      border-top: 1px solid $color-border-light;
+    }
+    h2 {
+      margin: 0 14px 10px;
+      color: $color-text-muted;
+      font-size: 10px; font-weight: 600; letter-spacing: .06em;
+      line-height: 1.5; white-space: nowrap;
+    }
+  }
+  .tenant-sidebar__link.btn {
+    border: 0; border-radius: 10px; box-shadow: none;
+    margin-bottom: 4px; min-height: 44px;
+    background: transparent; color: $color-text-secondary;
+    > svg { color: $color-text-muted; }
+    > span { font-size: 12px; font-weight: 500; }
+    &:hover:not(:disabled) {
+      background: $color-bg-hover; color: $color-text-main;
+      > svg { color: $color-primary; transform: none; }
+    }
+    &.is-active {
+      background: $color-primary-subtle; color: $color-primary-dark;
+      > svg { color: $color-primary; }
+      > span { font-weight: 600; }
+      &::before { background: $color-primary; border-radius: 3px; left: 0; }
+    }
+    &:active:not(:disabled) { transform: none; }
+  }
+}
+
+// Fixed expansion sizes and instant reflow, inspired by a clean console rail.
+.tenant-shell { --sidebar-width: 260px; --sidebar-collapsed: 76px; }
+#tenant-admin-sidebar {
+  max-width: 260px;
+  transition: none;
+  background: $color-bg-subtle;
+  &:hover, &:focus-within { box-shadow: none; }
+  .tenant-sidebar__workspace {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    height: 58px; padding: 0 27px; border-bottom: 1px solid $color-border;
+    > svg { flex-shrink: 0; color: $color-primary; }
+    > span { display: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
+  }
+  .tenant-sidebar__search {
+    display: none; align-items: center; gap: 9px; margin: 12px 14px 0;
+    padding: 0; border: 0; border-radius: 8px; background: transparent;
+    color: $color-text-muted;
+    > svg { flex-shrink: 0; }
+    input { width: 100%; min-width: 0; min-height: calc(var(--search-height, 34px) - 2px); border: 0; padding: 0; outline: none; background: transparent; color: $color-text-main; font: inherit; font-size: var(--search-font-size, 13px); }
+  }
+  &:not(.tenant-sidebar--collapsed), &:hover, &:focus-within, &.tenant-sidebar--open {
+    .tenant-sidebar__workspace > span { display: block; }
+    .tenant-sidebar__search { display: flex; }
+  }
+  .tenant-sidebar__nav { padding: 12px 14px 24px; }
+  .tenant-sidebar__section {
+    & + .tenant-sidebar__section { border-top: 0; margin-top: 22px; padding-top: 0; }
+    h2 { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; margin: 0 10px 8px; }
+  }
+  .tenant-sidebar__link.btn {
+    min-height: 36px; padding: 9px 14px; border-radius: 8px; margin-bottom: 2px;
+    transition: none;
+    > svg { width: 16px; height: 16px; transition: none; }
+    > span { font-size: 12px; font-weight: 400; }
+    &.is-active { background: $color-bg-muted; color: $color-text-main; &::before { display: none; } > svg { color: $color-text-secondary; } }
+  }
+}
+.tenant-shell .layout-content { transition: margin-left 180ms ease-out; }
+
+@media (prefers-reduced-motion: no-preference) {
+  #tenant-admin-sidebar { transition: width 180ms ease-out; }
+  #tenant-admin-sidebar:hover .tenant-sidebar__nav,
+  #tenant-admin-sidebar:focus-within .tenant-sidebar__nav,
+  #tenant-admin-sidebar:hover .tenant-sidebar__search,
+  #tenant-admin-sidebar:focus-within .tenant-sidebar__search {
+    animation: sidebar-content-reveal 180ms ease-out;
+  }
+}
+@keyframes sidebar-content-reveal {
+  from { opacity: .65; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tenant-shell .layout-content { transition: none; }
+}
+
+.tenant-sidebar__mail-dot {position:absolute;top:8px;left:26px;width:7px;height:7px;border-radius:50%;background:$color-primary;border:1px solid $color-surface;}
+.tenant-sidebar__mail-count {margin-left:auto;color:inherit;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;}

@@ -1,0 +1,11 @@
+@use "sass:color";
+
+// Sass colors only: lighter borders for dark surfaces, darker for light ones.
+@mixin background-border($background, $strength: 12%) {
+  $target: #000;
+  @if color.channel($background, "lightness", $space: hsl) < 50 {
+    $target: #fff;
+  }
+  background: $background;
+  border: 1px solid color.mix($target, $background, $strength);
+}

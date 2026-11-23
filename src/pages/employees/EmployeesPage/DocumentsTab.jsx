@@ -88,9 +88,9 @@ export function DocumentsTab({ employee, onShowToast }) {
         <form onSubmit={handleAdd} className="p-3.5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] space-y-3">
           <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2">
             <h5 className="font-semibold text-[#111827]">Add document to {employee.first_name}'s vault</h5>
-            <button type="button" onClick={closeForm} className="text-[#5F6368] hover:text-[#111827] cursor-pointer">
+            <Button type="button" onClick={closeForm} className="" variant="outline" wrapContent={false}>
               Cancel
-            </button>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -174,23 +174,13 @@ export function DocumentsTab({ employee, onShowToast }) {
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                <button
-                  type="button"
-                  onClick={() => handleDownload(doc)}
-                  className="inline-flex items-center gap-1 px-2 py-1 font-semibold text-[#374151] bg-white border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] shadow-2xs cursor-pointer"
-                  title="Download Document"
-                >
+                <Button type="button" onClick={() => handleDownload(doc)} className="inline-flex items-center gap-1  " title="Download Document" variant="outline" wrapContent={false}>
                   <Download className="w-3 h-3 text-[#6B7280]" />
                   <span>Download</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(doc.id)}
-                  className="p-1 rounded text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
-                  title="Remove Document"
-                >
+                </Button>
+                <Button type="button" onClick={() => handleDelete(doc.id)} className="" title="Remove Document" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                   <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                </Button>
               </div>
             </div>
           ))

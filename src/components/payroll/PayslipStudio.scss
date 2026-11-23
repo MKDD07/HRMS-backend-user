@@ -8,7 +8,7 @@
   padding: var(--space-xs, 8px) 0 var(--space-lg, 24px);
 
   .ps-panel {
-    border-radius: var(--radius-md, 14px);
+    border-radius: var(--radius-card, 12px);
     box-shadow: $shadow-sm;
 
     > header {
@@ -112,23 +112,12 @@
   }
 
   .ps-button {
-    min-height: 36px;
     white-space: normal;
   }
 
   .ps-designs {
     gap: var(--space-sm, 10px);
     padding: 18px;
-
-    > button {
-      padding: 12px;
-      transition: border-color 0.15s, box-shadow 0.15s;
-
-      &:hover {
-        border-color: $color-primary;
-        box-shadow: $shadow-md;
-      }
-    }
 
     small {
       min-height: 45px;
@@ -178,20 +167,7 @@
     button {
       display: flex;
       align-items: center;
-      gap: 7px;
-      background: none;
-      border: 0;
-      border-radius: var(--radius-sm, 6px);
-      padding: 9px 11px;
-      color: $color-text-muted;
-      font-size: var(--font-xs, 11px);
-      cursor: pointer;
-
-      &[aria-pressed="true"] {
-        background: $color-surface;
-        color: $color-primary-dark;
-        box-shadow: $shadow-sm;
-      }
+      gap: 7px
     }
   }
 
@@ -210,7 +186,7 @@
 .ps-panel,
 .payslip-records {
   border: 1px solid $color-border;
-  border-radius: var(--radius-md, 12px);
+  border-radius: var(--radius-card, 12px);
   background: $color-surface;
   min-width: 0;
   overflow: hidden;
@@ -325,18 +301,7 @@
   padding: 22px;
 
   > button {
-    border: 1px solid $color-border;
-    border-radius: var(--radius-sm, 9px);
-    padding: 16px;
-    background: $color-surface;
-    text-align: left;
-    cursor: pointer;
-
-    &[aria-pressed="true"] {
-      border-color: $color-primary;
-      background: $color-primary-subtle;
-      box-shadow: 0 0 0 1px $color-primary;
-    }
+    text-align: left
   }
 
   strong {
@@ -464,41 +429,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid $color-border;
-  border-radius: var(--radius-sm, 7px);
-  background: $color-surface;
-  color: $color-text-secondary;
-  padding: 9px 12px;
-  font-size: var(--font-xs, 11px);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: $color-surface-subtle;
-  }
-
-  &.ps-primary {
-    background: $color-primary;
-    border-color: $color-primary;
-    color: $color-surface;
-
-    &:hover {
-      background: $color-primary-dark;
-    }
-  }
-
-  &:disabled {
-    opacity: 0.6;
-  }
+  white-space: nowrap
 }
 
-.ps-button:focus-visible,
-.ps-panel input:focus-visible,
-.ps-panel textarea:focus-visible,
-.ps-panel select:focus-visible,
-.ps-toolbar button:focus-visible,
-.ps-designs button:focus-visible {
+.ps-panel input:focus-visible, .ps-panel textarea:focus-visible, .ps-panel select:focus-visible {
   outline: 2px solid $color-primary;
   outline-offset: 3px;
 }
@@ -525,10 +459,6 @@
   border: 1px solid $color-danger-light;
 
   button {
-    border: 0;
-    text-decoration: underline;
-    background: none;
-    color: inherit;
     margin-left: 8px;
   }
 }
@@ -556,13 +486,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: var(--space-sm, 10px);
-    padding: 12px;
-    background: $color-surface-subtle;
-    border: 1px solid $color-border;
-    border-radius: var(--radius-sm, 7px);
     text-align: left;
-    font-size: var(--font-xs, 11px);
-    color: $color-text-secondary;
 
     span {
       flex: 1;
@@ -770,16 +694,7 @@
     gap: var(--space-md, 16px);
     padding: 0;
     background: none;
-    border: 0;
-
-    button {
-      min-height: 40px;
-      color: $color-text-secondary;
-
-      &[aria-pressed="true"] {
-        color: $color-primary-dark;
-      }
-    }
+    border: 0
   }
 }
 
@@ -847,11 +762,7 @@
 
   .ps-designs {
     gap: 7px;
-    padding: 14px;
-
-    > button {
-      padding: 9px;
-    }
+    padding: 14px
   }
 
   .ps-mini {
@@ -894,16 +805,11 @@
 
   .ps-settings-column .ps-toolbar nav button {
     flex-direction: column;
-    font-size: var(--font-xs, 10px);
   }
 
   .payslip-studio .ps-designs {
     padding: 12px;
-    gap: 6px;
-
-    > button {
-      padding: 8px;
-    }
+    gap: 6px
   }
 
   .payslip-studio .ps-mini {
@@ -915,3 +821,11 @@
     padding: 16px;
   }
 }
+.payslip-studio .ps-workspace--library { grid-template-columns:minmax(0,1fr); }
+.salary-policy-row { display:grid;grid-template-columns:2fr repeat(4,minmax(100px,1fr)) auto;gap:12px;align-items:end;padding:12px 0;border-bottom:1px solid var(--color-border); }
+.salary-policy-row label { display:grid;gap:8px;font-size:var(--font-xs);color:var(--color-text-secondary); }
+.salary-policy-row input,.salary-policy-row select { width:100%;min-width:0;min-height:40px;padding:8px; }
+.payslip-studio .ps-panel { border:1px solid var(--color-border);border-radius:var(--radius-card);background:var(--color-surface);color:var(--color-text);box-shadow:none; }
+.payslip-studio .ps-panel > header { background:var(--color-surface);border-bottom:1px solid var(--color-border); }
+@media(max-width:1000px){.salary-policy-row{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:600px){.salary-policy-row{grid-template-columns:1fr;}}

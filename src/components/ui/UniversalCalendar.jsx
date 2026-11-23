@@ -1,3 +1,4 @@
+import { Button } from './Button';
 import React, { useMemo, useId, useState, useRef, useEffect } from 'react';
 import Tooltip from 'flowbite/lib/esm/components/tooltip';
 import { ChevronDown } from 'lucide-react';
@@ -105,14 +106,15 @@ export function HolidayLegend({ holidays = [], className = '', showAll = false }
     </span>
   </span>;
   return <div className={`uc-holiday-legend ${className}`.trim()}>
-    <button type="button" ref={trigger} className="uc-legend-trigger" popoverTarget={dropdownId}
-      aria-expanded={expanded} aria-controls={dropdownId}
-      onClick={() => {
-        const rect = trigger.current.getBoundingClientRect();
-        setPosition({ left: Math.max(8, Math.min(rect.left, window.innerWidth - 296)), top: Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - 320)) });
-      }}>
+    <Button type="button" ref={trigger} className="uc-legend-trigger" popoverTarget={dropdownId} aria-expanded={expanded} aria-controls={dropdownId} onClick={() => {
+  const rect = trigger.current.getBoundingClientRect();
+  setPosition({
+    left: Math.max(8, Math.min(rect.left, window.innerWidth - 296)),
+    top: Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - 320))
+  });
+}} variant="outline" wrapContent={false} layout="row">
       Holiday legends <ChevronDown size={14} aria-hidden="true" />
-    </button>
+    </Button>
     <div id={dropdownId} popover="auto" className="uc-legend-popover" style={position}
       onToggle={event => setExpanded(event.newState === 'open')} aria-label="Holiday categories">
       <div className="uc-legend-options">{[...primary, ...others].map(badge)}</div>

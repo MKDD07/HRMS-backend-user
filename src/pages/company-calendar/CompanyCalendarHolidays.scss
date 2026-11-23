@@ -5,10 +5,10 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-.cc-holiday-workspace {
+.cc-holiday-layout {
   display: grid;
   grid-template-columns: minmax(240px, 0.85fr) minmax(400px, 1.45fr) minmax(280px, 1.05fr);
-  gap: var(--space-lg, 20px);
+  gap: var(--space-5);
   align-items: start;
 
   .cc-panel {
@@ -30,24 +30,8 @@
       width: 100%;
       display: flex;
       align-items: center;
-      gap: var(--space-md, 12px);
-      text-align: left;
-      padding: 12px 14px;
-      border: 1px solid $color-border;
-      border-radius: var(--radius-sm, 8px);
-      background: $color-surface;
-      transition: all 0.15s ease;
-
-      &:hover {
-        background: $color-surface-subtle;
-        border-color: $color-primary-light;
-      }
-
-      &.is-selected {
-        border-color: $color-primary-light;
-        background: $color-primary-subtle;
-        box-shadow: inset 3px 0 $color-primary;
-      }
+      gap: var(--space-3);
+      text-align: left
     }
 
     span {
@@ -128,23 +112,13 @@
 
   .rdp-nav {
     display: flex;
-    gap: var(--space-xs, 8px);
+    gap: var(--space-2);
 
     button {
-      border: 1px solid $color-border;
-      border-radius: var(--radius-sm, 6px);
-      color: $color-text-secondary;
       width: 30px;
-      height: 30px;
-      background: $color-surface;
       display: flex;
       align-items: center;
-      justify-content: center;
-
-      &:hover {
-        background: $color-surface-subtle;
-        border-color: $color-primary-light;
-      }
+      justify-content: center
     }
   }
 
@@ -168,8 +142,8 @@
   }
 
   .rdp-selected .rdp-day_button {
-    color: $color-surface !important;
-    background: $color-primary-dark !important;
+    color: $color-text;
+    background: $color-primary-subtle;
     font-weight: 600;
   }
 
@@ -239,7 +213,7 @@
 
   footer {
     flex-wrap: wrap;
-    gap: var(--space-xs, 8px);
+    gap: var(--space-2);
   }
 }
 
@@ -267,7 +241,7 @@
 
 /* Responsive */
 @media (max-width: 1250px) {
-  .cc-holiday-workspace {
+  .cc-holiday-layout {
     grid-template-columns: minmax(230px, 0.9fr) minmax(380px, 1.4fr);
   }
 
@@ -283,7 +257,7 @@
 }
 
 @media (max-width: 850px) {
-  .cc-holiday-workspace {
+  .cc-holiday-layout {
     grid-template-columns: 1fr;
 
     .cc-panel {

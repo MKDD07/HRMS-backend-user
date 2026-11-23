@@ -1,56 +1,84 @@
-﻿# Company pricing and Razorpay test checkout
+# Company plans and billing
 
-Settings now includes Super Admin-only Plan & Subscription cards. D1 stores Starter at INR 1,999 (10 employees / 2 additional dashboard users), Team at INR 3,999 (50 / 5), Business at INR 5,999 (200 / 10), and Enterprise as custom. Prices include GST for this test flow. All plans include existing dashboard modules; only capacity differs. Existing module limitations still apply.
+Settings uses shared cards, a purple billing action, plan accents and a database-backed active-plan badge. Production subscriptions determine company capacity. Sandbox subscriptions remain isolated.
 
-## Payment behavior
+## Live configuration
 
-A selected plan creates a company-owned purchase UUID and server-priced Razorpay order. Checkout signature verification uses the saved order ID, then fetches the authoritative payment and checks captured status, amount, currency and refund state. A D1 transaction activates the subscription and records its audit entry exactly once. Signed payment.captured and order.paid webhooks recover purchases if the browser closes. Check payment provides authenticated reconciliation.
+BILLING_MODE defaults to live. Set RAZORPAY_KEY_ID to a live key and configure RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET as server secrets. Matching mode/key prefixes and both secrets are required; checkout fails closed otherwise. Never use VITE_ variables for secrets. Existing deployments must be updated separately.
 
-Monthly terms use calendar months with month-end clamping. Same-plan renewal adds a month to the active expiry. A plan change starts a new month immediately without credit or proration; the confirmation dialog discloses this. Payments are manual per term: no automatic debit or recurring mandate. Enterprise requires a custom quote.
+The public HTTPS /api/v1/billing/webhook endpoint must be configured in Razorpay for payment.captured and order.paid. Enable automatic capture. Verify actual webhook delivery before accepting customer payments. Local callback path: /api/company-auth/billing/webhook. Webhook bytes and signatures must remain intact.
 
-Only Razorpay test keys work. Live payment creation is disabled. Test subscriptions never change actual company capacity. Existing companies retain their legacy allowance of three dashboard users. The Super Admin is excluded from counts. Any employee not marked Inactive counts toward employee capacity; all dashboard grants count toward dashboard-user capacity.
+## Payments and terms
 
-Migration 0007_billing.sql is applied to remote D1 and recorded in migration history. It adds plans, orders, subscriptions, webhook events and audit tables, and subscription-aware capacity triggers. Future live subscription expiry blocks additions/reactivation/new grants while retaining existing records. No actual subscriptions were created by migration.
+Prices and limits come from billing_plans. Capture verification checks provider order, amount, currency, refund state and signatures before an atomic, idempotent activation. Signed webhooks and authenticated reconciliation recover browser-close purchases. Company ownership and Super Admin authorization are enforced.
 
-## Configure test checkout
+Manual terms use calendar months with month-end clamping. Same-plan manual renewal opens only in the final seven days before expiry (or after expiry); changing plans begins a new term without proration. Automatic debit is available only after a separately authorized Razorpay subscription mandate. Enterprise requires a custom agreement. Pending purchases must be reconciled before switching plans or rotating payment keys.
 
-Add these to ignored .env and restart the local server:
+## Complimentary grants
 
-```
-BILLING_MODE=test
-RAZORPAY_KEY_ID=rzp_test_your_key_id
-RAZORPAY_KEY_SECRET=your_test_secret
-RAZORPAY_WEBHOOK_SECRET=your_separate_webhook_secret
-```
+An operator may call grantComplimentaryPlan only with explicit owner authorization. It cannot replace an existing live subscription or pending purchase. It creates a one-month live subscription and a complimentary_subscription_granted audit record atomically. No provider order or payment is created. The order snapshot records activation_source=complimentary, amount_charged=0, the authorizer and reason. The legacy order amount column retains the catalogue value; it is not money collected. Public history reports zero for grants. Any future accounting export must use the snapshot source and amount_charged rather than treating activated orders as paid invoices.
 
-For Cloudflare, keep BILLING_MODE=test and store credentials using Wrangler secrets. Never use VITE_ variables for secrets. Only the key ID is returned to Checkout.
+scripts/grantComplimentaryTeam.mjs --apply is the approved, company-specific AsterNova activation command. Repeat execution cannot extend the grant. The owner approved one complimentary Team month on 15 November 2026.
 
-Deploy the Worker and configure this public HTTPS webhook in Razorpay test mode:
+## Validation and release limits
 
-```
-https://YOUR-WORKER-HOST/api/v1/billing/webhook
-```
+Run node --test worker/billing.test.mjs, node --test worker/worker.test.mjs, node src/pages/settings/PlanSummaryCard.test.mjs, and npm run build. Payment tests use mocked Razorpay responses and SQLite. They cover live and sandbox activation, key matching, company isolation, prices, signatures, mismatches, refund checks, duplicate callbacks, renewal, webhook recovery, capacity and complimentary grants.
 
-Subscribe to payment.captured and order.paid with the same webhook secret. Enable automatic payment capture in Razorpay. Local gateway endpoint: /api/company-auth/billing/webhook. It preserves raw JSON bytes before parsing and forwards the signature/event headers. Razorpay cannot deliver directly to localhost. The public Worker and local gateway should use the same test credentials and D1 database.
+A successful build does not verify real checkout, webhook delivery, deployment or tax compliance. Live mandate authentication and a captured recurring payment remain to be verified by the owner. Tax invoices, refund/dispute automation and accounting reconciliation are outside this implementation.
 
-For a separately hosted frontend, point VITE_COMPANY_API_URL at the Worker's /api/v1 base and add the frontend origin to ALLOWED_ORIGINS. Existing Express-only modules are not automatically migrated by this billing feature.
+## Deployment verification — 15 November 2026
 
-## APIs
+The configured live Razorpay credentials passed a read-only Orders API authentication check (HTTP 200). The three missing billing secrets were added to production Worker `hrms-api` with explicit owner approval; existing secrets were preserved.
 
-All except the signed webhook require a company Super Admin session:
+Version `7c4c4203-2a90-4234-9054-b72588f2ed96` was deployed with BILLING_MODE=live, existing dashboard variables preserved, and sampled logs/traces enabled. The deployed webhook accepted a signed non-payment event and rejected an unsigned event with HTTP 403. These checks do not create orders or payments.
 
-- GET /api/v1/billing/overview: catalogue, capacity, usage, test subscription, recent purchases and configuration readiness.
-- POST /api/v1/billing/orders: plan_id; creates or resumes a pending purchase.
-- POST /api/v1/billing/verify: purchase_id, razorpay_order_id, razorpay_payment_id, razorpay_signature.
-- POST /api/v1/billing/reconcile: purchase_id; fetch payment state.
-- POST /api/v1/billing/webhook: raw JSON plus Razorpay HMAC signature.
+The Razorpay dashboard must still register `https://hrms-api.mkmkataria07.workers.dev/api/v1/billing/webhook` in Live mode using the same webhook secret and the payment.captured/order.paid events. Actual captured-payment activation and Razorpay-origin webhook delivery remain unverified. No payment was made during deployment. This deployment covers the API Worker, not the frontend.
 
-One unfinished order is permitted per company/mode. Resume the same order instead of paying twice. Changing plans while an order is pending, rotating keys mid-purchase, or resolving an order stuck in creating after interruption requires support reconciliation. Never clear a pending record without checking the provider first.
+Repeat read-only checks with `node scripts/checkRazorpay.mjs` and `node scripts/checkBillingDeployment.mjs`. Neither script prints secret values or payment records. The broader application still has existing type-check and recruitment integration-test failures; passing billing checks does not certify the whole application for release.
 
-## Verification and limitations
+## Owner-requested INR 1 verification pricing
 
-Run node --test worker/billing.test.mjs, node worker/worker.test.mjs, npm run lint, and npm run build.
+On 15 November 2026 the owner requested real INR 1 payments for each fixed-price plan. Starter, Team and Business now cost 100 paise in the shared production catalogue; Enterprise remains custom. These prices apply to all companies until restored. Capacity limits are unchanged, so a company above Starter's limits cannot purchase Starter.
 
-Tests use isolated SQLite and mocked Razorpay responses. They cover server-owned prices, company isolation, signatures, amount/currency matching, uncaptured/refunded payments, duplicate callbacks, renewal, webhook recovery, plan limits and calendar-month terms. Actual sandbox checkout and webhook delivery require configured credentials and a public deployment; those are not verified yet.
+Restore normal prices after verification with `node scripts/setBillingVerificationPrices.mjs --restore --apply`. Existing orders always retain their original amount and plan snapshot. Unpaid stale-price checkouts can be retired only after checking for provider payments; a late captured payment remains reconcilable and is not discarded. The checkout update is deployed as version `eb4a2e66-4345-4c89-ba3f-848ba248fbcf`. No payment is automatically submitted by these scripts.
 
-Production keys are rejected. Recurring billing, invoices, refund/dispute automation and production activation are not included in this test release. Existing browser-local geofence rules and Super Admin-only legacy payslip studio restrictions remain.
+## Payment details and receipts
+
+`GET /api/v1/billing/purchases/:purchase_id` requires the company Super Admin and checks company ownership and billing mode. It returns original purchase pricing/capacity, company name, payment/order references, dates and term, plus an allowlisted live Razorpay payment view (method, bank/wallet, bank reference, payer contact and refund state). Secrets, raw provider payloads and card credentials are never returned. Provider failures retain the saved activation record and explicitly flag unavailable live/refund data.
+
+Billing history provides Details and Download receipt actions beside status. The shared modal displays the complete available record; a PDF payment acknowledgement can be downloaded for verified paid purchases. Complimentary grants and unpaid purchases do not produce paid receipts. PDFs are acknowledgements rather than tax invoices. New activations snapshot the purchased term; older records use the linked current subscription term when available and otherwise show Not recorded rather than infer historical dates.
+
+Run `node src/lib/billingReceipt.test.mjs` for PDF text/content verification alongside the billing tests. The existing INR 1 Business payment was checked against Razorpay: captured via UPI, bank reference available, and term recorded. These checks do not certify the modal's visual layout.
+
+The receipt PDF uses `/api/company-auth/branding/default/logo` (with the equivalent configured API endpoint as fallback), as explicitly requested by the owner. Its concise layout includes the company, receipt reference/date, plan, paid amount, payment ID/method and validity. Detailed bank references, payer contact and full transaction metadata remain in the app's Details window. Refund information appears on the receipt only when a refund has been recorded. The rendered PDF was visually inspected with the saved default logo.
+
+## Automatic renewal
+
+The orange secure-billing banner is removed. The active-plan summary contains a shared switch that opens a consent dialog. Enabling it creates an immutable, server-priced monthly Razorpay Plan and a Subscription for 12 renewal charges, starting at the current paid expiry. The user must approve the mandate through Razorpay Checkout; the app never enables it with a local boolean. Existing INR 1 catalogue pricing also applies to a mandate created now, and remains fixed for its authorized cycles even if the public catalogue is later restored.
+
+Unapproved checkout links expire within seven days or five minutes before the first renewal, whichever is earlier. Abandoned setup cannot be approved months later against an old first-charge date.
+
+Migrations 0018 and 0019 add mandate/event tables and database guards against overlapping manual/recurring checkout. The four company-admin POST routes are recurring/create, recurring/verify, recurring/sync and recurring/cancel. Create requires explicit acceptance of the displayed server price. Verify uses HMAC-SHA256(payment_id + '|' + saved_subscription_id), then fetches the canonical subscription. Authentication alone never extends access.
+
+Subscription webhooks fetch canonical provider state and paid invoices. Each matching, captured, unrefunded invoice creates one billing order, one audit record and a term update atomically. Invoice/payment IDs, subscription, price, currency, interval, quantity and billing dates are checked. Duplicate or older invoices cannot shorten or replace a newer paid term. Receipt downloads use the resulting ordinary billing history. Failed renewals do not extend access. The existing hourly cron reconciles ten mandates at a time, ordered by oldest sync, as webhook recovery.
+
+Cancellation immediately stops the Razorpay subscription while retaining the current paid database term. It remains available even if the invoice API is temporarily unavailable. A charge already in flight may complete and be reconciled. Manual purchases and plan changes require cancelling the existing mandate first. The UI displays provider-confirmed setup, enabled, payment-attention and cancelled states; it offers manual Renew plan only during the final seven days before expiry.
+
+An abandoned early same-plan checkout can be retired during setup only after Razorpay confirms that it has no successful/in-flight payment. Its original references remain intact. If a late capture arrives, the handler stops any newer mandate before applying that manual payment, preventing overlapping renewal schedules. Replays of already activated orders never cancel a subsequent mandate. Hourly recovery uses ctx.waitUntil independently of the other scheduled jobs. The billing suite includes 21 tests plus separate plan-action and receipt checks.
+
+Plan actions identify upgrades and downgrades using catalogue tier order, independently of temporary price changes. A lower plan that cannot accommodate current employee/dashboard usage keeps its Downgrade label with a visible explanation and remains blocked server-side. Eligible changes may retire a verified-unpaid abandoned early renewal before starting a new checkout. Selecting a different plan never changes active capacity before captured payment. The shared security label uses the official SVG from `https://razorpay.com/assets/razorpay-logo.svg`, bundled as `src/assets/razorpay.svg`. The billing suite now includes 22 tests.
+
+Enable Subscription events on the existing Live webhook, especially subscription.authenticated, subscription.activated, subscription.charged, subscription.pending, subscription.halted, subscription.cancelled and subscription.completed (all subscription events are supported). The owner must personally approve any live mandate; no mandate or recurring charge was created by the implementation checks. Tests use isolated SQLite and a mocked provider; the live Subscriptions list endpoint passed a read-only authentication check.
+
+
+## Workspace plan policy (0020)
+
+- Starter: people, departments, attendance, shifts, leave, calendar, documents, HR Connect and settings.
+- Team adds hierarchy, payroll, salary structures, expenses, recruitment, onboarding/offboarding, assets and reports.
+- Business/Enterprise include all existing dashboard modules; custom Enterprise purchases remain quote-only.
+- Lowering an active paid tier is free, immediate, and retains the original expiry and paid receipts. Raising a tier requires captured payment. No unused-term refund or credit is issued by this flow.
+- The review requires agreement to the displayed plan terms, followed by a second confirmation. Backend validates consent; plan prices and capacity remain server-owned.
+- Company Super Admin can enable the top-right Test mode. It stores a separate company-wide plan override in billing_workspace_policy, applies real feature/seat restrictions, and never charges or overwrites company_subscriptions. Disabling restores the latest live paid plan. Existing provider renewal mandates remain unchanged.
+- Seats are ordered by employee_code then employee_id, excluding Super Admin. Excess records remain saved and visible but unavailable; excess dashboard grants do not receive delegated access. Enforcement runs on authentication and company APIs as well as disabled directory/table rows and navigation.
+- Free changes and test switches are audited in billing_plan_changes. Revision and mutation-token guards reject concurrent changes.
+- Apply schema with node scripts/migrateBillingPolicy.mjs --apply before deploying this Worker.

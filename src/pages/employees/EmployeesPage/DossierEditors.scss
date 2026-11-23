@@ -1,0 +1,39 @@
+.dossier-inline-form { fieldset { border: 0; padding: 0; margin: 0; min-width: 0; } .dossier-actions { margin-top: 18px; } }
+.dossier-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:16px 0; label { display:flex; flex-direction:column; gap:7px; font-size:12px; font-weight:600; } input,select { width:100%; min-width:0; border:1px solid var(--border-color,#dce2eb); border-radius:7px; background:var(--bg-card,#fff); color:inherit; padding:10px 12px; font:inherit; } }
+.dossier-days { display:flex; flex-wrap:wrap; gap:16px; margin:16px 0; }
+.dossier-check { display:flex!important; flex-direction:row!important; align-items:center; gap:8px; font-size:12px; input { width:auto; } }
+.dossier-content .dossier-record { margin-top:12px; } .dossier-subsection h4 { margin:0 0 12px; } .dossier-content .dossier-fields dd { overflow-wrap:anywhere; }
+@media(max-width:640px){.dossier-form-grid{grid-template-columns:1fr;}}
+.dossier-content { display:flex; flex-direction:column; }
+.dossier-content .dossier-section-title { min-height:44px; flex-shrink:0; }
+.dossier-tab-body { display:flex; flex-direction:column; flex:1; min-height:380px; min-width:0; }
+.dossier-content .dossier-add-action { display:flex; justify-content:flex-end; margin-top:auto; padding-top:var(--space-5); }
+.dossier-content .dossier-month { display:flex; flex-direction:row; align-items:center; gap:var(--space-2); padding:var(--space-1) var(--space-3); border:1px solid var(--color-border); border-radius:var(--radius-input); background:var(--color-surface); font-size:var(--font-xs); color:var(--color-text-muted); input { width:160px; max-width:100%; height:34px; min-height:34px; padding:var(--space-1); border:0; background:transparent; color:var(--color-text); font-family:inherit; font-size:var(--font-xs); color-scheme:light dark; &:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;} } }
+.dossier-content .dossier-month--reserved { visibility:hidden; pointer-events:none; }
+.dossier-content .dossier-month small { display:block; margin-top:2px; font-size:var(--font-2xs); white-space:nowrap; }
+.dossier-content .dossier-month {
+  gap:var(--space-3);
+  padding:var(--space-2) var(--space-3);
+  max-width:100%;
+  > span { flex-shrink:0; line-height:1.4; color:var(--color-text-secondary); }
+  small { color:var(--color-text-muted); }
+  input { width:164px; min-width:0; padding-left:var(--space-1); border:0; border-radius:0; color-scheme:normal; }
+  &:focus-within { border-color:var(--color-primary); }
+}
+@media(max-width:400px){.dossier-content .dossier-month{width:100%;justify-content:space-between;input{flex:1;}}}
+.dossier-skeleton { display:grid; gap:var(--space-3); padding-top:var(--space-3); }
+.dossier-skeleton-card { padding:var(--space-4); border:1px solid var(--color-border); border-radius:var(--radius-card); display:grid; gap:var(--space-3); }
+.dossier-skeleton .animate-pulse { background:var(--color-surface-subtle); border-radius:var(--radius-input); }
+.dossier-skeleton-title { height:18px; width:40%; }
+.dossier-skeleton-line { height:12px; width:85%; }
+.dossier-skeleton-line--short { width:60%; }
+.dossier-avatar-loading .dossier-avatar-skeleton { width:100%; height:100%; border-radius:50%; background:var(--color-surface-subtle); }
+.dossier-salary-card.card { padding:0; margin-bottom:var(--space-5); border:1px solid var(--color-border); border-radius:var(--radius-card); background:var(--color-surface); box-shadow:none; overflow:hidden; }
+.dossier-salary-card .tenant-panel-head { border-bottom:1px solid var(--color-border); }
+.dossier-salary-form { padding:var(--space-5); .dossier-form-grid { margin:0; gap:var(--space-4); label{font-size:var(--font-xs);font-weight:500;color:var(--color-text-secondary);} input,select{min-height:40px;padding:var(--space-3);font-size:var(--font-xs);font-family:inherit;border:1px solid var(--color-border);border-radius:var(--radius-input);background:var(--color-surface);color:var(--color-text);&:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;}} } .dossier-salary-reference{grid-column:1 / -1;} }
+.dossier-salary-footer { display:flex;justify-content:flex-end;gap:var(--space-2);margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border); }
+@media(max-width:640px){.dossier-salary-form{padding:var(--space-4);}}
+@media(prefers-reduced-motion:reduce){.dossier-skeleton .animate-pulse{animation:none;}}
+.dossier-leave-entitlements { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--space-3); margin-top:var(--space-4); }
+.dossier-leave-entitlement.card { margin:0; display:flex; justify-content:space-between; align-items:center; gap:var(--space-3); padding:var(--space-4); border:1px solid var(--color-border); border-radius:var(--radius-card); box-shadow:none; background:linear-gradient(90deg,color-mix(in srgb,var(--leave-color) 8%,var(--color-surface)),var(--color-surface)); h4{margin:0 0 var(--space-1);font-size:var(--font-xs);} small{font-size:var(--font-2xs);color:var(--color-text-muted);} strong{white-space:nowrap;font-size:var(--font-lg);small{display:block;font-weight:400;}} }
+@media(max-width:640px){.dossier-leave-entitlements{grid-template-columns:1fr;}}

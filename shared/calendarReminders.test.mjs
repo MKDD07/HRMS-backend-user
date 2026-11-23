@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { reminderFields, dueCalendarReminders } from './calendarReminders.mjs';
+const entry = { id: 'meeting', name: 'Team meeting', type: 'Meeting', holiday_date: '2026-10-12', active: true, ...reminderFields({ time: '09:00', owner_id: 'forged' }, 'hr-a') };
+assert.equal(entry.owner_id, 'hr-a');
+assert.throws(() => reminderFields({ time: '25:00' }, 'hr-a'), /valid reminder time/);
+assert.equal(dueCalendarReminders([entry], 'hr-a', Date.parse('2026-10-12T03:29:59Z')).length, 0);
+const due = dueCalendarReminders([entry], 'hr-a', Date.parse('2026-10-12T03:30:00Z'));
+assert.equal(due.length, 1); assert.equal(due[0].unread, true);
+assert.equal(dueCalendarReminders([entry], 'hr-b', Date.parse('2026-10-13T00:00:00Z')).length, 0);
+assert.equal(dueCalendarReminders([{ ...entry, reminder: false }], 'hr-a', Date.parse('2026-10-13T00:00:00Z')).length, 0);
+assert.equal(dueCalendarReminders([{ ...entry, active: false }], 'hr-a', Date.parse('2026-10-13T00:00:00Z')).length, 0);
+assert.equal(dueCalendarReminders([{ ...entry, remind_before: 15 }], 'hr-a', Date.parse('2026-10-12T03:15:00Z')).length, 1);
+assert.equal(dueCalendarReminders([{ ...entry, remind_before: 15 }], 'hr-a', Date.parse('2026-10-12T03:14:59Z')).length, 0);
+assert.throws(() => reminderFields({ remind_before: -5 }, 'hr-a'), /alert interval/);
+assert.equal(dueCalendarReminders([{ ...entry, read_at: '2026-10-12T04:00:00Z' }], 'hr-a', Date.parse('2026-10-13T00:00:00Z'))[0].unread, false);
+console.log('Calendar reminder checks passed: IST timing, owner isolation, validation, read state and disabled reminders.');

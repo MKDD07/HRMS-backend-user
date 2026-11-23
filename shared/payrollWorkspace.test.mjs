@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { latestSalaryRecords, payrollPaymentState, payrollReview } from './payrollWorkspace.mjs';
+const latest=latestSalaryRecords([{id:'old',month:'October',year:'2026',created_at:'2026-10-01',salary_status:'Finalized',salary:{monthly_net:1000}},{id:'new',month:'October',year:'2026',created_at:'2026-10-02',salary_status:'Draft',salary:{monthly_net:1200}}]);
+assert.equal(latest.length,1);assert.equal(latest[0].id,'new');assert.equal(latest[0].status,'Draft');
+assert.equal(payrollPaymentState(latest[0],[{month:'10',year:2026,status:'Recorded',amount_paid:600}]).payment_status,'Partially paid');
+assert.equal(payrollPaymentState(latest[0],[{month:'10',year:2026,status:'Recorded',amount_paid:1200}]).payment_status,'Paid');
+assert.equal(payrollPaymentState(latest[0],[{month:'09',year:2026,status:'Recorded',amount_paid:1200}]).payment_status,'Unpaid');
+assert.equal(payrollPaymentState(latest[0],[{month:'10',year:2026,status:'Payroll record',amount_paid:1200}]).payment_status,'Unpaid');
+const setup={employee:{userid:'a'},record:{status:'Draft',monthly_gross:1200,total_deductions:200,monthly_net:1000},account:{preferred_payment_method:'Cash'},configuration:{assignments:[{userid:'a',template_id:'t'}],templates:[{id:'t'}]}};
+assert.deepEqual(payrollReview(setup),[]);
+assert.ok(payrollReview({...setup,account:{preferred_payment_method:'Bank transfer'}}).includes('Complete the bank account details'));
+assert.ok(payrollReview({...setup,configuration:{}}).includes('Assign an available payslip template'));
+assert.ok(payrollReview({...setup,record:{status:'Not started'}}).includes('No saved salary draft'));
+console.log('Payroll workspace tests passed: latest revisions, payment reconciliation, and readiness checks');

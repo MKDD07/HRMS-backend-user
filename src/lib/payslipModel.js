@@ -1,3 +1,5 @@
+import { applyIndiaBenefits, calculateIndiaStructure } from '../../shared/indiaSalaryStructure.mjs';
+import { applyPolicyComponents, validateSalaryComponents } from '../../shared/salaryPolicy.mjs';
 export const PAYSLIP_DESIGNS = [
   { id: 'classic', name: 'Classic', description: 'Traditional ruled statement with a centered company header.' },
   { id: 'modern', name: 'Modern', description: 'Bold brand header and a highlighted take-home amount.' },
@@ -24,7 +26,17 @@ export function validateTemplate(input) {
   return template;
 }
 export function normalizeSalary(input) {
+  if (input.india_structure) {
+    calculateIndiaStructure(input.india_structure);
+    input = applyIndiaBenefits(applyPolicyComponents(input));
+  }
   const record = {};
+  if (input.policy_components) record.policy_components=validateSalaryComponents(input.policy_components);
+  if (input.india_structure) {
+    const calculation = calculateIndiaStructure(input.india_structure);
+    record.india_structure = calculation.india_structure;
+    for (const key of ['employer_pf', 'employer_esi', 'gratuity_provision']) record[key] = input[key];
+  }
   for (const [key] of [...EARNINGS, ...DEDUCTIONS]) {
     const amount = Number(input[key] ?? 0);
     if (!Number.isFinite(amount) || amount < 0 || amount > 1e9) throw new Error('Salary amounts must be between 0 and 1,000,000,000.');
@@ -45,6 +57,7 @@ export function normalizeSalary(input) {
   record.total_deductions = total([...DEDUCTIONS.map(([key]) => ({ amount: record[key] })), ...record.custom_deductions]);
   record.monthly_net = (cents(record.monthly_gross) - cents(record.total_deductions)) / 100;
   if (record.monthly_net < 0) throw new Error('Deductions cannot exceed earnings.');
+  record.annual_ctc = Math.round((record.monthly_gross + (record.employer_pf || 0) + (record.employer_esi || 0) + (record.gratuity_provision || 0)) * 1200) / 100;
   for (const key of ['bank_name', 'bank_account', 'pay_date', 'transaction_ref', 'status']) record[key] = textValue(input[key], 100);
   record.paid_days = input.paid_days === '' || input.paid_days == null ? '' : Number(input.paid_days);
   if (record.paid_days !== '' && (!Number.isFinite(record.paid_days) || record.paid_days < 0 || record.paid_days > 31)) throw new Error('Paid days must be between 0 and 31.');

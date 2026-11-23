@@ -3,22 +3,37 @@ main = "worker/index.mjs"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+[observability]
+enabled = true
+head_sampling_rate = 0.1
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 0.1
+
+
+
 [[d1_databases]]
 binding = "DB"
 database_name = "hrms-db"
 database_id = "4fe0e2c8-e4f0-4433-8351-6dbf73359cd7"
 migrations_dir = "./migrations/hrms"
 
+[[kv_namespaces]]
+binding = "HRMS_CACHE"
+id = "c8abea1f69f949a7b5d1bc8d8604322a"
+
 [[r2_buckets]]
 binding = "HRMS_DOCUMENTS"
 bucket_name = "hrms-documents-vault"
 
 [vars]
-BILLING_MODE = "test"
+BILLING_MODE = "live"
 # Temporarily disabled. Restore the site key to re-enable verification.
 RECAPTCHA_SITE_KEY = ""
+ALLOWED_ORIGINS = "https://hrms-backend-user.mkmkataria07.workers.dev,https://nexthr.com,https://www.nexthr.com,https://lutter-master.mkmkataria07.workers.dev,http://localhost:3000,http://127.0.0.1:3000"
+ALLOW_LOCALHOST_ORIGINS = "true"
 RECAPTCHA_ALLOWED_HOSTNAMES = "nexthr.com,www.nexthr.com,localhost,127.0.0.1"
-ALLOWED_ORIGINS = "*"
 
 [[r2_buckets]]
 binding = "HRMS_BRANDING"
@@ -26,3 +41,20 @@ bucket_name = "hrms-db"
 
 [triggers]
 crons = ["0 * * * *"]
+
+[[r2_buckets]]
+binding = "HRMS_IMAGES"
+bucket_name = "hrms-images"
+
+[[ratelimits]]
+name = "AI_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 5, period = 60 }
+
+[[durable_objects.bindings]]
+name = "POLICY_GENERATION"
+class_name = "PolicyGenerationRunner"
+
+[[migrations]]
+tag = "policy-generation-v1"
+new_sqlite_classes = ["PolicyGenerationRunner"]

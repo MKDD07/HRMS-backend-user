@@ -1,5 +1,32 @@
 # Company HRMS backend
 
+## Cloud storage only
+
+Normal server startup requires Cloudflare D1 credentials; it no longer creates a
+local SQLite fallback or permits `PAYROLL_LOCAL_DEV` authentication. The retired
+local notification, hierarchy and attendance HTTP/WebSocket stores are disabled.
+Old JSON/SQLite files are preserved as backups and excluded from Git. No legacy
+records are imported automatically. SQLite filenames remain explicit test/migration
+inputs only.
+
+Payroll custom components use `/salary-components` and D1 migration
+`0023_payroll_components.sql`. The browser retains only an account-scoped memory
+copy and no longer writes monthly salary mirrors. Old browser records are untouched.
+
+## Directory KV cache
+
+`HRMS_CACHE` in `wrangler.company.toml` binds the dedicated `hrms-directory-cache`
+namespace. Apply `0022_directory_cache.sql` before enabling the binding. The admin
+directory caches raw query rows for 120 seconds, keyed by company, page and a D1
+revision. Employee/user triggers rotate the revision for edits from any module;
+obsolete keys expire automatically. Authentication, page permissions and plan seat
+locks are evaluated live and are never cached. Restricted directory projections
+remain uncached. A missing binding, missing migration or KV failure falls back to
+D1. The local Node gateway currently uses this uncached fallback.
+
+Validate with `node --test worker/directoryKvCache.test.mjs` and
+`npx wrangler deploy --config wrangler.company.toml --dry-run`.
+
 ## Branded login
 
 The Node app now exposes `/api/company-auth` for login, password change, logout,

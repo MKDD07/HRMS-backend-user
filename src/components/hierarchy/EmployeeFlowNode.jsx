@@ -1,3 +1,4 @@
+import { Button } from '../ui/Button';
 import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import {
@@ -69,25 +70,15 @@ function EmployeeFlowNodeComponent({ data, isConnectable }) {
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => onEditTitle && onEditTitle(person)}
-            className="p-1 text-[#9CA3AF] hover:text-[#4F46E5] hover:bg-[#EEF2FF] rounded transition-colors"
-            title="Edit Job Title"
-          >
+          <Button type="button" onClick={() => onEditTitle && onEditTitle(person)} className="" title="Edit Job Title" variant="outline" wrapContent={false} iconOnly={true} size="sm">
             <Edit3 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemovePerson && onRemovePerson(person.user_id);
-            }}
-            className="p-1 text-[#9CA3AF] hover:text-[#DC2626] hover:bg-rose-50 rounded transition-colors"
-            title={`Remove ${person.name} from flow chart`}
-          >
+          </Button>
+          <Button type="button" onClick={e => {
+  e.stopPropagation();
+  onRemovePerson && onRemovePerson(person.user_id);
+}} className="" title={`Remove ${person.name} from flow chart`} variant="outline" wrapContent={false} iconOnly={true} size="sm">
             <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -160,23 +151,13 @@ function EmployeeFlowNodeComponent({ data, isConnectable }) {
 
         {/* Quick Node Actions Bar */}
         <div className="flex items-center justify-between pt-1 border-t border-[#F3F4F6] text-[10px]">
-          <button
-            type="button"
-            onClick={() => onAddSenior && onAddSenior(person)}
-            disabled={seniorsCount >= MAX_RELATIONS}
-            className="text-[#4F46E5] hover:underline font-semibold flex items-center gap-0.5 disabled:opacity-40"
-          >
+          <Button type="button" onClick={() => onAddSenior && onAddSenior(person)} disabled={seniorsCount >= MAX_RELATIONS} className="flex items-center gap-0.5" variant="outline" wrapContent={false}>
             <Plus className="w-2.5 h-2.5" /> Senior
-          </button>
+          </Button>
           <span className="text-[#E2E8F0]">|</span>
-          <button
-            type="button"
-            onClick={() => onAddJunior && onAddJunior(person)}
-            disabled={juniorsCount >= MAX_RELATIONS}
-            className="text-[#059669] hover:underline font-semibold flex items-center gap-0.5 disabled:opacity-40"
-          >
+          <Button type="button" onClick={() => onAddJunior && onAddJunior(person)} disabled={juniorsCount >= MAX_RELATIONS} className="flex items-center gap-0.5" variant="outline" wrapContent={false}>
             <Plus className="w-2.5 h-2.5" /> Junior
-          </button>
+          </Button>
         </div>
       </div>
 

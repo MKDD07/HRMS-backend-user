@@ -1,10 +1,11 @@
-// ============================================================================
-// PulseHRMS Global Styles & Resets
-// Clean Light Aesthetic with Inter Font & #27292C Typography
-// ============================================================================
+/* ============================================================================ */
+/* PulseHRMS Global Styles & Resets */
+/* Clean Light Aesthetic with Inter Font & #27292C Typography */
+/* ============================================================================ */
 
 @use "variables" as *;
 @use "components" as *;
+@use "formFields";
 
 *,
 *::before,
@@ -45,10 +46,7 @@ a {
   text-decoration: none;
 }
 
-button,
-input,
-select,
-textarea {
+input, select, textarea {
   font-family: inherit;
 }
 
@@ -103,38 +101,43 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--rounded-full);
-  font-weight: var(--font-medium);
+  padding: 3px 9px;
+  border-radius: var(--rounded-full, 9999px);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
 
-  &--success {
-    background: var(--color-success-subtle);
-    color: var(--color-success);
-    border: 1px solid rgba(16, 185, 129, 0.2);
+  &--success,
+  &--active {
+    background: #16a34a;
+    color: #ffffff;
+    border: none;
   }
 
-  &--warning {
-    background: var(--color-warning-subtle);
-    color: var(--color-warning);
-    border: 1px solid rgba(217, 119, 6, 0.2);
+  &--danger,
+  &--inactive {
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
   }
 
-  &--danger {
-    background: var(--color-danger-subtle);
-    color: var(--color-danger);
-    border: 1px solid rgba(220, 38, 38, 0.2);
+  &--warning,
+  &--draft {
+    background: #d97706;
+    color: #ffffff;
+    border: none;
   }
 
   &--info {
-    background: var(--color-info-subtle);
-    color: var(--color-info);
-    border: 1px solid rgba(37, 99, 235, 0.2);
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
   }
 
   &--neutral {
-    background: var(--color-base-surface-3);
-    color: var(--color-base-text);
-    border: 1px solid var(--color-border);
+    background: #4b5563;
+    color: #ffffff;
+    border: none;
   }
 }

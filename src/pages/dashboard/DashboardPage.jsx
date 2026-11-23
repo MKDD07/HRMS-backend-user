@@ -1,102 +1,133 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ArrowUpRight, Users, UserCheck, CalendarDays, Clock3, RefreshCw, Building2, ArrowRight, AlertCircle, CheckCircle2, FileText, Wallet, GitBranch } from 'lucide-react';
-import { Button, ButtonGroup } from '../../components/ui/Button';
-import { attendanceDay, currentPresence } from '../employees/EmployeesPage/directoryData';
-import { attendanceSeries, departmentCounts, normalizeLeaves } from './dashboardData';
+import { ModalFrame } from '../../components/ui/Modal';
+import { OverviewWorkspace } from './OverviewWorkspace';
+import { OverviewLoading } from './OverviewLoading';
+import { TenantHeader } from '../../components/ui/TenantHeader';
+import React,{useCallback,useEffect,useRef,useState} from 'react';
+import { AlertCircle,Download,Plus,SlidersHorizontal,RotateCcw } from 'lucide-react';
+import { Button } from '../../components/ui/Button';
+import { CloseButton } from '../../components/ui/CloseButton';
+import { companyRequest } from '../../lib/companyAuth';
+import { downloadTalentCsv } from '../../lib/talentApi';
+import { AddPerson } from '../employees/EmployeesPage';
+import { istDay } from '../../../shared/overviewModel.mjs';
 import './DashboardPage.scss';
+function Empty({children}){return <div className="tenant-empty">{children}</div>;}
+function Dialog({ title, onClose, children }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    ref.current.showModal();
+    return () => previous?.focus?.();
+  }, []);
+  return (
+    <ModalFrame ref={ref} className="overview-dialog" onCancel={event => {
+      event.preventDefault();
+      onClose();
+    }} aria-label={title}>
+      <header>
+        <h2>{title}</h2>
+        <CloseButton label={`Close ${title}`} onClick={onClose} />
+      </header>
+      {children}
+    </ModalFrame>
+  );
+}
 
-const nameOf = person => [person?.first_name, person?.last_name].filter(Boolean).join(' ') || person?.name || person?.userid || 'Employee';
-function Empty({ children }) { return <div className="tenant-empty">{children}</div>; }
-function Panel({ title, subtitle, action, children, className = '' }) { return <section className={`tenant-panel ${className}`}><div className="tenant-panel-head"><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>{action}</div>{children}</section>; }
-
-export function DashboardPage({ currentUser, onNavigate, api, onShowToast }) {
-  const [employees, setEmployees] = useState([]);
-  const [leaves, setLeaves] = useState([]);
-  const [attendance, setAttendance] = useState({});
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [updated, setUpdated] = useState(null);
-  const [days, setDays] = useState(7);
-  const [department, setDepartment] = useState('');
-  const sequence = useRef(0);
-  const refresh = useCallback(async () => {
-    const id = ++sequence.current;
-    setLoading(true);
-    const issues = {};
-    const [usersResult, leavesResult] = await Promise.allSettled([api.getAllUsers({ liveOnly: true }), api.getLeaves(undefined, { liveOnly: true })]);
-    if (id !== sequence.current) return;
-    const people = usersResult.status === 'fulfilled' ? usersResult.value.data : [];
-    if (usersResult.status === 'rejected') issues.employees = 'Employee directory is unavailable.';
-    if (leavesResult.status === 'rejected') issues.leaves = 'Leave records are unavailable.';
-    const records = {};
-    let index = 0;
-    await Promise.all(Array.from({ length: Math.min(6, people.length) }, async () => {
-      while (index < people.length && id === sequence.current) {
-        const person = people[index++];
-        try { records[person.userid] = (await api.getAttendance(person.userid, undefined, { liveOnly: true })).data; }
-        catch { records[person.userid] = null; }
-      }
-    }));
-    if (id !== sequence.current) return;
-    const failed = Object.values(records).filter(value => value === null).length;
-    if (failed) issues.attendance = `Attendance could not be loaded for ${failed} employee${failed === 1 ? '' : 's'}.`;
-    setEmployees(people); setLeaves(leavesResult.status === 'fulfilled' ? normalizeLeaves(leavesResult.value.data) : []);
-    setAttendance(records); setErrors(issues); setUpdated(new Date()); setLoading(false);
-  }, [api]);
-  useEffect(() => { refresh(); return () => { sequence.current += 1; }; }, [refresh]);
-  const today = attendanceDay(updated || new Date());
-  const people = useMemo(() => employees.filter(person => !department || person.department === department), [employees, department]);
-  const scopedIds = new Set(people.map(person => person.userid));
-  const scopedLeaves = leaves.filter(leave => !department || scopedIds.has(leave.userid));
-  const scopedAttendance = Object.fromEntries(people.map(person => [person.userid, attendance[person.userid]]));
-  const attendanceUnavailable = Boolean(errors.employees || people.some(person => !Array.isArray(attendance[person.userid])));
-  const leaveUnavailable = Boolean(errors.leaves || (department && errors.employees));
-  const chart = attendanceSeries(scopedAttendance, today, days);
-  const hasPunches = chart.some(day => day.employees > 0);
-  const active = people.filter(person => currentPresence(attendance[person.userid] || [], updated || new Date()) === 'Active').length;
-  const onLeave = new Set(scopedLeaves.filter(leave => leave.state === 'approved' && leave.start && leave.end && leave.start <= today && leave.end >= today).map(leave => leave.userid).filter(Boolean)).size;
-  const pending = scopedLeaves.filter(leave => leave.state === 'pending');
-  const upcoming = scopedLeaves.filter(leave => leave.state === 'approved' && leave.start && leave.end >= today).sort((a, b) => a.start.localeCompare(b.start));
-  const departments = departmentCounts(people);
-  const missing = people.filter(person => !person.email || !person.department || !person.designation);
-  const stats = [
-    { title: 'Total employees', value: errors.employees ? null : people.length, note: 'In the employee directory', icon: Users, page: 'employees' },
-    { title: 'Punched in now', value: attendanceUnavailable ? null : active, note: 'Today, without a punch-out', icon: UserCheck, page: 'attendance' },
-    { title: 'On leave today', value: leaveUnavailable ? null : onLeave, note: 'Approved leave covering today', icon: CalendarDays, page: 'leave' },
-    { title: 'Pending leave requests', value: leaveUnavailable ? null : pending.length, note: 'Awaiting a decision', icon: Clock3, page: 'leave' }
-  ];
-  const link = (page, label = 'View all') => <Button variant="fadeout" size="sm" endIcon={ArrowUpRight} onClick={() => onNavigate?.(page)}>{label}</Button>;
-  const personFor = record => employees.find(person => person.userid === record.userid);
-  return <main id="tenant-admin-dashboard" className="tenant-dashboard">
-    <header className="tenant-header">
-      <div>
-        <span className="tenant-eyebrow">WORKSPACE / OVERVIEW</span>
-        <h1>Tenant Admin Console<span>.</span></h1>
-        <p>{currentUser?.first_name ? `Welcome back, ${currentUser.first_name}. ` : ''}Your people, attendance and priorities in one place.</p>
+const dateText=value=>value?new Date(value).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}):'Not recorded';
+export function DashboardPage({currentUser,onNavigate,api,onShowToast}){
+  const [data,setData]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[filters,setFilters]=useState({department:'',location:'',shift:'',from:'',to:''}),[days,setDays]=useState(7),[adding,setAdding]=useState(false),[posting,setPosting]=useState(false),[saving,setSaving]=useState(false),[postError,setPostError]=useState('');
+  const [filtersOpen,setFiltersOpen]=useState(false);
+  const request=useRef(null),sequence=useRef(0);
+  const refresh=useCallback(async()=>{
+    request.current?.abort();
+    const controller=new AbortController();request.current=controller;
+    const seq=++sequence.current;
+    let timedOut=false;
+    const timeout=setTimeout(()=>{timedOut=true;controller.abort();},30000);
+    setLoading(true);setError('');
+    try {
+      const params=new URLSearchParams(Object.entries(filters).filter(([,value])=>value));
+      params.set('days',String(days));
+      const value=await companyRequest('/overview?'+params,{token:localStorage.getItem('pulse_hrms_token'),signal:controller.signal});
+      if(seq===sequence.current)setData(value);
+    } catch(e) {
+      if(seq===sequence.current&&(timedOut||e.name!=='AbortError'))setError(timedOut?'The overview took too long to load. Please retry.':e.message);
+    } finally {
+      clearTimeout(timeout);
+      if(seq===sequence.current)setLoading(false);
+    }
+  },[filters,days]);
+  useEffect(()=>{refresh();const timer=setInterval(()=>{if(!document.hidden)refresh();},180000);return()=>{clearInterval(timer);sequence.current++;request.current?.abort();};},[refresh]);
+  const selectPeriod = (from, to) => {
+    if (!from || !to || from > to || to > (data?.today || istDay())) return;
+    setDays(0);
+    setFilters(old => ({ ...old, from, to }));
+  };
+  const changePeriod = direction => {
+    if (!data) return;
+    const start = Date.parse(data.from + 'T12:00:00Z');
+    const end = Date.parse(data.to + 'T12:00:00Z');
+    const span = Math.round((end - start) / 86400000) + 1;
+    const todayEnd = Date.parse(data.today + 'T12:00:00Z');
+    const nextEnd = Math.min(todayEnd, end + direction * span * 86400000);
+    setDays(0);
+    setFilters(old => ({ ...old, from: new Date(nextEnd - (span - 1) * 86400000).toISOString().slice(0, 10), to: new Date(nextEnd).toISOString().slice(0, 10) }));
+  };
+  const navigate=(page,userId)=>{if(data?.permissions[page]||(page==='employee-detail'&&data?.permissions.employees))onNavigate?.(page,userId);};
+  const unavailable=keys=>keys.some(k=>data?.errors[k]);
+  const change=(key,value)=>setFilters(old=>({...old,[key]:value}));
+  const today=data?.today||istDay();
+  const exportAttendance=()=>downloadTalentCsv('attendance-overview.csv',['Employee','Department','Date','Status','Check-in (UTC)','Check-out (UTC)','Worked hours'],data.lists.attendance.map(r=>[r.name,r.department,r.date,r.detail,r.check_in,r.check_out,r.hours]));
+  async function postAnnouncement(event){event.preventDefault();setSaving(true);setPostError('');const form=new FormData(event.currentTarget);try{await companyRequest('/hr-connect',{token:localStorage.getItem('pulse_hrms_token'),method:'POST',body:JSON.stringify({kind:'announcement',title:form.get('title'),body:form.get('body'),status:'Published',scope:filters.department?'department':'all',target:filters.department})});setPosting(false);refresh();onShowToast?.({type:'success',title:'Announcement published',message:'Saved in HR Connect.'});}catch(e){setPostError(e.message);}finally{setSaving(false);}}
+  return <main id="tenant-admin-dashboard" className="tenant-dashboard" aria-busy={loading}>
+    <TenantHeader
+      refreshAccessory={<Button className="overview-filter-toggle" variant="fadeout" iconOnly icon={SlidersHorizontal} aria-label="Toggle dashboard filters" title="Filters" active={filtersOpen} aria-expanded={filtersOpen} aria-controls="dashboard-filter-panel" onClick={()=>setFiltersOpen(open=>!open)} />}
+      settings={{
+        subheading: 'WORKSPACE / OVERVIEW',
+        heading: (data?.role || 'Workspace') + ' Overview',
+        paragraph: 'Welcome back' + (currentUser?.first_name ? ', ' + currentUser.first_name : '') + '. Your people, attendance and priorities.',
+        refresh: true,
+        buttons: [
+          { id: 'exportAttendance', label: 'Export attendance', variant: 'outline' },
+          { id: 'postAnnouncement', label: 'Post announcement', variant: 'outline' },
+          { id: 'addEmployee', label: 'Add employee' },
+        ],
+      }}
+      actions={{
+        refresh: { onClick: refresh, loading },
+        exportAttendance: {
+          icon: Download,
+          visible: !!data,
+          disabled: loading || unavailable(['attendance', 'leaves', 'shifts', 'calendar']),
+          onClick: exportAttendance,
+        },
+        postAnnouncement: {
+          visible: !!data?.permissions?.helpdesk,
+          onClick: () => { setPosting(true); setPostError(''); },
+        },
+        addEmployee: {
+          icon: Plus,
+          visible: !!data?.permissions?.employees,
+          onClick: () => setAdding(true),
+        },
+      }}
+    />
+    <div className={`overview-filter-disclosure ${filtersOpen ? 'is-open' : ''}`} inert={!filtersOpen} aria-hidden={!filtersOpen}><div className="overview-filter-disclosure-inner"><div id="dashboard-filter-panel" className="overview-filters overview-filters--compact" role="region" aria-label="Dashboard filters">
+      <div className={`overview-filter-fields ${days === 0 ? 'has-custom-range' : ''}`}>
+        {[['department','Department',data?.filters.departments],['location','Location',data?.filters.locations],['shift','Shift',data?.filters.shifts]].map(([key,label,options]) => <label key={key}><span className="overview-label-text">{label}</span><select value={filters[key]} onChange={e=>change(key,e.target.value)} aria-label={label}><option value="">All {label.toLowerCase()}s</option>{(options||[]).map(option=><option key={option.id||option} value={option.id||option}>{option.name||option}</option>)}</select></label>)}
+        <label><span className="overview-label-text">Period</span><select aria-label="Overview date range" value={days} onChange={e=>{setDays(Number(e.target.value));setFilters(old=>({...old,from:'',to:''}));}}><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={0}>Custom range</option></select></label>
+        {days===0&&<><label><span className="overview-label-text">From</span><input aria-label="From date" type="date" max={filters.to||today} value={filters.from} onChange={e=>change('from',e.target.value)}/></label><label><span className="overview-label-text">To</span><input aria-label="To date" type="date" min={filters.from||undefined} max={today} value={filters.to} onChange={e=>change('to',e.target.value)}/></label></>}
       </div>
-      <Button variant="fadeout" size="md" iconOnly icon={RefreshCw} loading={loading} onClick={refresh} aria-label="Refresh data" />
-    </header>
-    <div className="tenant-context"><span>{new Date(`${today}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' })}<small>India time</small></span><label>Department<select aria-label="Filter dashboard by department" value={department} onChange={event => setDepartment(event.target.value)}><option value="">All departments</option>{[...new Set(employees.map(person => person.department).filter(Boolean))].sort().map(value => <option key={value}>{value}</option>)}</select></label></div>
-    {!loading && Object.keys(errors).length > 0 && <div role="alert" className="tenant-warning"><AlertCircle size={18} /><span>{Object.values(errors).join(' ')} Unavailable metrics are shown as a dash.</span><Button variant="fadeout" size="sm" onClick={refresh}>Retry</Button></div>}
-    <section className="tenant-stats" aria-label="Workforce overview" aria-busy={loading}>{stats.map(({ title, value, note, icon: Icon, page }) => <button key={title} className="tenant-stat" onClick={() => onNavigate?.(page)}><div>{title}<Icon size={17} /></div><strong>{loading || value == null ? '-' : value.toLocaleString()}</strong><p>{note}<ArrowUpRight size={13} /></p></button>)}</section>
-    <div className="tenant-main-grid">
-      <Panel title="Attendance activity" subtitle="Unique employees with a recorded punch-in each day" className="tenant-trend" action={<ButtonGroup>{[7, 30].map(value => <Button key={value} size="sm" active={days === value} onClick={() => setDays(value)}>{value} days</Button>)}</ButtonGroup>}>
-        {loading ? <Empty>Loading attendance records...</Empty> : attendanceUnavailable ? <Empty>Attendance is incomplete. Retry to load the full trend.</Empty> : !hasPunches ? <Empty>No recorded punch-ins in the last {days} days.</Empty> : <><div className="tenant-chart"><ResponsiveContainer width="100%" height="100%"><AreaChart data={chart} margin={{ top: 15, right: 15, bottom: 10, left: -18 }} accessibilityLayer><defs><linearGradient id="tenantAttendanceFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#53755b" stopOpacity={0.22} /><stop offset="100%" stopColor="#53755b" stopOpacity={0.01} /></linearGradient></defs><CartesianGrid vertical={false} stroke="#edf0e9" strokeDasharray="3 4" /><XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={25} tick={{ fontSize: 10, fill: '#8a9386' }} /><YAxis allowDecimals={false} domain={[0, Math.max(1, ...chart.map(day => day.employees))]} tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#8a9386' }} /><Tooltip labelFormatter={(_, payload) => payload?.[0]?.payload.date} contentStyle={{ borderRadius: 10, border: '1px solid #e5eae0', fontSize: 12 }} /><Area name="Employees punched in" dataKey="employees" type="monotoneX" stroke="#527357" strokeWidth={2.5} fill="url(#tenantAttendanceFill)" isAnimationActive={false} dot={days === 7 ? { r: 3, fill: '#527357' } : false} /></AreaChart></ResponsiveContainer></div><details className="tenant-data-table"><summary>View chart data</summary><table><thead><tr><th>Date</th><th>Employees punched in</th></tr></thead><tbody>{chart.map(row => <tr key={row.date}><td>{row.date}</td><td>{row.employees}</td></tr>)}</tbody></table></details></>}
-        <div className="tenant-panel-footer"><span>Recorded punches only; missing punches do not imply absence.</span>{link('attendance', 'Attendance')}</div>
-      </Panel>
-      <Panel title="Needs your attention" subtitle="Open leave requests" action={link('leave')}>
-        {loading ? <Empty>Loading requests...</Empty> : leaveUnavailable ? <Empty>Leave requests are unavailable.</Empty> : !pending.length ? <Empty><CheckCircle2 size={25} />No pending leave requests.</Empty> : <div className="tenant-request-list">{pending.slice(0, 4).map((leave, index) => <div className="tenant-request" key={leave.id || leave.leave_id || index}><div><strong>{personFor(leave) ? nameOf(personFor(leave)) : leave.employee_name || leave.name || leave.userid || 'Employee not provided'}</strong><span className="tenant-pill">Pending</span></div><p>{leave.leave_type || 'Leave request'}</p><small>{leave.start || 'Date not provided'} / {leave.end || 'Date not provided'}</small><Button variant="fadeout" size="sm" endIcon={ArrowRight} onClick={() => onNavigate?.('leave')}>Review request</Button></div>)}</div>}
-      </Panel>
-      <Panel title="Team distribution" subtitle="Employees by department" action={link('employees', 'Directory')}>
-        {loading ? <Empty>Loading departments...</Empty> : errors.employees ? <Empty>Employee data is unavailable.</Empty> : !departments.length ? <Empty>No employees in this selection.</Empty> : <div className="tenant-departments">{departments.map(item => <div key={item.name}><div><span>{item.name}</span><strong>{item.count}<small>{Math.round(item.count / people.length * 100)}%</small></strong></div><div className="tenant-track"><span style={{ width: `${item.count / people.length * 100}%` }} /></div></div>)}</div>}
-      </Panel>
-      <Panel title="Leave schedule" subtitle="Approved leave, current and upcoming" action={link('leave')}>
-        {loading ? <Empty>Loading leave schedule...</Empty> : leaveUnavailable ? <Empty>Leave schedule is unavailable.</Empty> : !upcoming.length ? <Empty>No current or upcoming approved leave.</Empty> : <div className="tenant-leave-list">{upcoming.slice(0, 5).map((leave, index) => <div key={leave.id || index}><span className="tenant-calendar-icon"><CalendarDays size={18} /></span><div><strong>{personFor(leave) ? nameOf(personFor(leave)) : leave.employee_name || leave.name || leave.userid || 'Employee not provided'}</strong><p>{leave.start} / {leave.end}</p></div><span className="tenant-pill">{leave.start <= today ? 'On leave' : 'Upcoming'}</span></div>)}</div>}
-      </Panel>
-    </div>
-    <section className="tenant-bottom"><div className="tenant-quality"><span className="tenant-quality-icon"><Building2 size={22} /></span><div><h2>Keep your directory complete</h2><p>{loading ? 'Checking employee records...' : errors.employees ? 'Employee records could not be checked.' : `${missing.length} employee${missing.length === 1 ? '' : 's'} missing an email, department or job title.`}</p></div>{link('employees', 'Review directory')}</div><div className="tenant-shortcuts">{[[GitBranch, 'Organization', 'hierarchy'], [Wallet, 'Payroll', 'payroll'], [FileText, 'Documents', 'documents']].map(([Icon, label, page]) => <button key={page} onClick={() => onNavigate?.(page)}><Icon size={16} />{label}<ArrowUpRight size={13} /></button>)}</div></section>
-    <footer className="tenant-freshness" role="status">{loading ? 'Fetching the latest records...' : updated ? `Last refresh attempt: ${updated.toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata' })} IST${Object.keys(errors).length ? ' - some sources unavailable' : ' - records loaded'}.` : 'Not refreshed yet.'} Use Refresh data for the latest punches and requests.</footer>
+      <div className="overview-filter-reset"><Button size="sm" variant="fadeout" iconOnly icon={RotateCcw} aria-label="Reset dashboard filters" title="Reset filters" disabled={!Object.values(filters).some(Boolean) && days === 7} onClick={()=>{setFilters({department:'',location:'',shift:'',from:'',to:''});setDays(7);}} /></div>
+    </div></div></div>
+    {error&&<div role="alert" className="tenant-warning"><AlertCircle size={18}/><span>{error}{data?' Previously loaded data remains visible.':''}</span><Button onClick={refresh}>Retry</Button></div>}
+    {data&&Object.keys(data.errors).length>0&&<div role="alert" className="tenant-warning"><AlertCircle size={18}/><span>{Object.values(data.errors).join(' ')} Affected metrics are unavailable.</span><Button variant="outline" onClick={refresh}>Retry</Button></div>}
+    {!data?(loading?<OverviewLoading />:<Empty>Overview could not be loaded.</Empty>):<>
+      <OverviewWorkspace onSelectPeriod={selectPeriod} onChangePeriod={changePeriod} data={data} loading={loading && !data} currentUser={currentUser} onNavigate={navigate} onRefresh={refresh} onAddEmployee={()=>setAdding(true)} onPostAnnouncement={()=>{setPosting(true);setPostError('');}} />
+    </>}
+    <footer className="tenant-freshness" role="status">{loading?'Refreshing…':data?`Last successful refresh: ${dateText(data.refreshed_at)} IST`:'Not loaded.'} · Auto-refresh every 3 minutes while this tab is visible.</footer>
+    {adding&&<AddPerson api={api} onClose={()=>setAdding(false)} onCreated={()=>{setAdding(false);refresh();onShowToast?.({type:'success',title:'Employee added',message:'Directory updated.'});}}/>}
+    {posting&&<Dialog title="Post announcement" onClose={()=>{if(!saving)setPosting(false);}}><form onSubmit={postAnnouncement} className="overview-post"><p>Audience: {filters.department||'All employees'}. Shift and location filters do not limit announcement recipients.</p>{postError&&<p role="alert">{postError}</p>}<label>Title<input name="title" required maxLength={200} disabled={saving}/></label><label>Notice<textarea name="body" required maxLength={10000} rows={6} disabled={saving}/></label><Button type="submit" loading={saving}>Publish announcement</Button></form></Dialog>}
   </main>;
 }
 export default DashboardPage;

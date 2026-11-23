@@ -1,0 +1,21 @@
+@use '../../styles/color' as *;
+
+.calendar-day-tooltip {
+  position: fixed;
+  z-index: 10000;
+  width: min(300px, calc(100vw - 48px));
+  padding: 14px;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--calendar-type-color) 14%, #{$color-surface}), #{$color-surface} 80%);
+  border-top: 3px solid var(--calendar-type-color);
+  animation: calendar-tooltip-enter 180ms cubic-bezier(.2,.8,.2,1) both;
+  color: $color-text;
+  box-shadow: 0 12px 36px #17231c24;
+  pointer-events: none;
+  .calendar-day-tooltip-date { display: block; padding-bottom: 10px; border-bottom: 1px solid $color-border; font-size: 12px; font-weight: 600; }
+  .calendar-day-tooltip-records { max-height: 160px; overflow: hidden; }
+  .calendar-day-tooltip-record { display: flex; align-items: flex-start; gap: 9px; padding: 9px; margin-top: 7px; border-radius: 7px; background: linear-gradient(110deg, color-mix(in srgb, var(--record-color) 12%, transparent), transparent); i { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; } strong { display: block; font-size: 12px; font-weight: 500; } span { display: block; margin-top: 3px; font-size: 11px; color: $color-text-muted; } }
+}
+@keyframes calendar-tooltip-enter { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .calendar-day-tooltip { animation: none; } }

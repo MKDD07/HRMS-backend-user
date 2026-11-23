@@ -1,11 +1,12 @@
-async function request(path, options = {}) {
-  const token = localStorage.getItem('pulse_hrms_token');
-  const response = await fetch('/api/company-calendar' + path, { ...options, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers } });
-  const body = await response.json().catch(() => { throw new Error('Company Calendar service is unavailable. Restart the application server.'); });
-  if (!response.ok) throw new Error(body.message || 'Company Calendar request failed.');
-  return body;
-}
+import { companyRequest } from './companyAuth';
+
+const request = (path, options = {}) => companyRequest('/company-calendar' + path, {
+  token: localStorage.getItem('pulse_hrms_token'),
+  ...options
+});
 export const companyCalendarApi = {
+  reminders: () => request('/reminders'),
+  readReminders: id => request('/reminders/read', { method: 'POST', body: JSON.stringify(id ? { id } : {}) }),
   fetchHolidays: value => request('/holiday-cache', { method: 'POST', body: JSON.stringify(value) }),
   configuration: () => request('/configuration'),
   saveLeaveType: value => request('/leave-types', { method: 'POST', body: JSON.stringify(value) }),

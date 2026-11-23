@@ -1,0 +1,9 @@
+.profile-kpi-card.card { margin: 0; padding: 20px; border: 0; border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-main); }
+.profile-kpi-card {
+  &__header { display: flex; align-items: center; gap: 10px; h4 { flex: 1; min-width: 0; margin: 0; font-size: 13px; font-weight: 600; line-height: 1.5; color: var(--color-gray-800); overflow-wrap: anywhere; } > .btn { flex-shrink: 0; } }
+  &__icon { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border-radius: 9px; background: #eef3f7; color: #607c95; }
+  &__numbers { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 20px 0 14px; > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 9px; } strong { font-size: 30px; line-height: 1.2; font-weight: 600; letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: var(--color-gray-900); } div span { font-size: 12px; color: var(--color-gray-500); } }
+  &__percent { font-size: 11px; font-weight: 500; color: var(--color-gray-500); &.is-complete { color: #39776f; } }
+  > progress { display: block; width: 100%; height: 6px; border: 0; border-radius: 999px; overflow: hidden; appearance: none; background: var(--color-gray-100); &::-webkit-progress-bar { background: var(--color-gray-100); border-radius: 999px; } &::-webkit-progress-value { background: linear-gradient(90deg, #607c95, #9bb7c7); border-radius: 999px; } &::-moz-progress-bar { background: #607c95; border-radius: 999px; } }
+  &__footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 13px; color: var(--color-gray-500); font-size: 11px; > span:first-child { display: inline-flex; align-items: center; gap: 6px; } }
+}

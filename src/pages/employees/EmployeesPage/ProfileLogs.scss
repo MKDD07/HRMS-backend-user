@@ -1,0 +1,13 @@
+.profile-logs.card { margin: 0; padding: 0; border: 0; border-radius: var(--radius-card); box-shadow: var(--shadow-main); background: var(--color-surface); overflow: hidden; }
+.profile-logs {
+  &__meta { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 16px 20px; border-bottom: 1px solid var(--color-gray-100); color: var(--color-gray-500); font-size: 11px; }
+  &__scroll { max-height: 520px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--color-gray-200) transparent; &:focus-visible { outline: 2px solid var(--color-gray-400); outline-offset: -2px; } }
+  ol { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; align-items: flex-start; gap: 12px; padding: 20px; & + li { border-top: 1px solid var(--color-gray-100); } }
+  &__icon { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; color: var(--color-gray-500); background: var(--color-gray-50); &.is-verified { background: #edf5f1; color: #39776f; } }
+  &__copy { flex: 1; min-width: 0; > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; } strong { font-size: 12px; font-weight: 600; color: var(--color-gray-800); } time { font-size: 11px; color: var(--color-gray-500); } p { margin: 7px 0; font-size: 11px; color: var(--color-gray-500); } }
+  summary { margin-top: 10px; font-size: 11px; color: var(--color-gray-600); cursor: pointer; }
+  dl { display: grid; gap: 14px; padding: 14px; margin: 12px 0 0; background: var(--color-gray-50); border-radius: 8px; font-size: 11px; dt { margin-bottom: 5px; color: var(--color-gray-500); } dd { margin: 0; color: var(--color-gray-700); overflow-wrap: anywhere; } }
+  &__fields { display: flex; flex-wrap: wrap; gap: 6px; span { padding: 4px 7px; border: 1px solid var(--color-gray-200); border-radius: 5px; background: var(--color-surface); } }
+  &__empty { display: grid; justify-items: center; gap: 10px; padding: 36px 24px; text-align: center; color: var(--color-gray-400); p { margin: 0; font-size: 12px; color: var(--color-gray-700); } span { font-size: 11px; line-height: 1.6; color: var(--color-gray-500); } }
+}

@@ -1,0 +1,18 @@
+.organization-person-node {
+ &.is-on-leave { border-color: #d9ae63; background: color-mix(in srgb, #f5c66d 10%, var(--color-surface)); .organization-person-node__heading { background: linear-gradient(115deg, #fff0cc, var(--color-surface)); > span { color: #87500b; } } .organization-person-node__footer > span { color: #87500b; font-weight: 600; } }
+ width: 280px; min-height: 150px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface); color: var(--color-text); box-shadow: 0 4px 16px rgba(39,41,44,.06); overflow: visible;
+ &.is-selected { border-color: var(--department-accent); box-shadow: 0 0 0 2px color-mix(in srgb,var(--department-accent) 20%,transparent); }
+ &.is-indirect { border-style: dashed; border-color: var(--department-accent); }
+ &__heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; padding: 8px 14px; border-radius: 14px 14px 0 0; background: linear-gradient(115deg,var(--department-tint),var(--department-glow),var(--color-surface)); > span { font-size: 10px; font-weight: 600; color: var(--department-accent); overflow-wrap: anywhere; } }
+ &__identity { display: flex; align-items: center; gap: 12px; padding: 14px; > div:last-child { min-width: 0; } strong { display: block; font-size: 13px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; } small { display: block; font-size: 11px; color: var(--color-text-muted); margin-top: 4px; } }
+ &__contact { display: grid; gap: 5px; padding: 0 14px 12px; > span { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--color-text-secondary); overflow-wrap: anywhere; > svg { flex-shrink: 0; color: var(--department-accent); } } }
+ &__footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; border-top: 1px solid var(--color-border); padding: 6px 14px; > span { font-size: 10px; color: var(--color-text-muted); } }
+ .react-flow__handle { width: 11px; height: 11px; background: var(--department-accent); border: 2px solid var(--color-surface); }
+}
+.organization-flow-chart {
+ background: linear-gradient(145deg,var(--color-surface-subtle),var(--color-surface));
+ .react-flow__controls { box-shadow: 0 3px 14px rgba(39,41,44,.08); border: 1px solid var(--color-border); border-radius: 9px; overflow: hidden; }
+ .react-flow__controls-button { background: var(--color-surface); color: var(--color-text); border-bottom-color: var(--color-border); }
+}
+.organization-person-node.has-team-role { border-color: var(--department-accent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--department-accent) 25%, transparent), 0 0 16px color-mix(in srgb, var(--department-accent) 16%, transparent); }
+.organization-person-node__role { display: inline-flex; margin-top: 5px; padding: 3px 7px; border-radius: 5px; font-size: 10px; color: var(--department-accent); background: var(--department-tint); }

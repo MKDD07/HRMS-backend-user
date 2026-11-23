@@ -1,0 +1,159 @@
+@use 'color' as *;
+
+$editable: ":is(input:not(:where([type='button'], [type='checkbox'], [type='color'], [type='file'], [type='hidden'], [type='image'], [type='radio'], [type='range'], [type='reset'], [type='search'], [type='submit'])), select, textarea)";
+$special-control: ":where(.form-field *, .universal-search *, .date-range-picker *, .header-calendar-filters > label, .header-calendar-filters > label *)";
+$field-label: "label:not(:where(.form-field, .sr-only, [hidden])):has(> #{$editable}):not(:has(> :is(input, select, textarea, button) ~ :is(input, select, textarea, button)))";
+
+@mixin field-surface($background: var(--color-surface-subtle), $border-color: var(--color-border)) {
+  border: 1px solid $border-color;
+  border-radius: var(--radius-input);
+  background: $background;
+}
+
+@mixin field-focus {
+  outline: 2px solid var(--color-slate-500, #{$color-focus});
+  outline-offset: -2px;
+}
+
+@mixin field-shell {
+  @include field-surface;
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-xs);
+
+  &:has(> :focus-visible) { @include field-focus; }
+}
+
+@mixin field-value {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--space-8);
+  padding: var(--space-1) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--font-sm);
+  box-shadow: none;
+
+  &:focus { outline: none; }
+}
+
+.form-field {
+  @include field-shell;
+  margin: 0;
+
+  &__label {
+    color: var(--color-text-muted);
+    font-size: var(--font-xs);
+    font-weight: var(--weight-medium);
+  }
+
+  > :is(input, textarea, select, .form-select__control) {
+    @include field-value;
+    &:disabled { opacity: 0.55; cursor: not-allowed; }
+  }
+
+  > textarea { resize: vertical; }
+}
+
+.form-select {
+  position: relative;
+  min-width: 0;
+
+  &__control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: start;
+    cursor: pointer;
+  }
+
+  &__value {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  &__list {
+    @include field-surface;
+    position: absolute;
+    z-index: 5;
+    inset: calc(100% + var(--space-1)) 0 auto;
+    max-height: 192px;
+    overflow-y: auto;
+    margin: 0;
+    padding: var(--space-1);
+    box-shadow: var(--shadow-main);
+    list-style: none;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-input);
+    color: var(--color-text);
+    font-size: var(--font-sm);
+    cursor: pointer;
+
+    &[aria-selected='true'] { font-weight: var(--weight-medium); }
+    &[data-active] { background: var(--color-gray-100); }
+  }
+}
+
+// Shared theme for pages and portaled dialogs that still use native fields.
+:is(#root, dialog.universal-modal) {
+  #{$editable}:not(#{$special-control}) {
+    @include field-surface(var(--native-field-background, var(--color-surface-subtle)), var(--native-field-border-color, var(--color-border)));
+    color: var(--color-text);
+    box-shadow: none;
+
+    &:focus { box-shadow: none; }
+    &:focus-visible { @include field-focus; }
+  }
+
+  #{$field-label}:not(#{$special-control}) {
+    @include field-shell;
+    gap: 0;
+
+    > #{$editable} {
+      @include field-value;
+
+      &:focus-visible { outline: none; }
+    }
+
+    > textarea { resize: vertical; }
+  }
+
+  @supports (appearance: base-select) {
+    select:not([multiple], [size]):not(#{$special-control}) {
+      &,
+      &::picker(select) { appearance: base-select; }
+
+      &::picker(select) {
+        @include field-surface;
+        color: var(--color-text);
+        max-height: min(240px, 45vh);
+        overflow: auto;
+        padding: var(--space-1);
+        box-shadow: var(--shadow-main);
+      }
+
+      option {
+        gap: var(--space-2);
+        padding: var(--space-2);
+        border-radius: var(--radius-input);
+      }
+
+      option:is(:hover, :focus-visible) { background: var(--color-gray-100); }
+    }
+  }
+}

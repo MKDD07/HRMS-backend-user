@@ -1,11 +1,13 @@
+import { ChartLegend } from './ChartLegend';
+import { chartPalette } from './chartColors';
 import React, { useState } from 'react';
 
 export function DonutChart({
   data = [
-    { label: 'Full-time', value: 118, color: '#6366f1' },
-    { label: 'Hybrid', value: 18, color: '#06b6d4' },
-    { label: 'Contract', value: 8, color: '#10b981' },
-    { label: 'Intern', value: 4, color: '#f59e0b' },
+    { label: 'Full-time', value: 118, color: chartPalette[0] },
+    { label: 'Hybrid', value: 18, color: chartPalette[1] },
+    { label: 'Contract', value: 8, color: chartPalette[2] },
+    { label: 'Intern', value: 4, color: chartPalette[3] },
   ],
   size = 180,
   strokeWidth = 24
@@ -19,7 +21,7 @@ export function DonutChart({
   let currentOffset = 0;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-2">
+    <div className="flex flex-col items-center justify-center gap-3 py-2">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
         <svg
           width={size}
@@ -73,34 +75,15 @@ export function DonutChart({
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-col gap-2 min-w-[130px]">
-        {data.map((item, idx) => {
-          const isHovered = hoveredIdx === idx;
-          const pct = Math.round((item.value / total) * 100);
-
-          return (
-            <div
-              key={item.label}
-              className={`flex items-center justify-between text-[13px] p-1 rounded transition-colors cursor-pointer ${isHovered ? 'bg-slate-800 text-white' : 'text-slate-400'
-                }`}
-              onMouseEnter={() => setHoveredIdx(idx)}
-              onMouseLeave={() => setHoveredIdx(null)}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className={isHovered ? 'font-semibold text-white' : ''}>
-                  {item.label}
-                </span>
-              </div>
-              <span className="font-semibold text-slate-300 ml-2">{pct}%</span>
-            </div>
-          );
-        })}
-      </div>
+      <ChartLegend
+        items={data.map(item => ({
+          id: item.label,
+          label: item.label,
+          color: item.color,
+          detail: total ? Math.round(item.value / total * 100) + '%' : '0%',
+        }))}
+        onHighlight={setHoveredIdx}
+      />
     </div>
   );
 }

@@ -385,17 +385,13 @@ export function EmployeeManageModal({
 
           <div className="flex items-center gap-2 self-start md:self-center">
             {onSelectEmployee && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onSelectEmployee(employee.userid);
-                }}
-                className="px-3 py-1.5 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] hover:bg-[#F3F4F6] text-[#2563EB] text-[13px] font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
-              >
+              <Button type="button" onClick={() => {
+  onClose();
+  onSelectEmployee(employee.userid);
+}} className="  flex items-center gap-1.5" variant="outline" wrapContent={false}>
                 Full Dossier Page
                 <ExternalLink className="w-3.5 h-3.5" />
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -406,18 +402,10 @@ export function EmployeeManageModal({
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition-colors whitespace-nowrap cursor-pointer ${isActive
-                  ? 'bg-[#27292C] text-[#FFFFFF]'
-                  : 'text-[#5F6368] hover:bg-[#F3F4F6] hover:text-[#27292C]'
-                  }`}
-              >
+              <Button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-1.5       whitespace-nowrap  ${isActive ? "" : ""}`} variant="outline" wrapContent={false}>
                 <Icon className="w-3.5 h-3.5" />
                 {tab.label}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -578,12 +566,7 @@ export function EmployeeManageModal({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon={Clock}
-                    onClick={() => setIsAdjustPunchOpen(true)}
-                  >
+                  <Button variant="secondary" size="sm" icon={Clock} onClick={() => setIsAdjustPunchOpen(true)}>
                     Adjust / Regularize Punch
                   </Button>
                 </div>
@@ -597,13 +580,9 @@ export function EmployeeManageModal({
                   <h5 className="text-[13px] font-bold text-[#1E3A8A]">
                     Regularize Punch for Day {selectedDayDetail.day} ({selectedDayDetail.date})
                   </h5>
-                  <button
-                    type="button"
-                    onClick={() => setIsAdjustPunchOpen(false)}
-                    className="text-[13px] text-[#1E3A8A] font-semibold hover:underline cursor-pointer"
-                  >
+                  <Button type="button" onClick={() => setIsAdjustPunchOpen(false)} className="" variant="outline" wrapContent={false}>
                     Cancel
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -634,12 +613,7 @@ export function EmployeeManageModal({
                 </div>
 
                 <div className="flex justify-end gap-2 pt-1">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={CheckCircle2}
-                    onClick={handleApplyPunchAdjustment}
-                  >
+                  <Button variant="primary" size="sm" icon={CheckCircle2} onClick={handleApplyPunchAdjustment}>
                     Save Regularized Punch
                   </Button>
                 </div>
@@ -671,18 +645,13 @@ export function EmployeeManageModal({
               </div>
 
               <div className="flex items-center gap-2">
-                <Button
-                  variant={isEditingKpiKri ? 'secondary' : 'primary'}
-                  size="sm"
-                  icon={isEditingKpiKri ? CheckCircle2 : Edit}
-                  onClick={() => {
-                    if (isEditingKpiKri) {
-                      handleSaveKpiKri();
-                    } else {
-                      setIsEditingKpiKri(true);
-                    }
-                  }}
-                >
+                <Button variant={isEditingKpiKri ? 'secondary' : 'primary'} size="sm" icon={isEditingKpiKri ? CheckCircle2 : Edit} onClick={() => {
+  if (isEditingKpiKri) {
+    handleSaveKpiKri();
+  } else {
+    setIsEditingKpiKri(true);
+  }
+}}>
                   {isEditingKpiKri ? 'Save Scores' : 'Edit Evaluation'}
                 </Button>
               </div>
@@ -815,13 +784,7 @@ export function EmployeeManageModal({
               </div>
 
               <div className="flex items-center gap-2">
-                <Button
-                  id="btn-add-employee-doc"
-                  variant="primary"
-                  size="sm"
-                  icon={Plus}
-                  onClick={() => setIsUploadDocOpen(true)}
-                >
+                <Button id="btn-add-employee-doc" variant="primary" size="sm" icon={Plus} onClick={() => setIsUploadDocOpen(true)}>
                   Upload Document
                 </Button>
               </div>
@@ -837,13 +800,9 @@ export function EmployeeManageModal({
                   <h5 className="text-[13px] font-bold text-[#27292C]">
                     Add New Document to {employee.first_name}'s Dossier
                   </h5>
-                  <button
-                    type="button"
-                    onClick={() => setIsUploadDocOpen(false)}
-                    className="text-[13px] text-[#5F6368] hover:text-[#27292C] cursor-pointer"
-                  >
+                  <Button type="button" onClick={() => setIsUploadDocOpen(false)} className="" variant="outline" wrapContent={false}>
                     Cancel
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[13px]">
@@ -894,19 +853,10 @@ export function EmployeeManageModal({
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-[#E5E7EB]">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setIsUploadDocOpen(false)}
-                  >
+                  <Button variant="secondary" size="sm" onClick={() => setIsUploadDocOpen(false)}>
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    icon={Upload}
-                  >
+                  <Button type="submit" variant="primary" size="sm" icon={Upload}>
                     Save & Archive Document
                   </Button>
                 </div>
@@ -948,24 +898,12 @@ export function EmployeeManageModal({
                     </div>
 
                     <div className="flex items-center gap-2 self-end sm:self-center">
-                      <Button
-                        id={`btn-download-doc-${doc.id}`}
-                        variant="secondary"
-                        size="sm"
-                        icon={Download}
-                        className="text-[13px] font-semibold text-[#2563EB] hover:text-[#1D4ED8]"
-                        onClick={() => handleDownloadDoc(doc)}
-                      >
+                      <Button id={`btn-download-doc-${doc.id}`} variant="secondary" size="sm" icon={Download} className="" onClick={() => handleDownloadDoc(doc)}>
                         Download
                       </Button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteDoc(doc.id)}
-                        className="p-1.5 rounded-lg text-[#9CA3AF] hover:text-[#EF4444] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
-                        title="Delete Document"
-                      >
+                      <Button type="button" onClick={() => handleDeleteDoc(doc.id)} className="" title="Delete Document" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -986,13 +924,7 @@ export function EmployeeManageModal({
                   Edit all personal, employment, contact, and statutory details for {employee.userid}
                 </p>
               </div>
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                icon={Save}
-                loading={submitting}
-              >
+              <Button type="submit" variant="primary" size="sm" icon={Save} loading={submitting}>
                 Save Changes
               </Button>
             </div>
@@ -1288,14 +1220,7 @@ export function EmployeeManageModal({
               <Button variant="secondary" size="sm" onClick={onClose}>
                 Cancel
               </Button>
-              <Button
-                id="btn-save-all-employee-info"
-                type="submit"
-                variant="primary"
-                size="sm"
-                icon={Save}
-                loading={submitting}
-              >
+              <Button id="btn-save-all-employee-info" type="submit" variant="primary" size="sm" icon={Save} loading={submitting}>
                 Save Complete Record
               </Button>
             </div>

@@ -1,26 +1,30 @@
+import { isAvatarStorageKey } from '../../shared/avatarStorage.mjs';
+import { cachedImage } from './imageCache';
 import { useEffect, useState } from 'react';
 import { COMPANY_API } from './companyAuth';
 
 export function useAvatarImage(source) {
+  return useAvatarImageState(source).url;
+}
+
+export function useAvatarImageState(source) {
   const [image, setImage] = useState({ source: '', url: '' });
   const value = typeof source === 'string' ? source.trim() : '';
   const key = value.replace(/^\/?storage\//, '').replace(/^\//, '');
-  const stored = key.startsWith('profile/');
+  const stored = isAvatarStorageKey(key);
   useEffect(() => {
     if (!stored) return;
-    const controller = new AbortController();
+    let active = true;
     let objectUrl;
-    const token = localStorage.getItem('pulse_hrms_token');
-    fetch(`${COMPANY_API}/avatar?key=${encodeURIComponent(key)}`, { headers: { Authorization: `Bearer ${token || ''}` }, signal: controller.signal })
-      .then(response => { if (!response.ok) throw new Error('Photo unavailable'); return response.blob(); })
+    cachedImage(`${COMPANY_API}/avatar?key=${encodeURIComponent(key)}`)
       .then(blob => {
-        if (controller.signal.aborted) return;
+        if (!active) return;
         objectUrl = URL.createObjectURL(blob);
         setImage({ source: value, url: objectUrl });
-      }).catch(() => { if (!controller.signal.aborted) setImage({ source: value, url: '' }); });
-    return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
+      }).catch(() => { if (active) setImage({ source: value, url: '' }); });
+    return () => { active = false; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [value, key, stored]);
-  if (stored) return image.source === value ? image.url : '';
-  if (/^(https?:|blob:|data:image\/)/i.test(value)) return value;
-  return key.startsWith('images/') ? `https://hrms-api.mkmkataria07.workers.dev/storage/${key}` : '';
+  if (stored) return { url: image.source === value ? image.url : '', loading: image.source !== value };
+  if (/^(https?:|blob:|data:image\/)/i.test(value)) return { url: value, loading: false };
+  return { url: key.startsWith('images/') ? `https://hrms-api.mkmkataria07.workers.dev/storage/${key}` : '', loading: false };
 }

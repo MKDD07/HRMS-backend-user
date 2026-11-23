@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { validatePaymentDetails } from './paymentDetails.mjs';
+const base={pay_date:'2026-10-11',reference:'REF-001'};
+for(const method of ['Bank transfer','Net banking','UPI']) assert.equal(validatePaymentDetails({...base,method}).method,method);
+assert.throws(()=>validatePaymentDetails({...base,method:'Cash'}),/received/);
+assert.equal(validatePaymentDetails({...base,method:'Cash',received_by:'Employee'}).status,'Recorded');
+assert.throws(()=>validatePaymentDetails({...base,method:'Cheque'}),/bank and date/);
+assert.throws(()=>validatePaymentDetails({...base,method:'Cheque',bank_name:'Bank',cheque_date:'2026-02-30'}),/bank and date/);
+assert.equal(validatePaymentDetails({...base,method:'Cheque',bank_name:'Bank',cheque_date:'2026-10-10'}).reference,'REF-001');
+assert.throws(()=>validatePaymentDetails({...base,method:'Unknown'}),/valid payment method/);
+assert.throws(()=>validatePaymentDetails({...base,method:'UPI',reference:''}),/reference/);
+console.log('Payment details validation passed');

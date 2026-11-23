@@ -1,3 +1,4 @@
+import { Button } from './Button';
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -26,38 +27,19 @@ export function Pagination({
       </div>
 
       <div className="pagination__controls">
-        <button
-          type="button"
-          className="pagination__btn"
-          disabled={currentPage <= 1}
-          onClick={() => onPageChange(currentPage - 1)}
-          aria-label="Previous page"
-        >
+        <Button type="button" className="pagination__btn" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)} aria-label="Previous page" variant="outline" wrapContent={false} iconOnly={true} size="sm">
           <ChevronLeft className="w-4 h-4" />
-        </button>
+        </Button>
 
         {pages.map((p) => (
-          <button
-            key={p}
-            type="button"
-            className={`pagination__btn ${
-              currentPage === p ? 'pagination__btn--active' : ''
-            }`}
-            onClick={() => onPageChange(p)}
-          >
+          <Button key={p} type="button" className={`pagination__btn ${currentPage === p ? 'pagination__btn--active' : ''}`} onClick={() => onPageChange(p)} variant={currentPage === p ? "colored" : "fadeout"} wrapContent={false}>
             {p}
-          </button>
+          </Button>
         ))}
 
-        <button
-          type="button"
-          className="pagination__btn"
-          disabled={currentPage >= totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
-          aria-label="Next page"
-        >
+        <Button type="button" className="pagination__btn" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)} aria-label="Next page" variant="outline" wrapContent={false} iconOnly={true} size="sm">
           <ChevronRight className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

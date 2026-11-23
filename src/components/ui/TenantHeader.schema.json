@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tenant header settings",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "subheading": {
+      "type": "string"
+    },
+    "heading": {
+      "type": "string"
+    },
+    "paragraph": {
+      "type": "string"
+    },
+    "refresh": {
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "visible": {
+              "type": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "buttons": {
+      "type": "array",
+      "maxItems": 3,
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "not": {
+              "const": "refresh"
+            }
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variant": {
+            "enum": [
+              "colored",
+              "outline",
+              "fadeout",
+              "focus",
+              "primary",
+              "secondary",
+              "ghost",
+              "danger",
+              "success"
+            ]
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

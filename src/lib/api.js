@@ -1,5 +1,10 @@
+import { avatarThumbnail } from './avatarThumbnail';
+import { createEmployeeDirectoryCache } from './employeeDirectoryCache.mjs';
 import { documentVaultApi } from './documentVaultApi.js';
 import { companyRequest } from './companyAuth.js';
+
+const employeeDirectoryCache = createEmployeeDirectoryCache();
+const directoryScope = () => getAuthToken();
 
 const API_BASE_URL = 'https://hrms-api.mkmkataria07.workers.dev/api/v1';
 export const DB_ID = '4fe0e2c8-e4f0-4433-8351-6dbf73359cd7';
@@ -133,6 +138,7 @@ export const hrmsApi = {
   },
 
   logout() {
+    employeeDirectoryCache.clear();
     setAuthToken(null);
     setStoredUser(null);
     return { success: true };
@@ -149,24 +155,34 @@ export const hrmsApi = {
   // --------------------------------------------------------------------------
   // EMPLOYEES & DIRECTORY
   // --------------------------------------------------------------------------
-  async getAllUsers({ liveOnly = false } = {}) {
-    const result = await request('/get-all-users');
-    if (result?.success === false || !Array.isArray(result?.data)) {
-      if (liveOnly) {
-        throw new Error(result?.message || 'Unable to load the employee directory.');
-      }
+  getCachedUsers() {
+    return employeeDirectoryCache.peek(directoryScope())?.data;
+  },
+  async getAllUsers({ liveOnly = false, maxAge = 0 } = {}) {
+    try {
+      const scope = directoryScope();
+      return await employeeDirectoryCache.load(scope, async () => {
+        if (scope !== directoryScope()) throw new Error('Account changed while loading employees.');
+        const result = await request('/get-all-users');
+        if (result?.success === false || !Array.isArray(result?.data)) {
+          throw new Error(result?.message || 'Unable to load the employee directory.');
+        }
+    
+        const liveUsers = result.data.map((u) => ({
+          ...u,
+          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || u.userid,
+          date_of_joining: u.date_of_joining || u.joining_date || '',
+          date_of_birth: u.date_of_birth || u.dob || '',
+          profile_pic_url: u.profile_pic_url || ''
+        }));
+    
+        if (scope !== directoryScope()) throw new Error('Account changed while loading employees.');
+        return { success: true, data: liveUsers };
+          }, maxAge);
+    } catch (error) {
+      if (liveOnly) throw error;
       return { success: true, data: [] };
     }
-
-    const liveUsers = result.data.map((u) => ({
-      ...u,
-      name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || u.userid,
-      date_of_joining: u.date_of_joining || u.joining_date || '',
-      date_of_birth: u.date_of_birth || u.dob || '',
-      profile_pic_url: u.profile_pic_url || ''
-    }));
-
-    return { success: true, data: liveUsers };
   },
 
   async getUser(userid, { liveOnly = false } = {}) {
@@ -175,22 +191,50 @@ export const hrmsApi = {
       return { success: false, data: [] };
     }
 
-    const res = await request(`/get-user?userid=${encodeURIComponent(userid)}`);
-    if (res?.success === false || !Array.isArray(res?.data) || !res.data.length) {
-      if (liveOnly) {
-        throw new Error(res?.message || 'Employee details are unavailable.');
+    try {
+      const res = await request(`/get-user?userid=${encodeURIComponent(userid)}`);
+      const usersList = Array.isArray(res?.data)
+        ? res.data
+        : (res?.data && typeof res.data === 'object' ? [res.data] : (res?.userid || res?.user_id ? [res] : []));
+
+      if (res?.success !== false && usersList.length > 0) {
+        return {
+          success: true,
+          data: usersList,
+          personalDetails: res.personalDetails || (res.personal_detail ? [res.personal_detail] : []),
+          professionalDetails: res.professionalDetails || (res.professional_detail ? [res.professional_detail] : []),
+          bankDetails: res.bankDetails || (res.bank_detail ? [res.bank_detail] : []),
+          familyDetails: res.familyDetails || (res.family_detail ? [res.family_detail] : [])
+        };
       }
-      return { success: false, data: [], personalDetails: [], professionalDetails: [], bankDetails: [], familyDetails: [] };
+    } catch (err) {
+      console.warn(`[API] getUser request failed for ${userid}:`, err?.message);
     }
 
-    return {
-      success: true,
-      data: res.data,
-      personalDetails: res.personalDetails || [],
-      professionalDetails: res.professionalDetails || [],
-      bankDetails: res.bankDetails || [],
-      familyDetails: res.familyDetails || []
-    };
+    // Fallback: look up user in directory if get-user is unavailable or returned empty
+    try {
+      const allRes = await this.getAllUsers();
+      const match = (allRes?.data || []).find(
+        (u) => String(u.userid || u.user_id || u.employee_code || u.employee_id) === String(userid)
+      );
+      if (match) {
+        return {
+          success: true,
+          data: [match],
+          personalDetails: match.personalDetails || (match.personal_detail ? [match.personal_detail] : []),
+          professionalDetails: match.professionalDetails || (match.professional_detail ? [match.professional_detail] : []),
+          bankDetails: match.bankDetails || (match.bank_detail ? [match.bank_detail] : []),
+          familyDetails: match.familyDetails || (match.family_detail ? [match.family_detail] : [])
+        };
+      }
+    } catch (fallbackErr) {
+      console.warn('[API] getUser fallback failed:', fallbackErr?.message);
+    }
+
+    if (liveOnly) {
+      throw new Error('Employee details are unavailable.');
+    }
+    return { success: false, data: [], personalDetails: [], professionalDetails: [], bankDetails: [], familyDetails: [] };
   },
 
   async getTodaysBirthdays(dateString) {
@@ -223,58 +267,51 @@ export const hrmsApi = {
   },
 
   async uploadAvatar(userid, imageData) {
-    let base64 = imageData;
-    if (typeof window !== 'undefined' && (imageData instanceof File || imageData instanceof Blob)) {
-      base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Failed to read image file.'));
-        reader.readAsDataURL(imageData);
-      });
-    }
+    const base64 = await avatarThumbnail(imageData);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('pulse_hrms_token') : null;
     const result = await companyRequest('/upload-avatar', {
       token, method: 'POST', body: JSON.stringify({ userid, image: base64 })
     });
 
+    const photoKey = result.profile_pic_url || result.key;
+    if (!photoKey) throw new Error('The server did not return the saved photo.');
+    employeeDirectoryCache.clear();
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(`pulse_avatar_${userid}`, base64);
+        localStorage.removeItem(`pulse_avatar_${userid}`);
         const currentUser = getStoredUser();
-        if (currentUser && (currentUser.userid === userid || currentUser.username === userid)) {
-          setStoredUser({ ...currentUser, profile_pic_url: base64 });
+        if (currentUser && (currentUser.userid === userid || currentUser.user_id === userid || currentUser.username === userid)) {
+          setStoredUser({ ...currentUser, profile_pic_url: photoKey });
         }
-        window.dispatchEvent(new CustomEvent('pulse-avatar-updated', { detail: { userid, profile_pic_url: base64 } }));
-        window.dispatchEvent(new Event('pulse-users-updated'));
-        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('pulse-avatar-updated', { detail: { userid, profile_pic_url: photoKey } }));
       } catch (e) {
         console.warn('Avatar local sync notice:', e);
       }
     }
 
-    return { success: true, profile_pic_url: base64, data: result };
+    return { success: true, profile_pic_url: photoKey, data: result };
   },
 
+  async getEmployeeDossier(userid) {
+    const data = await companyRequest('/employee-dossier?userid=' + encodeURIComponent(userid), { token: getAuthToken() });
+    return { success: true, data: [data] };
+  },
   async updateUser(userid, updates) {
+    const result = await request('/update-user', { method: 'POST', body: JSON.stringify({ ...updates, userid }) });
+    if (result?.success !== true) throw new Error(result?.message || 'Employee changes were not saved.');
     const currentUser = getStoredUser();
-    if (currentUser && (currentUser.userid === userid || currentUser.username === userid)) {
-      const updated = { ...currentUser, ...updates };
-      setStoredUser(updated);
-    }
-    try {
-      await request('/update-user', {
-        method: 'POST',
-        body: JSON.stringify({ userid, ...updates })
-      });
-    } catch (e) {}
-
-    return { success: true, data: { userid, ...updates } };
+    if (currentUser && (currentUser.userid === userid || currentUser.user_id === userid)) setStoredUser({ ...currentUser, ...updates });
+    return result;
   },
 
   // --------------------------------------------------------------------------
   // ATTENDANCE & SHIFTS
   // --------------------------------------------------------------------------
+  async getAttendanceSchedule() {
+    return companyRequest('/attendance/schedule', { token: getAuthToken() });
+  },
+
   async getAttendance(userid, date, { liveOnly = false } = {}) {
     const q = userid ? `?userid=${encodeURIComponent(userid)}` : '';
     const res = await request(`/get-attendance${q}`);
@@ -795,12 +832,13 @@ export const hrmsApi = {
         if (liveOnly) throw new Error(res?.message || 'Salary records are unavailable.');
         return { success: true, data: [] };
       }
-      const mapped = res.data.map((item) => ({
+      const mapped = res.data.map((original) => { const breakdown = typeof original.breakdown === 'string' ? JSON.parse(original.breakdown || '{}') : original.breakdown || {}; const payment = breakdown.payment || {}; const item = original.payroll_id ? {...original,id:original.payroll_id,user_id:userid,month:original.period?.slice(5),year:original.period?.slice(0,4),pay_date:payment.pay_date,amount_paid:(original.gross_minor-original.deductions_minor)/100,transaction_ref:payment.reference,status:payment.status||'Payroll record'} : original; return ({
         id: item.id,
         user_id: item.user_id,
         employee_name: item.employee_name,
         month: item.month,
         year: item.year,
+        date: item.pay_date || original.period,
         pay_date: item.pay_date,
         amount_paid: item.amount_paid,
         status: item.status || 'Processed',
@@ -817,8 +855,9 @@ export const hrmsApi = {
         gross: item.structure?.gross_salary,
         net: item.structure?.net_salary || item.amount_paid,
         annual_ctc: item.structure?.annual_ctc,
-        payment_mode: 'Direct Bank Transfer'
-      }));
+        payment_mode: payment.method || item.payment_mode || 'Not specified',
+        received_by: payment.received_by || undefined, cheque_bank: payment.bank_name || undefined, cheque_date: payment.cheque_date || undefined
+      }); });
       return { success: true, data: mapped };
     }
 
@@ -865,6 +904,13 @@ export const hrmsApi = {
   },
 
   async addSalary(salaryData, { liveOnly = false } = {}) {
+    if (getStoredUser()?.company_id) {
+      const monthIndex = ['January','February','March','April','May','June','July','August','September','October','November','December'].indexOf(salaryData.month);
+      if (monthIndex < 0) throw new Error('Choose a payroll month.');
+      const amount = Math.round(Number(salaryData.amount_paid) * 100);
+      if (!Number.isSafeInteger(amount) || amount < 0) throw new Error('Enter a valid payment amount.');
+      return request('/add-salary', {method:'POST',body:JSON.stringify({userid:salaryData.user_id,period:String(salaryData.year)+'-'+String(monthIndex+1).padStart(2,'0'),gross_minor:amount,deductions_minor:0,breakdown:{payment:salaryData.payment}})});
+    }
     const payload = {
       user_id: salaryData.user_id,
       employee_name: salaryData.employee_name,

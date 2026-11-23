@@ -1,3 +1,4 @@
+import { TenantHeader } from '../../components/ui/TenantHeader';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings,
@@ -25,7 +26,6 @@ import {
   Sliders,
   DollarSign
 } from 'lucide-react';
-import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Toggle } from '../../components/ui/Toggle';
@@ -361,31 +361,20 @@ export function SettingsPage({ api, onShowToast }) {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Settings & Shifts"
-        subtitle="Manage organization branding, multiple employee work shift rosters, campus geofencing, and statutory rules."
-        breadcrumbs={['HRMS', 'Settings']}
-        actions={
-          activeTab === 'shifts' ? (
-            <Button
-              variant="primary"
-              size="sm"
-              icon={Plus}
-              onClick={openAddShiftModal}
-            >
-              Create Shift Profile
-            </Button>
-          ) : (
-            <Button
-              variant="primary"
-              size="sm"
-              icon={Save}
-              onClick={handleSaveGeneralSettings}
-            >
-              Save All Settings
-            </Button>
-          )
-        }
+      <TenantHeader
+        settings={{
+          heading: "Settings & Shifts",
+          paragraph: "Manage organization branding, multiple employee work shift rosters, campus geofencing, and statutory rules.",
+          subheading: (['HRMS', 'Settings']).join(' / '),
+          buttons: [
+            { id: 'action0', label: "Create Shift Profile", variant: "primary" },
+            { id: 'action1', label: "Save All Settings", variant: "primary" }
+          ]
+        }}
+        actions={{
+          action0: { "icon": Plus, "onClick": openAddShiftModal, visible: (activeTab === 'shifts') },
+          action1: { "icon": Save, "onClick": handleSaveGeneralSettings, visible: !(activeTab === 'shifts') }
+        }}
       />
 
       {/* Settings Navigation Tabs */}
@@ -616,34 +605,19 @@ export function SettingsPage({ api, onShowToast }) {
                   {/* Actions Footer */}
                   <div className="pt-3 border-t border-[#E5E7EB] flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon={Edit2}
-                        onClick={() => openEditShiftModal(shift)}
-                        title="Edit Shift Configuration"
-                      >
+                      <Button variant="secondary" size="sm" icon={Edit2} onClick={() => openEditShiftModal(shift)} title="Edit Shift Configuration">
                         Edit
                       </Button>
-                      <button
-                        type="button"
-                        onClick={() => handleDuplicateShift(shift)}
-                        className="p-1.5 rounded-lg text-[#5F6368] hover:text-[#27292C] hover:bg-[#F3F4F6] transition-colors"
-                        title="Duplicate shift profile"
-                      >
+                      <Button type="button" onClick={() => handleDuplicateShift(shift)} className="" title="Duplicate shift profile" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                         <Copy className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
 
                     <div className="flex items-center gap-2">
                       {!shift.isDefault ? (
-                        <button
-                          type="button"
-                          onClick={() => handleSetDefault(shift.id)}
-                          className="text-xs font-semibold text-[#4F46E5] hover:text-[#3730A3] transition-colors"
-                        >
+                        <Button type="button" onClick={() => handleSetDefault(shift.id)} className="" variant="outline" wrapContent={false}>
                           Make Default
-                        </button>
+                        </Button>
                       ) : (
                         <span className="text-[11px] font-semibold text-[#000000] flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" /> Active Default
@@ -651,14 +625,9 @@ export function SettingsPage({ api, onShowToast }) {
                       )}
 
                       {!shift.isDefault && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteShift(shift.id, shift.name)}
-                          className="p-1 text-[#9CA3AF] hover:text-[#DC2626] transition-colors"
-                          title="Delete shift"
-                        >
+                        <Button type="button" onClick={() => handleDeleteShift(shift.id, shift.name)} className="" title="Delete shift" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -739,24 +708,12 @@ export function SettingsPage({ api, onShowToast }) {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    icon={Upload}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
+                  <Button type="button" variant="primary" size="sm" icon={Upload} onClick={() => fileInputRef.current?.click()}>
                     {brandLogo ? 'Change Logo Image' : 'Select Logo Image'}
                   </Button>
 
                   {brandLogo && (
-                    <Button
-                      type="button"
-                      variant="danger"
-                      size="sm"
-                      icon={Trash2}
-                      onClick={handleRemoveLogo}
-                    >
+                    <Button type="button" variant="danger" size="sm" icon={Trash2} onClick={handleRemoveLogo}>
                       Reset to Default
                     </Button>
                   )}
@@ -1024,31 +981,20 @@ export function SettingsPage({ api, onShowToast }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    const defs = resetShiftsToDefault();
-                    setShifts(defs);
-                    if (onShowToast) {
-                      onShowToast({
-                        type: 'info',
-                        title: 'Shifts Reset',
-                        message: 'Restored default work shift profiles.'
-                      });
-                    }
-                  }}
-                >
+                <Button type="button" variant="secondary" size="sm" onClick={() => {
+  const defs = resetShiftsToDefault();
+  setShifts(defs);
+  if (onShowToast) {
+    onShowToast({
+      type: 'info',
+      title: 'Shifts Reset',
+      message: 'Restored default work shift profiles.'
+    });
+  }
+}}>
                   Reset Shifts
                 </Button>
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="sm"
-                  icon={RefreshCw}
-                  onClick={handleResetData}
-                >
+                <Button type="button" variant="danger" size="sm" icon={RefreshCw} onClick={handleResetData}>
                   Clear All Cache
                 </Button>
               </div>
@@ -1262,17 +1208,9 @@ export function SettingsPage({ api, onShowToast }) {
               {DAYS_OF_WEEK.map((day) => {
                 const isSelected = workingDays.includes(day);
                 return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => toggleDay(day)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isSelected
-                      ? 'bg-[#4F46E5] text-white shadow-2xs'
-                      : 'bg-[#F9FAFB] text-[#5F6368] border border-[#E5E7EB] hover:bg-[#F3F4F6]'
-                      }`}
-                  >
+                  <Button key={day} type="button" onClick={() => toggleDay(day)} className={`       ${isSelected ? "" : ""}`} variant="outline" wrapContent={false}>
                     {day}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -1322,12 +1260,7 @@ export function SettingsPage({ api, onShowToast }) {
 
           {/* Form Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsShiftModalOpen(false)}
-            >
+            <Button type="button" variant="secondary" size="sm" onClick={() => setIsShiftModalOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" variant="primary" size="sm" icon={Save}>

@@ -1,0 +1,141 @@
+@use "../../styles/variables" as *;
+
+.tenant-dashboard .overview-filters {
+  margin: 0 0 var(--space-6);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-text);
+
+  .overview-filter-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-subtle);
+  }
+
+  .overview-filter-headline {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+
+    strong {
+      display: block;
+      font-size: var(--font-2sm);
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    small {
+      display: block;
+      margin-top: var(--space-0-5);
+      color: var(--color-text-muted);
+      font-size: var(--font-xs);
+      line-height: 1.5;
+    }
+  }
+
+  .overview-filter-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 var(--space-10);
+    height: var(--space-10);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+  }
+
+  .overview-filter-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-left: auto;
+  }
+
+  .overview-filter-date {
+    color: var(--color-text-muted);
+    font-size: var(--font-xs);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .overview-filter-fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: end;
+    gap: var(--space-4);
+    padding: var(--space-5);
+
+    label {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-width: 0;
+      gap: var(--space-2);
+    }
+
+    .overview-label-text {
+      color: var(--color-text-secondary);
+      font-size: var(--font-xs);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    select,
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      min-width: 0;
+      max-width: none;
+      height: var(--space-11);
+      margin: 0;
+      padding: 0 var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-input);
+      background-color: var(--color-surface);
+      color: var(--color-text);
+      font-family: var(--font-family-base);
+      font-size: var(--font-2sm);
+      line-height: normal;
+      transition: border-color 150ms ease, background-color 150ms ease;
+
+      &:hover { border-color: var(--color-text-muted); }
+      &:focus-visible {
+        border-color: var(--color-primary);
+        outline: 2px solid rgb(var(--focus-outline-color));
+        outline-offset: 2px;
+      }
+    }
+
+    select { cursor: pointer; }
+  }
+
+  @media (max-width: $breakpoint-lg) {
+    .overview-filter-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    .overview-filter-title { padding: var(--space-4); }
+    .overview-filter-fields { padding: var(--space-4); }
+    .overview-filter-actions { margin-left: 0; }
+  }
+
+  @media (max-width: 480px) {
+    .overview-filter-fields { grid-template-columns: minmax(0, 1fr); }
+    .overview-filter-actions { width: 100%; justify-content: space-between; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .overview-filter-fields select,
+    .overview-filter-fields input { transition: none; }
+  }
+}

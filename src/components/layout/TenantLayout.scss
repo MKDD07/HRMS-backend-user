@@ -15,12 +15,19 @@
     flex: 1;
     min-height: calc(100dvh - var(--tenant-header-height));
     margin-left: var(--sidebar-width, 260px);
+    min-width: 0;
     background: $color-bg-subtle;
     transition: margin-left var(--ease-fast, 0.2s ease);
 
     &--collapsed {
       margin-left: var(--sidebar-collapsed, 76px);
     }
+  }
+}
+
+@media (min-width: ($breakpoint-md + 1px)) {
+  .tenant-shell:has(#tenant-admin-sidebar:hover, #tenant-admin-sidebar:focus-within) {
+    .layout-content { margin-left: var(--sidebar-width, 260px); }
   }
 }
 

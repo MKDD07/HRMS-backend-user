@@ -1,4 +1,5 @@
 import React from 'react';
+import './Toggle.scss';
 
 export function Toggle({
   checked = false,
@@ -6,7 +7,8 @@ export function Toggle({
   disabled = false,
   className = '',
   id,
-  name
+  name,
+  ...props
 }) {
   return (
     <button
@@ -18,6 +20,7 @@ export function Toggle({
       disabled={disabled}
       className={`toggle ${checked ? 'toggle--on' : ''} ${className}`}
       onClick={() => !disabled && onChange && onChange(!checked)}
+      {...props}
     />
   );
 }

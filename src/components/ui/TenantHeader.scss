@@ -1,0 +1,54 @@
+@use "../../styles/color" as *;
+
+.tenant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5, 20px);
+  margin-bottom: var(--space-6-5, 26px);
+
+  > .tenant-header__content > h1 {
+    margin: 0;
+    color: $color-text;
+    line-height: 1.2;
+    font-family: var(--heading-font-family, Inter, sans-serif);
+    font-size: clamp(25px, 3vw, 34px);
+    font-weight: var(--weight-bold, 600);
+    letter-spacing: -0.05em;
+
+
+  }
+
+  > .tenant-header__content > p {
+    color: $color-text-muted;
+    margin: var(--space-2-5, 9px) 0 0;
+    line-height: 1.55;
+    font-size: var(--font-2sm, 13px);
+  }
+}
+
+.tenant-eyebrow {
+  display: block;
+  color: $color-text-subtle;
+  font-size: var(--font-3xs, 10px);
+  font-weight: var(--weight-bold, 600);
+  letter-spacing: 0.15em;
+  margin-bottom: var(--space-3-5, 13px);
+}
+
+
+.tenant-header__content { min-width: 0; overflow-wrap: anywhere; }
+.tenant-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  flex-shrink: 0;
+  max-width: 100%;
+  .btn { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+}
+@media (max-width: 900px) {
+  .tenant-header { flex-direction: column; align-items: flex-start; }
+  .tenant-header__actions { justify-content: flex-start; }
+}

@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import { createEmployeeDirectoryCache } from './employeeDirectoryCache.mjs';
+
+let time = 0, calls = 0;
+const cache = createEmployeeDirectoryCache(() => time);
+const fetcher = async () => { calls++; return { data: [{ userid: 'one' }] }; };
+await Promise.all([cache.load('account-a', fetcher, 120000), cache.load('account-a', fetcher, 120000)]);
+assert.equal(calls, 1, 'concurrent requests share one fetch');
+assert.equal(cache.peek('account-a').data[0].userid, 'one');
+await cache.load('account-a', fetcher, 120000);
+assert.equal(calls, 1, 'fresh directory is reused');
+time = 120001;
+await cache.load('account-a', fetcher, 120000);
+assert.equal(calls, 2, 'expired directory is refreshed');
+await assert.rejects(cache.load('account-a', async () => { throw Error('offline'); }));
+assert.ok(cache.peek('account-a'), 'failed refresh preserves existing employees');
+assert.equal(cache.peek('account-b'), undefined, 'accounts cannot share employees');
+let finish;
+const old = cache.load('account-b', () => new Promise(resolve => { finish = resolve; }));
+await Promise.resolve();
+cache.clear();
+finish({ data: [{ userid: 'old-account' }] });
+await old;
+assert.equal(cache.peek('account-b'), undefined, 'late responses cannot repopulate cleared cache');
+await cache.load('account-b', fetcher, 120000);
+await cache.load('account-b', fetcher, 0);
+assert.equal(calls, 4, 'default callers still fetch fresh data');
+console.log('Directory cache checks passed.');

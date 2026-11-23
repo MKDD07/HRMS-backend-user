@@ -216,28 +216,17 @@ export function SalaryCompensationView({
           {/* Action Buttons */}
           {salaryRecord && (
             <div className="flex items-center gap-2">
-              <Button
-                variant={isEditing ? 'secondary' : 'secondary'}
-                size="sm"
-                icon={isEditing ? CheckCircle2 : Edit}
-                onClick={() => {
-                  if (isEditing) {
-                    handleSaveSalary();
-                  } else {
-                    setIsEditing(true);
-                  }
-                }}
-              >
+              <Button variant={isEditing ? 'secondary' : 'secondary'} size="sm" icon={isEditing ? CheckCircle2 : Edit} onClick={() => {
+  if (isEditing) {
+    handleSaveSalary();
+  } else {
+    setIsEditing(true);
+  }
+}}>
                 {isEditing ? 'Save on Click' : 'Edit Salary'}
               </Button>
 
-              <Button
-                variant="primary"
-                size="sm"
-                icon={Download}
-                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs"
-                onClick={handleDownloadPDF}
-              >
+              <Button variant="primary" size="sm" icon={Download} className="" onClick={handleDownloadPDF}>
                 Download PDF
               </Button>
             </div>
@@ -259,12 +248,7 @@ export function SalaryCompensationView({
               Currently showing only recorded payroll data. No disbursal record was logged for this period yet.
             </p>
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            icon={Plus}
-            onClick={handleInitializeMonth}
-          >
+          <Button variant="primary" size="sm" icon={Plus} onClick={handleInitializeMonth}>
             Initialize & Generate Payroll for {selectedMonth} {selectedYear}
           </Button>
         </div>
@@ -273,20 +257,20 @@ export function SalaryCompensationView({
         <div className="space-y-4">
           {/* Top KPI Cards: Annual CTC, Monthly Gross, Net In-Hand */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[13px]">
-            <div className="p-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] shadow-xs">
+            <div className="metric-card shadow-xs">
               <span className="text-[#5F6368] font-medium">Annual CTC Package</span>
               <p className="text-2xl font-bold text-[#27292C] mt-1">
-                ₹{((salaryRecord.monthly_gross || 87000) * 12).toLocaleString('en-IN')}
+                ₹{(salaryRecord.annual_ctc ?? ((salaryRecord.monthly_gross ?? 0) * 12)).toLocaleString('en-IN')}
               </p>
               <span className="text-[11px] text-[#000000] font-semibold mt-1 inline-block">
                 Per Annum Cost to Company
               </span>
             </div>
 
-            <div className="p-4 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] shadow-xs">
+            <div className="metric-card shadow-xs">
               <span className="text-[#5F6368] font-medium">Monthly Gross Earnings</span>
               <p className="text-2xl font-bold text-[#000000] mt-1">
-                +₹{(salaryRecord.monthly_gross || 87000).toLocaleString('en-IN')}
+                +₹{(salaryRecord.monthly_gross ?? 0).toLocaleString('en-IN')}
               </p>
               <span className="text-[11px] text-[#5F6368] font-medium mt-1 inline-block">
                 Before tax & statutory withholdings
@@ -296,7 +280,7 @@ export function SalaryCompensationView({
             <div className="p-4 rounded-xl border border-[#000000]/30 bg-[#ECFDF5] shadow-xs">
               <span className="text-[#065F46] font-semibold">Net In-Hand Salary</span>
               <p className="text-2xl font-bold text-[#065F46] mt-1">
-                ₹{(salaryRecord.monthly_net || 62000).toLocaleString('en-IN')}
+                ₹{(salaryRecord.monthly_net ?? 0).toLocaleString('en-IN')}
               </p>
               <span className="text-[11px] text-[#059669] font-medium mt-1 inline-block">
                 Disbursed to {salaryRecord.bank_name || 'HDFC Bank'} ({salaryRecord.bank_account || '•••• 9842'})
@@ -462,13 +446,7 @@ export function SalaryCompensationView({
                     className="text-[13px] w-32 font-mono"
                   />
 
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    icon={Plus}
-                    onClick={handleAddCustomRow}
-                  >
+                  <Button type="button" variant="secondary" size="sm" icon={Plus} onClick={handleAddCustomRow}>
                     Add Row
                   </Button>
                 </div>
@@ -485,13 +463,9 @@ export function SalaryCompensationView({
                           <span className="font-semibold text-[#166534]">
                             + {row.name}: ₹{row.amount?.toLocaleString('en-IN')}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCustomRow(row.id, 'earning')}
-                            className="text-[#EF4444] hover:underline cursor-pointer"
-                          >
+                          <Button type="button" onClick={() => handleRemoveCustomRow(row.id, 'earning')} className="" variant="outline" wrapContent={false}>
                             ✕
-                          </button>
+                          </Button>
                         </div>
                       ))}
                       {editForm.custom_deductions?.map((row) => (
@@ -502,13 +476,9 @@ export function SalaryCompensationView({
                           <span className="font-semibold text-[#991B1B]">
                             - {row.name}: ₹{row.amount?.toLocaleString('en-IN')}
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveCustomRow(row.id, 'deduction')}
-                            className="text-[#EF4444] hover:underline cursor-pointer"
-                          >
+                          <Button type="button" onClick={() => handleRemoveCustomRow(row.id, 'deduction')} className="" variant="outline" wrapContent={false}>
                             ✕
-                          </button>
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -517,19 +487,10 @@ export function SalaryCompensationView({
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsEditing(false)}
-                >
+                <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)}>
                   Cancel
                 </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  icon={Save}
-                  onClick={handleSaveSalary}
-                >
+                <Button variant="primary" size="sm" icon={Save} onClick={handleSaveSalary}>
                   Save and Recalculate
                 </Button>
               </div>
@@ -542,35 +503,35 @@ export function SalaryCompensationView({
                 <div className="font-bold text-[#27292C] border-b border-[#E5E7EB] pb-2 flex justify-between items-center">
                   <span>Monthly Earnings (Additions)</span>
                   <span className="text-[#000000] text-sm font-bold">
-                    +₹{(salaryRecord.monthly_gross || 87000).toLocaleString('en-IN')}
+                    +₹{(salaryRecord.monthly_gross ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
                   <span className="text-[#5F6368]">Basic Salary</span>
                   <span className="font-semibold text-[#27292C]">
-                    ₹{(salaryRecord.basic || 12000).toLocaleString('en-IN')}
+                    ₹{(salaryRecord.basic ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
                   <span className="text-[#5F6368]">House Rent Allowance (HRA)</span>
                   <span className="font-semibold text-[#27292C]">
-                    ₹{(salaryRecord.hra || 37500).toLocaleString('en-IN')}
+                    ₹{(salaryRecord.hra ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
                   <span className="text-[#5F6368]">Special / Flexi Allowance</span>
                   <span className="font-semibold text-[#27292C]">
-                    ₹{(salaryRecord.special_allowance || 27500).toLocaleString('en-IN')}
+                    ₹{(salaryRecord.special_allowance ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
                   <span className="text-[#5F6368]">Conveyance & Medical</span>
                   <span className="font-semibold text-[#27292C]">
-                    ₹{((Number(salaryRecord.conveyance || 5000)) + Number(salaryRecord.medical_allowance || 5000)).toLocaleString('en-IN')}
+                    ₹{((Number(salaryRecord.conveyance ?? 0)) + Number(salaryRecord.medical_allowance ?? 0)).toLocaleString('en-IN')}
                   </span>
                 </div>
 
@@ -590,28 +551,28 @@ export function SalaryCompensationView({
                 <div className="font-bold text-[#27292C] border-b border-[#E5E7EB] pb-2 flex justify-between items-center">
                   <span>Statutory Deductions</span>
                   <span className="text-[#EF4444] text-sm font-bold">
-                    -₹{(salaryRecord.total_deductions || 25000).toLocaleString('en-IN')}
+                    -₹{(salaryRecord.total_deductions ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
                   <span className="text-[#5F6368]">Provident Fund (PF - Employee)</span>
                   <span className="font-semibold text-[#EF4444]">
-                    ₹{(salaryRecord.pf_deduction || 9000).toLocaleString('en-IN')}
+                    ₹{(salaryRecord.pf_deduction ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
                   <span className="text-[#5F6368]">Professional Tax (PT)</span>
                   <span className="font-semibold text-[#EF4444]">
-                    ₹{salaryRecord.professional_tax || 200}
+                    ₹{salaryRecord.professional_tax ?? 0}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1.5 border-b border-[#F3F4F6]">
                   <span className="text-[#5F6368]">Income Tax (TDS)</span>
                   <span className="font-semibold text-[#EF4444]">
-                    ₹{(salaryRecord.tds_tax || 15800).toLocaleString('en-IN')}
+                    ₹{(salaryRecord.tds_tax ?? 0).toLocaleString('en-IN')}
                   </span>
                 </div>
 
@@ -632,3 +593,4 @@ export function SalaryCompensationView({
     </div>
   );
 }
+

@@ -1,28 +1,54 @@
-import { emptyConfiguration, validateConfiguration, resolveRoute, activeApprovers, decide, REQUEST_TYPES } from '../shared/workflowModel.mjs';
+import { personOnLeave } from '../shared/departmentCoverage.mjs';
+import { istDay } from '../shared/overviewModel.mjs';
+import { changeDepartmentLifecycle } from '../shared/departmentLifecycle.mjs';
+import { emptyConfiguration, validateConfiguration, resolveRoute, activeApprovers, decide, transferUnavailableApprovers, REQUEST_TYPES } from '../shared/workflowModel.mjs';
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
 const stmt = (db, sql, params = []) => db.prepare(sql).bind(...params);
 const all = async (db, sql, params = []) => (await stmt(db, sql, params).all()).results;
 const json = value => JSON.stringify(value);
 const admin = actor => { if (actor.role !== 'company_admin') fail('Company administrator access required.', 403); };
 const date = value => { if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString().slice(0,10) !== value) fail('Use a valid date.'); return value; };
+function employeeProfile(value) {
+  if (typeof value !== 'string') return value || {};
+  try { return JSON.parse(value) || {}; } catch { return {}; }
+}
+
+function leaveDays(start, end) {
+  date(start);
+  date(end);
+  if (end < start) fail('End date precedes start date.');
+  return (Date.parse(end) - Date.parse(start)) / 86400000 + 1;
+}
+
+const requestPerson = person => ({
+  userId: person.id,
+  name: person.name,
+  designation: person.designation,
+  profile_pic_url: person.profile_pic_url,
+});
+
 export async function workflowPeople(db, company) {
-  const people = await all(db, `SELECT u.user_id AS id,u.status AS account_status,u.username,e.employee_id,e.employee_code,e.first_name,e.last_name,e.department,e.designation,e.status,e.profile
+  const people = await all(db, `SELECT u.user_id AS id,u.status AS account_status,u.username,u.email,e.employee_id,e.employee_code,e.first_name,e.last_name,e.department,e.designation,e.status,e.profile
     FROM users u
     LEFT JOIN employees e ON e.company_id=u.company_id AND e.user_id=u.user_id
     WHERE u.company_id=? AND u.status='active'
     ORDER BY COALESCE(e.first_name, u.username), e.employee_id`, [company]);
+  const leaves = await all(db, `SELECT e.user_id, l.start_date AS "from", l.end_date AS "until" FROM leave_requests l JOIN employees e ON e.company_id=l.company_id AND e.employee_id=l.employee_id WHERE l.company_id=? AND l.status='Approved'`, [company]);
+  const periods = new Map();
+  for (const row of leaves) { if (!periods.has(row.user_id)) periods.set(row.user_id, []); periods.get(row.user_id).push({from:row.from,until:row.until}); }
   return people.map(person => {
-    let parsed = {};
-    try { parsed = typeof person.profile === 'string' ? JSON.parse(person.profile || '{}') : (person.profile || {}); } catch {}
+    const parsed = employeeProfile(person.profile);
     const name = [person.first_name, person.last_name].filter(Boolean).join(' ') || person.username || person.employee_code || person.id;
     return {
       ...person,
       id: person.id,
       userid: person.id,
+      approvedLeave: periods.get(person.id) || [],
       name,
       first_name: person.first_name || person.username,
-      department: person.department || 'General',
+      department: person.department ?? 'General',
       designation: person.designation || (person.role === 'company_admin' ? 'Company Admin' : 'Team Member'),
+      phone_number: parsed.phone_number || parsed.phone || '',
       location: parsed.location || '',
       profile_pic_url: parsed.profile_pic_url || ''
     };
@@ -47,7 +73,7 @@ export async function createWorkflow(db, actor, input, sourceStatements = []) {
   if (!person || person.status === 'Inactive' || person.account_status !== 'active') fail('Active employee not found.', 404);
   const payload = input.payload || {};
   if (typeof payload.reason !== 'string' || !payload.reason.trim() || payload.reason.length > 2000) fail('Provide a reason (up to 2000 characters).');
-  if (input.kind === 'leave') { date(payload.start_date); date(payload.end_date); if (payload.end_date < payload.start_date) fail('End date precedes start date.'); }
+  const days = input.kind === 'leave' ? leaveDays(payload.start_date, payload.end_date) : 0;
   if (input.kind === 'attendance') {
     date(payload.date);
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(payload.check_in) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(payload.check_out) || payload.check_out <= payload.check_in) fail('Enter valid check-in and check-out times on the same day.');
@@ -55,7 +81,6 @@ export async function createWorkflow(db, actor, input, sourceStatements = []) {
   }
   const time = new Date().toISOString();
   const config = await workflowConfig(db, actor.company_id);
-  const days = input.kind === 'leave' ? (Date.parse(payload.end_date) - Date.parse(payload.start_date)) / 86400000 + 1 : 0;
   const route = resolveRoute(config.configuration, people, { requester, kind: input.kind, days }, time);
   route.configRevision = config.revision;
   const id = crypto.randomUUID(), status = route.blocked ? 'Blocked' : 'Pending';
@@ -90,6 +115,15 @@ export async function reviewWorkflow(db, actor, requestId, decision, remarks = '
   if (!record) fail('Request not found.',404);
   if (record.status !== 'Pending') fail('This request is not awaiting approval.',409);
   if (record.requester_id === actor.user_id) fail('You cannot approve your own request.',403);
+  const people = await workflowPeople(db,actor.company_id);
+  const configuration = (await workflowConfig(db,actor.company_id)).configuration;
+  const transferred = transferUnavailableApprovers(JSON.parse(record.route),people,configuration,record.requester_id,new Date().toISOString());
+  if (transferred) {
+    await updateRequest(db,null,record,transferred,'Pending','backup-activated',{reason:'Primary approver unavailable'});
+    fail('Approval transferred to the backup. Refresh the request.',409);
+  }
+  const reviewer = people.find(person=>person.id===actor.user_id);
+  if (!reviewer || personOnLeave(reviewer,configuration.departments,istDay())) fail('You are unavailable to approve this request. Contact an administrator if no backup is assigned.',403);
   let next;
   try { next = decide(JSON.parse(record.route),actor.user_id,decision,new Date().toISOString()); } catch (error) { fail(error.message,403); }
   if (next.status === 'Pending') {
@@ -105,17 +139,105 @@ export async function reviewWorkflow(db, actor, requestId, decision, remarks = '
     const checkOut = new Date(`${payload.date}T${payload.check_out}:00${payload.timezone}`).toISOString();
     additional.push({ sql:'INSERT INTO attendance(attendance_id,company_id,employee_id,date,check_in_time,check_out_time) SELECT ?,?,?,?,?,? WHERE /*guard*/ ON CONFLICT(company_id,employee_id,date) DO UPDATE SET check_in_time=excluded.check_in_time,check_out_time=excluded.check_out_time',values:[crypto.randomUUID(),actor.company_id,payload.employee_id,payload.date,checkIn,checkOut] });
   }
-  return updateRequest(db,actor,record,next.route,next.status,'decision',{decision,remarks:String(remarks).slice(0,2000)},additional);
+  const result = await updateRequest(db,actor,record,next.route,next.status,'decision',{decision,remarks:String(remarks).slice(0,2000)},additional);
+  return { ...result, kind: record.kind };
 }
+const canDeleteRequest = (record, actor) => ['Pending', 'Blocked'].includes(record.status) &&
+  (actor.role === 'company_admin' || actor.user_id === record.requester_id);
+
+async function deleteRequest(db, actor, requestId) {
+  const record = await stmt(db, 'SELECT * FROM workflow_requests WHERE company_id=? AND request_id=?', [actor.company_id, requestId]).first();
+  if (!record || (actor.role !== 'company_admin' && record.requester_id !== actor.user_id)) fail('Request not found.', 404);
+  if (!canDeleteRequest(record, actor)) fail('Only submitted requests can be deleted.', 409);
+
+  const openMatch = "company_id=? AND request_id=? AND revision=? AND status IN ('Pending','Blocked')";
+  const guard = `EXISTS(SELECT 1 FROM workflow_requests WHERE ${openMatch})`;
+  const params = [actor.company_id, requestId, record.revision];
+  const statements = [
+    stmt(db, `DELETE FROM workflow_notifications WHERE company_id=? AND request_id=? AND ${guard}`, [actor.company_id, requestId, ...params]),
+    stmt(db, `INSERT INTO workflow_audit(audit_id,company_id,request_id,actor_id,action,details,created_at)
+      SELECT ?,?,?,?,?,?,? WHERE ${guard}`, [crypto.randomUUID(), actor.company_id, requestId, actor.user_id, 'deleted', json({ kind: record.kind, previousStatus: record.status }), new Date().toISOString(), ...params]),
+  ];
+  if (record.kind === 'leave' && record.source_id) {
+    statements.push(stmt(db, `DELETE FROM leave_requests WHERE company_id=? AND leave_id=? AND status='Pending' AND ${guard}`, [actor.company_id, record.source_id, ...params]));
+  }
+  statements.push(stmt(db, `DELETE FROM workflow_requests WHERE ${openMatch}`, params));
+  const results = await db.batch(statements);
+  if ((results.at(-1)?.meta?.changes ?? results.at(-1)?.changes ?? 0) !== 1) fail('This request changed. Refresh and try again.', 409);
+  return { deleted: true };
+}
+
 function publicRequest(record, actor) {
   const route = JSON.parse(record.route), payload = JSON.parse(record.payload);
   const role = route.participants.find(person => person.userId === actor.user_id)?.role;
   const privileged = actor.role === 'company_admin' || record.requester_id === actor.user_id || role === 'approver' || role === 'reviewer';
-  return { ...record, payload: privileged ? payload : { requesterName: payload.requesterName, ...(record.kind === 'leave' ? { start_date: payload.start_date, end_date: payload.end_date } : {}) }, route: privileged ? route : { participants: [], policy: { name: route.policy?.name }, blocked: Boolean(route.blocked) }, canApprove: record.status === 'Pending' && record.requester_id !== actor.user_id && activeApprovers(route).some(person => person.userId === actor.user_id), role: role || (record.requester_id === actor.user_id ? 'requester' : 'administrator') };
+  return { ...record, payload: privileged ? payload : { requesterName: payload.requesterName, ...(record.kind === 'leave' ? { start_date: payload.start_date, end_date: payload.end_date } : {}) }, route: privileged ? route : { participants: [], policy: { name: route.policy?.name }, blocked: Boolean(route.blocked) }, canApprove: record.status === 'Pending' && record.requester_id !== actor.user_id && activeApprovers(route).some(person => person.userId === actor.user_id), canDelete: canDeleteRequest(record, actor), role: role || (record.requester_id === actor.user_id ? 'requester' : 'administrator') };
 }
 export async function workflowHandle({ db, actor, path, method, url, body }) {
   if (!path.startsWith('/api/v1/workflows/')) return undefined;
-  const section = path.slice('/api/v1/workflows/'.length);
+  let section = path.slice('/api/v1/workflows/'.length);
+  let leadershipAction = '';
+  if (section === 'department-lifecycle' && method === 'POST') {
+    admin(actor);
+    const current = await workflowConfig(db, actor.company_id);
+    if (body.revision !== current.revision) fail('The departments changed. Reload before trying again.',409);
+    // Include inactive employees: an empty visible directory does not prove the department is empty.
+    const members = await all(db, 'SELECT user_id AS id,department FROM employees WHERE company_id=?', [actor.company_id]);
+    let configuration;
+    try { configuration = changeDepartmentLifecycle(current.configuration,body.name,body.action,members); } catch(error) { fail(error.message); }
+    leadershipAction = 'department-' + ({archive:'archived',restore:'restored',delete:'deleted'})[body.action];
+    body = {configuration,revision:body.revision};
+    section = 'configuration';
+  }
+  if (section === 'company-leadership' && method === 'POST') {
+    admin(actor);
+    if (typeof body.finalize !== 'boolean' || !body.roles || typeof body.roles !== 'object' || Array.isArray(body.roles)) fail('Invalid leadership draft.');
+    const current = await workflowConfig(db, actor.company_id);
+    const existing = current.configuration.companyLeadership || {};
+    const companyLeadership = { ...existing, draft: body.roles };
+    if (body.finalize) companyLeadership.finalized = { roles: body.roles, at: new Date().toISOString(), by: actor.user_id };
+    leadershipAction = body.finalize ? 'company-leadership-finalized' : 'company-leadership-draft-saved';
+    body = { configuration: { ...current.configuration, companyLeadership }, revision: body.revision };
+    section = 'configuration';
+  }
+  if (section === 'department-transfer' && method === 'POST') {
+    admin(actor);
+    const current = await workflowConfig(db, actor.company_id);
+    if (body.revision !== current.revision) fail('The organization changed. Reload before moving this employee.', 409);
+    const people = await workflowPeople(db, actor.company_id);
+    const person = people.find(person => person.id === body.userid && person.employee_id);
+    if (!person) fail('Employee not found.', 404);
+    const target = typeof body.department === 'string' ? body.department.trim() : '';
+    const available = new Set([...people.map(person => person.department), ...(current.configuration.departments || []).map(department => department.name)]);
+    if (typeof body.department !== 'string' || (target && !available.has(target))) fail('Choose an existing department.');
+    const employee = await stmt(db, 'SELECT department,profile FROM employees WHERE company_id=? AND user_id=?', [actor.company_id, person.id]).first();
+    if (employee.department === target) return current;
+    const configuration = { ...current.configuration,
+      departments: (current.configuration.departments || []).map(department => {
+        const memberRoles = { ...(department.memberRoles || {}) }; delete memberRoles[person.id];
+        return { ...department, memberRoles, leadershipCoverage: (department.leadershipCoverage || []).filter(row => row.person !== person.id && row.cover !== person.id), temporaryMembers: (department.temporaryMembers || []).filter(id => department.name !== target || id !== person.id), head: department.head === person.id ? '' : department.head };
+      }),
+      // Existing incoming reporting links belong to the previous assignment.
+      // Retain reports managed by this person; new routes use destination policies.
+      links: current.configuration.links.filter(link => link.employee !== person.id)
+    };
+    const issue = validateConfiguration(configuration, people.map(row => row.id === person.id ? { ...row, department: target } : row));
+    if (issue) fail(issue);
+    const now = new Date().toISOString(), revision = current.revision + 1, auditId = crypto.randomUUID();
+    const profile = JSON.parse(employee.profile || '{}');
+    const nextProfile = { ...profile, department: target, dossier_revision: (profile.dossier_revision || 0) + 1,
+      dossier_audit: [{ at: now, actor: actor.user_id, action: 'Department transferred', fields: ['department'], from: employee.department, to: target }, ...(profile.dossier_audit || [])].slice(0, 50) };
+    const guard = 'EXISTS(SELECT 1 FROM workflow_configuration WHERE company_id=? AND revision=?) AND EXISTS(SELECT 1 FROM employees WHERE company_id=? AND user_id=? AND profile=?)';
+    const values = [actor.company_id, current.revision, actor.company_id, person.id, employee.profile];
+    const statements = [];
+    if (!current.revision) statements.push(stmt(db, 'INSERT OR IGNORE INTO workflow_configuration(company_id,payload,revision,updated_at) VALUES(?,?,0,?)', [actor.company_id, json(current.configuration), now]));
+    statements.push(stmt(db, `INSERT INTO workflow_audit(audit_id,company_id,actor_id,action,details,created_at) SELECT ?,?,?,?,?,? WHERE ${guard}`, [auditId, actor.company_id, actor.user_id, 'department-transferred', json({ userid: person.id, from: employee.department, to: target }), now, ...values]));
+    statements.push(stmt(db, `UPDATE workflow_configuration SET payload=?,revision=?,updated_at=? WHERE company_id=? AND revision=? AND ${guard}`, [json(configuration), revision, now, actor.company_id, current.revision, ...values]));
+    statements.push(stmt(db, 'UPDATE employees SET department=?,profile=? WHERE company_id=? AND user_id=? AND profile=? AND EXISTS(SELECT 1 FROM workflow_audit WHERE company_id=? AND audit_id=?) AND EXISTS(SELECT 1 FROM workflow_configuration WHERE company_id=? AND revision=? AND payload=?)', [target, json(nextProfile), actor.company_id, person.id, employee.profile, actor.company_id, auditId, actor.company_id, revision, json(configuration)]));
+    const results = await db.batch(statements);
+    if ((results.at(-1)?.meta?.changes ?? results.at(-1)?.changes ?? 0) !== 1) fail('The employee or organization changed. Reload before trying again.', 409);
+    return { configuration, revision, savedAt: now };
+  }
   if (section === 'configuration') {
     admin(actor);
     if (method === 'GET') return workflowConfig(db,actor.company_id);
@@ -126,22 +248,65 @@ export async function workflowHandle({ db, actor, path, method, url, body }) {
       if (body.revision !== current.revision) fail('The configuration changed. Reload before saving.',409);
       const now = new Date().toISOString(), nextRevision = current.revision + 1;
       const changes = { revision: nextRevision, before: current.configuration, after: config };
-      if (!current.revision) await db.batch([stmt(db,'INSERT INTO workflow_configuration(company_id,payload,revision,updated_at) VALUES(?,?,?,?)',[actor.company_id,json(config),nextRevision,now]),audit(db,actor.company_id,actor.user_id,null,'configuration-published',changes,now)]);
+      if (!current.revision) await db.batch([stmt(db,'INSERT INTO workflow_configuration(company_id,payload,revision,updated_at) VALUES(?,?,?,?)',[actor.company_id,json(config),nextRevision,now]),audit(db,actor.company_id,actor.user_id,null,leadershipAction || 'configuration-published',changes,now)]);
       else {
         const results = await db.batch([
-          stmt(db,'INSERT INTO workflow_audit(audit_id,company_id,actor_id,action,details,created_at) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM workflow_configuration WHERE company_id=? AND revision=?)',[crypto.randomUUID(),actor.company_id,actor.user_id,'configuration-published',json(changes),now,actor.company_id,current.revision]),
+          stmt(db,'INSERT INTO workflow_audit(audit_id,company_id,actor_id,action,details,created_at) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM workflow_configuration WHERE company_id=? AND revision=?)',[crypto.randomUUID(),actor.company_id,actor.user_id,leadershipAction || 'configuration-published',json(changes),now,actor.company_id,current.revision]),
           stmt(db,'UPDATE workflow_configuration SET payload=?,revision=?,updated_at=? WHERE company_id=? AND revision=?',[json(config),nextRevision,now,actor.company_id,current.revision])
         ]);
         if ((results[1]?.meta?.changes ?? results[1]?.changes ?? 0) !== 1) fail('The configuration changed. Reload before saving.',409);
       }
-      return { revision: nextRevision, savedAt: now };
+      return { revision: nextRevision, savedAt: now, ...(leadershipAction ? { configuration: config } : {}) };
     }
   }
-  if (section === 'directory' && method === 'GET') { return workflowPeople(db,actor.company_id); }
+  if (section === 'directory' && method === 'GET') return workflowPeople(db, actor.company_id);
   if (section === 'preview' && method === 'POST') {
     admin(actor); const people = await workflowPeople(db,actor.company_id), config = body.configuration || (await workflowConfig(db,actor.company_id)).configuration;
     const issue = validateConfiguration(config,people); if (issue) fail(issue);
     return resolveRoute(config,people,{requester:body.requester,kind:body.kind,days:Number(body.days)||1});
+  }
+  if (section === 'leave-types' && method === 'GET') {
+    const calendar = await stmt(db, 'SELECT leave_types FROM company_calendar WHERE company_id=?', [actor.company_id]).first();
+    return JSON.parse(calendar?.leave_types || '[]')
+      .filter(type => type.active !== false && type.name?.trim())
+      .map(type => type.name.trim());
+  }
+  if (section === 'requests/preview' && method === 'POST') {
+    if (!REQUEST_TYPES.includes(body.kind)) fail('Unsupported request type.');
+    const requester = body.requester || actor.user_id;
+    if (actor.role !== 'company_admin' && requester !== actor.user_id) fail('You can preview only your own requests.', 403);
+    const days = body.kind === 'leave' ? leaveDays(body.start_date, body.end_date) : 0;
+    const people = await workflowPeople(db, actor.company_id);
+    const byId = new Map(people.map(person => [person.id, person]));
+    const person = byId.get(requester);
+    if (!person || person.status === 'Inactive') fail('Active employee not found.', 404);
+    const { configuration } = await workflowConfig(db, actor.company_id);
+    const route = resolveRoute(configuration, people, { requester, kind: body.kind, days });
+    return {
+      requester: requestPerson(person),
+      blocked: route.blocked || '',
+      approvers: route.participants.filter(item => item.role === 'approver').map(item => ({
+        ...requestPerson(byId.get(item.userId)),
+        step: item.step,
+        delegated: item.delegated,
+      })),
+    };
+  }
+  const requestProfiles = section.match(/^requests\/([^/]+)\/profiles$/);
+  if (requestProfiles && method === 'GET') {
+    const record = await stmt(db, 'SELECT * FROM workflow_requests WHERE company_id=? AND request_id=?', [actor.company_id, requestProfiles[1]]).first();
+    if (!record) fail('Request not found.', 404);
+    const route = JSON.parse(record.route);
+    if (actor.role !== 'company_admin' && record.requester_id !== actor.user_id && !route.participants.some(person => person.userId === actor.user_id)) fail('Request not found.', 404);
+    const visible = publicRequest(record, actor);
+    const ids = [visible.requester_id, ...visible.route.participants.map(person => person.userId)];
+    const people = await all(db, `SELECT e.user_id AS id, e.first_name, e.last_name, e.designation, e.profile
+      FROM employees e WHERE e.company_id=? AND e.user_id IN (SELECT value FROM json_each(?))`, [actor.company_id, json(ids)]);
+    return people.map(person => requestPerson({
+      ...person,
+      name: [person.first_name, person.last_name].filter(Boolean).join(' '),
+      profile_pic_url: employeeProfile(person.profile).profile_pic_url || '',
+    }));
   }
   if (section === 'requests' && method === 'POST') {
     if (!['attendance','expense','other'].includes(body.kind)) fail('Submit leave through the leave application endpoint.');
@@ -151,15 +316,20 @@ export async function workflowHandle({ db, actor, path, method, url, body }) {
     const offset = Math.max(0,Math.floor(Number(url.searchParams.get('offset'))||0));
     const view = url.searchParams.get('view') || 'mine';
     if (!['mine','approvals','following','all'].includes(view)) fail('Invalid inbox view.');
+    const kind = url.searchParams.get('kind');
+    if (kind !== null && !REQUEST_TYPES.includes(kind)) fail('Unsupported request type.');
     let where = '', params = [actor.company_id];
     if (view === 'all') admin(actor);
     else if (view === 'mine') { where = 'AND requester_id=?'; params.push(actor.user_id); }
     else { where = `AND EXISTS(SELECT 1 FROM json_each(workflow_requests.route,'$.participants') p WHERE json_extract(p.value,'$.userId')=? AND ${view === 'approvals' ? "json_extract(p.value,'$.role')='approver'" : "json_extract(p.value,'$.role') IN ('cc','reviewer')"})`; params.push(actor.user_id); }
+    if (kind) { where += ' AND kind=?'; params.push(kind); }
     const requests = await all(db,`SELECT * FROM workflow_requests WHERE company_id=? ${where} ORDER BY created_at DESC,request_id LIMIT 100 OFFSET ?`,[...params,offset]);
     return requests.map(record => publicRequest(record,actor));
   }
   const review = section.match(/^requests\/([^/]+)\/decision$/);
   if (review && method === 'POST') return reviewWorkflow(db,actor,review[1],body.decision,body.remarks);
+  const removal = section.match(/^requests\/([^/]+)\/delete$/);
+  if (removal && method === 'POST') return deleteRequest(db, actor, removal[1]);
   const reassign = section.match(/^requests\/([^/]+)\/reassign$/);
   if (reassign && method === 'POST') {
     admin(actor);
@@ -189,6 +359,10 @@ export async function workflowHandle({ db, actor, path, method, url, body }) {
   if (section === 'notifications/read' && method === 'POST') {
     await stmt(db,`UPDATE workflow_notifications SET unread=0 WHERE company_id=? AND recipient_id=? ${body.id ? 'AND notification_id=?' : ''}`,[actor.company_id,actor.user_id,...(body.id ? [body.id] : [])]).run(); return {saved:true};
   }
+  if (section === 'leadership-log' && method === 'GET') {
+    admin(actor);
+    return all(db, "SELECT * FROM workflow_audit WHERE company_id=? AND action IN ('company-leadership-draft-saved','company-leadership-finalized') ORDER BY created_at DESC,audit_id LIMIT 100", [actor.company_id]);
+  }
   if (section === 'audit' && method === 'GET') {
     admin(actor); const offset = Math.max(0,Math.floor(Number(url.searchParams.get('offset'))||0));
     return all(db,'SELECT * FROM workflow_audit WHERE company_id=? ORDER BY created_at DESC,audit_id LIMIT 100 OFFSET ?',[actor.company_id,offset]);
@@ -197,7 +371,18 @@ export async function workflowHandle({ db, actor, path, method, url, body }) {
 }
 export async function processWorkflowTimers(db, now = new Date().toISOString()) {
   const requests = await all(db,"SELECT * FROM workflow_requests WHERE status='Pending' ORDER BY updated_at,request_id");
+  const companyData = new Map();
   for (const record of requests) {
+    const savedRoute = JSON.parse(record.route);
+    if (savedRoute.participants.some(person=>person.role==='approver' && person.decision==='Pending' && person.backup)) {
+      if (!companyData.has(record.company_id)) companyData.set(record.company_id, {people:await workflowPeople(db,record.company_id),config:(await workflowConfig(db,record.company_id)).configuration});
+      const data=companyData.get(record.company_id);
+      const transferred=transferUnavailableApprovers(savedRoute,data.people,data.config,record.requester_id,now);
+      if (transferred) {
+        try { await updateRequest(db,null,record,transferred,'Pending','backup-activated',{scheduledAt:now}); } catch(error) {if(error.status!==409) throw error;}
+        continue;
+      }
+    }
     const route = JSON.parse(record.route), age = (Date.parse(now)-Date.parse(route.resolvedAt))/3600000;
     let action;
     if (age >= route.policy.escalationHours && !route.escalatedAt && route.policy.escalationUser) {

@@ -1,3 +1,4 @@
+import { Button } from '../ui/Button';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   ReactFlow,
@@ -297,52 +298,30 @@ export function OrgFlowchartCanvas({
         <Panel position="top-left" className="m-3">
           <div className="flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-xs p-2 rounded-xl border border-[#E2E8F0] shadow-sm">
             {/* Auto-Organize Flow Chart */}
-            <button
-              type="button"
-              onClick={() => applyLayout(db, direction)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF] rounded-lg transition-colors border border-[#C7D2FE]"
-              title="Automatically organize and align all nodes using Dagre hierarchical graph algorithm"
-            >
+            <Button type="button" onClick={() => applyLayout(db, direction)} className="flex items-center gap-1.5  " title="Automatically organize and align all nodes using Dagre hierarchical graph algorithm" variant="outline" wrapContent={false}>
               <RefreshCw className="w-3.5 h-3.5" />
               Auto-Align Flow Chart
-            </button>
+            </Button>
 
             {/* Direction Toggle */}
             <div className="flex items-center bg-[#F1F5F9] p-0.5 rounded-lg border border-[#E2E8F0]">
-              <button
-                type="button"
-                onClick={() => handleToggleDirection('TB')}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[13px] font-medium rounded-md transition-all ${direction === 'TB'
-                    ? 'bg-white text-[#0F172A] shadow-xs font-semibold'
-                    : 'text-[#64748B]'
-                  }`}
-                title="Top to Bottom Flow"
-              >
+              <Button type="button" onClick={() => handleToggleDirection('TB')} className={`flex items-center gap-1       ${direction === 'TB' ? "" : ""}`} title="Top to Bottom Flow" variant="outline" wrapContent={false}>
                 <ArrowDown className="w-3 h-3" />
                 Top-Down
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggleDirection('LR')}
-                className={`flex items-center gap-1 px-2.5 py-1 text-[13px] font-medium rounded-md transition-all ${direction === 'LR'
-                    ? 'bg-white text-[#0F172A] shadow-xs font-semibold'
-                    : 'text-[#64748B]'
-                  }`}
-                title="Left to Right Flow"
-              >
+              </Button>
+              <Button type="button" onClick={() => handleToggleDirection('LR')} className={`flex items-center gap-1       ${direction === 'LR' ? "" : ""}`} title="Left to Right Flow" variant="outline" wrapContent={false}>
                 <ArrowRight className="w-3 h-3" />
                 Left-Right
-              </button>
+              </Button>
             </div>
 
             {/* Fit View */}
-            <button
-              type="button"
-              onClick={() => reactFlowInstance?.fitView({ padding: 0.2, duration: 400 })}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-[13px] font-medium text-[#475569] hover:bg-[#F1F5F9] rounded-lg border border-[#E2E8F0]"
-            >
+            <Button type="button" onClick={() => reactFlowInstance?.fitView({
+  padding: 0.2,
+  duration: 400
+})} className="flex items-center gap-1  " variant="outline" wrapContent={false}>
               Fit View
-            </button>
+            </Button>
           </div>
         </Panel>
 

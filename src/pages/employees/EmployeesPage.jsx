@@ -1,8 +1,13 @@
+import { SectionSkeleton } from '../../components/ui/SectionSkeleton';
+import { EmployeeProfileSkeleton } from './EmployeesPage/EmployeeProfileSkeleton';
+import { MetricOverview, MetricCard } from '../../components/ui/MetricOverview';
+import { ModalFrame } from '../../components/ui/Modal';
 import { EmployeeDirectory } from '../../components/employees/EmployeeDirectory';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LiveEmployeeDossier } from './EmployeesPage/LiveEmployeeDossier';
-import { ArrowDownAZ, ArrowUpRight, Building2, Check, ChevronLeft, ChevronRight, Download, GitBranch, LayoutGrid, List, LoaderCircle, MapPin, Plus, RefreshCw, Search, Users, UserCheck, X, AlertCircle } from 'lucide-react';
+import { ArrowDownAZ, Building2, Check, ChevronLeft, ChevronRight, Download, LayoutGrid, List, LoaderCircle, MapPin, Plus, RefreshCw, Search, Users, UserCheck, X, AlertCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { TenantHeader } from '../../components/ui/TenantHeader';
 import './EmployeesPage.scss';
 import { currentPresence } from './EmployeesPage/directoryData';
 
@@ -15,16 +20,14 @@ function DirectoryDialog({ title, onClose, children }) {
   useEffect(() => {
     const dialog = ref.current;
     dialog.showModal();
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { dialog.close(); document.body.style.overflow = previousOverflow; };
+    return () => { dialog.close(); };
   }, []);
-  return <dialog ref={ref} className="people-dialog" aria-labelledby="people-dialog-title" onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className="people-dialog-head"><h2 id="people-dialog-title">{title}</h2><button className="people-icon-button" onClick={onClose} aria-label="Close dialog"><X size={18} /></button></div>
+  return <ModalFrame ref={ref} className="people-dialog" aria-labelledby="people-dialog-title" onCancel={event => { event.preventDefault(); onClose(); }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="people-dialog-head"><h2 id="people-dialog-title">{title}</h2><Button className="people-icon-button" onClick={onClose} aria-label="Close dialog" variant="fadeout" type="submit" wrapContent={false} iconOnly={true} size="sm"><X size={18} /></Button></div>
     {children}
-  </dialog>;
+  </ModalFrame>;
 }
-function AddPerson({ api, onClose, onCreated }) {
+export function AddPerson({ api, onClose, onCreated }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   async function submit(event) {
@@ -54,7 +57,7 @@ function AddPerson({ api, onClose, onCreated }) {
         <label>Access role<select name="type" defaultValue="Employee" disabled={saving}>{['Employee', 'Department Manager', 'HR Admin', 'Super Admin'].map(role => <option key={role}>{role}</option>)}</select></label>
       </div>
       {error && <div role="alert" className="people-error">{error}</div>}
-      <div className="people-dialog-footer"><button type="button" className="people-button" onClick={onClose} disabled={saving}>Cancel</button><button className="people-button people-button--primary" disabled={saving}>{saving ? <LoaderCircle size={16} className="people-spin" /> : <Plus size={16} />}{saving ? 'Saving…' : 'Add employee'}</button></div>
+      <div className="people-dialog-footer"><Button type="button" className="people-button" onClick={onClose} disabled={saving} variant="outline" wrapContent={false}>Cancel</Button><Button className="people-button people-button--primary" disabled={saving} variant="colored" type="submit" wrapContent={false}>{saving ? <LoaderCircle size={16} className="people-spin" /> : <Plus size={16} />}{saving ? 'Saving…' : 'Add employee'}</Button></div>
     </form>
   </DirectoryDialog>;
 }
@@ -147,21 +150,28 @@ export function EmployeesPage({ api, onSelectEmployee, onShowToast, onNavigate }
     { label: 'Work locations', value: locations.length, icon: MapPin, caption: 'Recorded work locations' }
   ];
   return <div className="people-page">
-    <header className="people-header">
-      <div><div className="people-eyebrow">WORKSPACE / PEOPLE</div><h1>Employees<span className="people-title-dot">.</span></h1><p>A considered space for your people and their details.</p></div>
-      <div className="people-header-actions">
-        <Button variant="outline" size="md" icon={Download} disabled={loading || !!error || !filtered.length} onClick={exportDirectory}>Export CSV</Button>
-        <Button variant="colored" size="md" icon={Plus} onClick={() => setAdding(true)}>Add employee</Button>
-      </div>
-    </header>
-    <section className="people-stats" aria-label="Directory overview">{stats.map(({ label, value, icon: Icon, caption }) => <div className="people-stat" key={label}><div className="people-stat-label">{label}<Icon size={17} /></div><strong>{loading || error ? '—' : value.toLocaleString()}</strong><span>{caption}</span></div>)}</section>
-    <div className="people-workspace">
+    <TenantHeader
+      settings={{
+        subheading: 'WORKSPACE / PEOPLE',
+        heading: 'Employees',
+        paragraph: 'A considered space for your people and their details.',
+        buttons: [
+          { id: 'export', label: 'Export CSV', variant: 'outline' },
+          { id: 'add', label: 'Add employee', variant: 'colored' }
+        ]
+      }}
+      actions={{
+        export: { icon: Download, disabled: loading || !!error || !filtered.length, onClick: exportDirectory },
+        add: { icon: Plus, onClick: () => setAdding(true) }
+      }}
+    />
+    <MetricOverview loading={loading} aria-label="Directory overview">{stats.map(({ label, value, icon: Icon, caption }) => <MetricCard key={label} label={label} icon={Icon} value={loading || error ? '—' : value.toLocaleString()} caption={caption} />)}</MetricOverview>
+    <div className="workspace-grid people-workspace">
     <section className="people-dossier-column" aria-label="Selected employee dossier">
-      {loading ? <div className="people-empty">Loading employee dossier...</div> : activePerson ? <LiveEmployeeDossier key={activePerson.userid} person={activePerson} api={api} presence={presenceOf(activePerson)} onShowToast={onShowToast} /> : <div className="people-empty"><Users size={30} /><h3>No employee selected</h3><p>Select a person from the directory to view their dossier.</p></div>}
+      <SectionSkeleton loading={loading}>{loading ? <EmployeeProfileSkeleton /> : activePerson ? <LiveEmployeeDossier person={activePerson} api={api} presence={presenceOf(activePerson)} onShowToast={onShowToast} onUpdated={updated=>setEmployees(rows=>rows.map(row=>row.userid===updated.userid?{...row,...updated}:row))} /> : <div className="people-empty"><Users size={30} /><h3>No employee selected</h3><p>Select a person from the directory to view their dossier.</p></div>}</SectionSkeleton>
     </section>
     <EmployeeDirectory employees={filtered} totalCount={employees.length} selectedId={activePerson?.userid} onSelect={setSelected} getStatus={presenceOf} loading={loading} error={error} onRefresh={loadUsers}
-      headerAction={onNavigate && <button className="people-text-button" onClick={() => onNavigate('hierarchy')}><GitBranch size={15} />Org chart</button>}
-      toolbar={<><input aria-label="Search employees" placeholder="Search name, email or ID..." value={search} onChange={event => setSearch(event.target.value)} /><select aria-label="Filter department" value={department} onChange={event => setDepartment(event.target.value)}><option value="">All departments</option>{departments.map(item => <option key={item}>{item}</option>)}</select><select aria-label="Filter attendance" value={status} onChange={event => setStatus(event.target.value)}><option value="">All attendance</option>{statuses.map(item => <option key={item}>{item}</option>)}</select><button onClick={() => setSort(sort === 'asc' ? 'desc' : 'asc')}>{sort === 'asc' ? 'A-Z' : 'Z-A'}</button>{hasFilters && <button onClick={clearFilters}>Clear filters</button>}</>} />
+      toolbar={<><input aria-label="Search employees" placeholder="Search name, email or ID..." value={search} onChange={event => setSearch(event.target.value)} /><select aria-label="Filter department" value={department} onChange={event => setDepartment(event.target.value)}><option value="">All departments</option>{departments.map(item => <option key={item}>{item}</option>)}</select><select aria-label="Filter attendance" value={status} onChange={event => setStatus(event.target.value)}><option value="">All attendance</option>{statuses.map(item => <option key={item}>{item}</option>)}</select><Button size="sm" variant="outline" aria-label="Toggle employee sort order" onClick={() => setSort(sort === 'asc' ? 'desc' : 'asc')}>{sort === 'asc' ? 'A-Z' : 'Z-A'}</Button>{hasFilters && <Button size="sm" variant="fadeout" onClick={clearFilters}>Clear filters</Button>}</>} />
     </div>
     <div className="people-footnote"><Check size={13} />Directory totals reflect the employee records available from your connected service.</div>
     {adding && <AddPerson api={api} onClose={() => setAdding(false)} onCreated={() => { setAdding(false); clearFilters(); loadUsers(); onShowToast?.({ type: 'success', title: 'Employee added', message: 'The employee record was saved successfully.' }); }} />}

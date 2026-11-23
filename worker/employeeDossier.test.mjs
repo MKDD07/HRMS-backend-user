@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync,readdirSync } from 'node:fs';
+import { employeeDossier } from './employeeDossier.mjs';
+import { workforceSummary } from '../shared/overviewDashboard.mjs';
+import { documentHandle } from './documents.mjs';
+import { geofenceSiteHandle } from './geofence.mjs';
+import { geofenceRulesHandle } from './geofenceRules.mjs';
+import { routePages } from '../shared/dashboardAccess.mjs';
+const sql=new DatabaseSync(':memory:');
+for(const f of readdirSync(new URL('../migrations/hrms/',import.meta.url)).filter(f=>f.endsWith('.sql')).sort())sql.exec(readFileSync(new URL('../migrations/hrms/'+f,import.meta.url),'utf8'));
+function prepare(query,values=[]){return {bind:(...v)=>prepare(query,v),async first(){return sql.prepare(query).get(...values)||null;},async all(){return {results:sql.prepare(query).all(...values)};},async run(){return sql.prepare(query).run(...values);}};}
+const db={prepare,async batch(statements){sql.exec('BEGIN');try{const results=[];for(const statement of statements)results.push(await statement.run());sql.exec('COMMIT');return results;}catch(e){sql.exec('ROLLBACK');throw e;}}};
+sql.exec("INSERT INTO companies(company_id,name) VALUES('a','A'),('b','B')");
+for(const company of ['a','b']){sql.prepare("INSERT INTO users(user_id,company_id,username,email,password_hash,role) VALUES(?,?,?,?,?,'employee')").run(company,company,company,company+'@example.com','test');sql.prepare("INSERT INTO employees(employee_id,company_id,user_id,employee_code,first_name,status,profile) VALUES(?,?,?,?,?,'Probation','{}')").run(company,company,company,company,'Person');}
+const actor={role:'company_admin',company_id:'a',user_id:'admin'};
+const call=(method='GET',body={},userid='a')=>employeeDossier({db,actor,method,body,userid});
+try {
+  const initial=await call();assert.equal(initial.gender,'');assert.equal(initial.work_location,'');assert.equal(initial.dossier_revision,0);
+  await assert.rejects(call('GET',{},'b'),e=>e.status===404);
+  await assert.rejects(employeeDossier({db,actor:{...actor,role:'employee'},method:'GET',userid:'a'}),e=>e.status===403);
+  const shift={startTime:'09:00',endTime:'17:00',workingDays:['Mon'],breakDurationMins:30,gracePeriodMins:5,earlyExitGraceMins:0};
+  const rule={mode:'custom',name:'Office',latitude:19.1,longitude:72.8,radius_meters:100,photo_required:true,allow_wfh:false};
+  await call('POST',{dossier_revision:0,phone_number:'123',account_holder:'Test Employee',bank_name:'Test Bank',account_no:'1234567890',ifsc_code:'TEST0000001',preferred_payment_method:'UPI',upi_id:'employee@bank',kpi_records:[{title:'Resolved requests',target:10,actual:2}],shift_override:shift,attendance_rule:rule});
+  const saved=await call();assert.equal(saved.phone_number,'123');assert.equal(saved.account_holder,'Test Employee');assert.equal(saved.preferred_payment_method,'UPI');assert.equal(saved.upi_id,'employee@bank');await assert.rejects(call('POST',{preferred_payment_method:'Unsupported'}),/valid payment method/);assert.equal(saved.kpi_records[0].actual,2);assert.equal(saved.shift_override.startTime,'09:00');assert.equal(saved.available_locations.length,0);
+  await assert.rejects(call('POST',{dossier_revision:0,first_name:'Stale'}),e=>e.status===409);
+  await assert.rejects(call('POST',{dossier_revision:1,attendance_rule:{...rule,latitude:100}}));
+  await call('POST',{dossier_revision:1,profile_finalized:true});assert.equal((await call()).status,'Probation');assert.equal((await call()).profile_finalized,true);
+  await call('POST',{dossier_revision:2,first_name:'Updated',date_of_birth:'1995-10-11'});assert.equal((await call()).profile_finalized,false);assert.equal((await call()).dossier_audit.length,3);
+  const storedProfile=JSON.parse(sql.prepare("SELECT profile FROM employees WHERE user_id='a'").get().profile);
+  assert.equal(storedProfile.date_of_birth,'1995-10-11');assert.equal(storedProfile.dob,'1995-10-11');
+  await assert.rejects(call('POST',{shift_id:'fake'}));
+  const site={group_id:'hq',revision:0,name:'HQ',latitude:19,longitude:72,radius_meters:100,photo_required:true};
+  await geofenceSiteHandle({db,actor,method:'POST',body:site});
+  assert.equal((await call()).available_locations[0].name,'HQ');
+  const readGeofence=()=>geofenceRulesHandle({db,actor,method:'GET',userid:'a'});
+  assert.equal((await readGeofence()).attendance_rule.name,'Office','Dossier rule is read by geofence page');
+  assert.equal((await readGeofence()).email,undefined,'Geofence page does not expose unrelated personnel fields');
+  await geofenceRulesHandle({db,actor,method:'POST',userid:'a',body:{dossier_revision:3,attendance_rule:{mode:'group',group_id:'hq',photo_required:false,allow_wfh:true,status:'Paused',notes:'Temporary assignment'}}});
+  assert.equal((await call()).attendance_rule.group_id,'hq','Geofence page edits appear in dossier');
+  assert.equal((await call()).attendance_rule.status,'Paused');assert.equal((await call()).attendance_rule.notes,'Temporary assignment');
+  await geofenceSiteHandle({db,actor,method:'POST',body:{...site,revision:1,radius_meters:250}});
+  assert.equal((await call()).attendance_rule.radius_meters,250,'Group assignment resolves live campus updates');
+  await assert.rejects(geofenceSiteHandle({db,actor,method:'POST',body:{...site,revision:1}}),e=>e.status===409);
+  await assert.rejects(geofenceRulesHandle({db,actor,method:'POST',userid:'a',body:{dossier_revision:3,attendance_rule:rule}}),e=>e.status===409);
+  await assert.rejects(geofenceRulesHandle({db,actor,method:'GET',userid:'b'}),e=>e.status===404);
+  await assert.rejects(geofenceRulesHandle({db,actor,method:'POST',userid:'a',body:{dossier_revision:4,email:'changed@example.com'}}));
+  await assert.rejects(call('POST',{dossier_revision:4,attendance_rule:{mode:'group',group_id:'foreign',photo_required:false,allow_wfh:false}}));
+  assert.equal((await geofenceSiteHandle({db,actor:{...actor,company_id:'b'},method:'GET'})).length,0);
+  assert.deepEqual(routePages('/api/v1/geofence-sites','POST'),['geofence-rules']);
+  assert.equal(workforceSummary([{joining_date:'2026-01-01'},{joining_date:'2026-01-01',last_working_date:'2026-10-04'}],'2026-10-11').attritionRate,66.67);
+  assert.equal(workforceSummary([{status:'Inactive'}],'2026-10-11').attritionRate,null);
+  sql.prepare("INSERT INTO documents(document_id,company_id,employee_id,title,object_key,content_type,size_bytes,uploaded_by,metadata) VALUES('doc','a','a','Old','key','text/plain',5,'a','{}')").run();
+  const path='/api/v1/documents/doc',url=new URL('https://test.invalid'+path);
+  const update=who=>documentHandle({db,env:{},actor:who,path,url,method:'PATCH',request:new Request(url,{method:'PATCH',body:JSON.stringify({title:'New',category:'Identity',expiry_date:'2027-01-01'})})});
+  assert.equal((await update(actor)).title,'New');await assert.rejects(update({...actor,company_id:'b'}),e=>e.status===404);
+  console.log('Dossier tests passed: real fields, tenant isolation, revisions, rules/KPIs, finalization, document metadata and attrition.');
+}finally{sql.close();}

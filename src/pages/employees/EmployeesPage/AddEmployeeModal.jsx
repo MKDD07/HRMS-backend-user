@@ -173,20 +173,10 @@ export function AddEmployeeModal({
         </div>
 
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={onClose}
-          >
+          <Button type="button" variant="secondary" size="sm" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            disabled={isSubmitting}
-          >
+          <Button type="submit" variant="primary" size="sm" disabled={isSubmitting}>
             {isSubmitting ? 'Onboarding…' : 'Save & Generate ID'}
           </Button>
         </div>

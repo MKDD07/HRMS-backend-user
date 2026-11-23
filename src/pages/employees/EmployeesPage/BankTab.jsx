@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button';
 import React, { useState } from 'react';
 import { Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { EditLink, SectionCard } from './employeeUi';
@@ -23,14 +24,10 @@ export function BankTab({ employee: e, onEdit }) {
         title="Bank Account & Statutory KYC"
         action={
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setReveal((r) => !r)}
-              className="inline-flex items-center gap-1 font-semibold text-[#374151] hover:text-[#111827] cursor-pointer"
-            >
+            <Button type="button" onClick={() => setReveal(r => !r)} className="inline-flex items-center gap-1" variant="outline" wrapContent={false}>
               {reveal ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               {reveal ? 'Hide' : 'Show'} numbers
-            </button>
+            </Button>
             <EditLink onClick={onEdit}>Edit Details</EditLink>
           </div>
         }

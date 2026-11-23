@@ -47,3 +47,47 @@ test('reviewers and CC cannot approve; duplicate recipients cannot gain duplicat
  config.links[0].responsibilities.leave.unavailable=true;config.links[0].responsibilities.leave.backup='hr';
  assert.equal(resolveRoute(config,people,{requester:'employee',kind:'leave',days:2}).participants.length,1);
 });
+
+test('indirect collaboration can point back into a direct reporting tree', () => {
+ const config = setup();
+ config.links.push({ id: 'temporary', manager: 'employee', employee: 'manager', type: 'indirect' });
+ assert.equal(validateConfiguration(config, people), '');
+ config.links.at(-1).type = 'direct';
+ assert.match(validateConfiguration(config, people), /Direct reporting relationships contain a loop/);
+});
+
+test('reciprocal indirect connections are allowed but self connections remain invalid', () => {
+ const config = setup();
+ config.links = [
+  { id: 'out', manager: 'employee', employee: 'manager', type: 'indirect' },
+  { id: 'back', manager: 'manager', employee: 'employee', type: 'indirect' }
+ ];
+ assert.equal(validateConfiguration(config, people), '');
+ config.links[0].employee = 'employee';
+ assert.match(validateConfiguration(config, people), /Invalid reporting relationship/);
+});
+
+test('department chart positions and expansion state are validated for persistence', () => {
+ const config = setup();
+ config.departmentChart = [{ name: 'Engineering', position: { x: 120, y: 90 }, expanded: false }];
+ assert.equal(validateConfiguration(config, people), '');
+ config.departmentChart[0].expanded = true;
+ assert.equal(validateConfiguration(config, people), '');
+ config.departmentChart.push({ ...config.departmentChart[0] });
+ assert.match(validateConfiguration(config, people), /duplicate department chart/);
+ config.departmentChart.pop();
+ config.departmentChart[0].position.x = Infinity;
+ assert.match(validateConfiguration(config, people), /department chart/);
+});
+
+test('chart membership persists independently and rejects duplicate or unknown employees', () => {
+ const config=setup();
+ config.departmentChart=[{name:'Engineering',position:{x:0,y:0},expanded:false,memberIds:['employee']}];
+ assert.equal(validateConfiguration(config,people),'');
+ config.departmentChart[0].memberIds=[];
+ assert.equal(validateConfiguration(config,people),'');
+ config.departmentChart[0].memberIds=['employee','employee'];
+ assert.match(validateConfiguration(config,people),/unique employees/);
+ config.departmentChart[0].memberIds=['outside-company'];
+ assert.match(validateConfiguration(config,people),/unique employees/);
+});

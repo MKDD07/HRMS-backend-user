@@ -1,11 +1,16 @@
+import { SectionSkeleton } from '../../components/ui/SectionSkeleton';
+import { MetricOverview, MetricCard } from '../../components/ui/MetricOverview';
+import { TenantPanelHeader } from '../../components/ui/TenantPanel';
+import { TenantHeader } from '../../components/ui/TenantHeader';
+
 import { WorkflowInbox } from '../../components/hierarchy/WorkflowInbox';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, Check, X, ArrowRight } from 'lucide-react';
+import { RefreshCw, Check, X, ArrowRight, Users, CalendarDays, ClipboardClock, CircleCheck } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { UniversalCalendar } from '../../components/ui/UniversalCalendar';
+import { LeaveSchedule } from './LeaveSchedule';
 import { EmployeeDirectory } from '../../components/employees/EmployeeDirectory';
 import { Modal } from '../../components/ui/Modal';
-import { dateKey, leaveDates, leaveSummary, normalizeLeaveDate } from './leaveCalendarData';
+import { dateKey, leaveSummary, normalizeLeaveDate } from './leaveCalendarData';
 import { BezierLeaveChart } from './BezierLeaveChart';
 import { companyCalendarApi } from '../../lib/companyCalendarApi';
 import { PROFESSIONAL_LEAVE_PRESETS, eligibleFor } from '../../lib/leavePolicy';
@@ -109,12 +114,6 @@ export function LeavePage({ currentUser = {}, allUsers, api, onShowToast }) {
     return allLeaveTypes.filter(type => eligibleFor(type, selectedPerson));
   }, [selectedPerson, allLeaveTypes, calendarConfig]);
 
-  const byDay = useMemo(() => {
-    const map = new Map();
-    for (const leave of visibleLeaves) for (const day of leaveDates(leave)) map.set(day, [...(map.get(day) || []), leave]);
-    return map;
-  }, [visibleLeaves]);
-  const dailyLeaves = byDay.get(selectedDate) || [];
   const calendarYear = month.getFullYear();
   const graphs = useMemo(() => leaveSummary(visibleLeaves, chartYear, eligibleLeaveTypes), [visibleLeaves, chartYear, eligibleLeaveTypes]);
   const enrichedTypes = useMemo(() => {
@@ -155,51 +154,34 @@ export function LeavePage({ currentUser = {}, allUsers, api, onShowToast }) {
   };
 
   return <div className="leave-console">
-    <header className="leave-header">
-      <div>
-        <span className="leave-eyebrow">WORKSPACE / LEAVE REQUESTS</span>
-        <h1>Leaves<span>.</span></h1>
-        <p>Explore recorded time off and review employee requests.</p>
-      </div>
-      <div className="leave-header-actions">
-        <Button
-          variant={showWorkflow ? "colored" : "outline"}
-          size="md"
-          aria-expanded={showWorkflow}
-          onClick={() => setShowWorkflow(value => !value)}
-        >
-          Requests & approvals
-        </Button>
-        <Button
-          variant="fadeout"
-          size="md"
-          iconOnly
-          icon={RefreshCw}
-          loading={loading}
-          onClick={load}
-          aria-label="Refresh leave records"
-        />
-      </div>
-    </header>
+    <TenantHeader
+        settings={{
+          subheading: "WORKSPACE / LEAVE REQUESTS",
+          heading: "Leaves",
+          paragraph: "Explore recorded time off and review employee requests.",
+          refresh: { label: "Refresh leave records" },
+          buttons: [
+            { id: 'action0', label: "Requests & approvals", variant: showWorkflow ? "colored" : "outline" }
+          ]
+        }}
+        actions={{
+          action0: { "aria-expanded": showWorkflow, "onClick": () => setShowWorkflow(value => !value) },
+          refresh: { "icon": RefreshCw, "loading": loading, "onClick": load }
+        }}
+      />
     {showWorkflow && <section className="hm-page hm-main"><WorkflowInbox currentUser={currentUser} people={people} initialKind="leave" /></section>}
-    {error && <div className="leave-alert" role="alert">Leave records are unavailable: {error} <button type="button" onClick={load}>Retry</button></div>}
-    <section className="leave-stats" aria-label="Leave overview"><div><span>Employees</span><strong>{loading || error ? '-' : people.length}</strong><small>Live directory</small></div><div><span>Leave requests</span><strong>{loading || error ? '-' : visibleLeaves.length}</strong><small>{calendarYear} and other recorded periods</small></div><div><span>Pending review</span><strong>{loading || error ? '-' : pending}</strong><small>Awaiting a decision</small></div><div><span>Approved</span><strong>{loading || error ? '-' : approved}</strong><small>Recorded requests</small></div></section>
-    <div className="leave-layout"><main className="leave-main">
-      <section className="leave-panel leave-schedule-panel" ref={calendarRef} tabIndex={-1}><div className="leave-panel-heading"><div><span className="leave-eyebrow">TIME-OFF CALENDAR</span><h2>{selectedId ? nameOf(personById.get(selectedId)) : 'Company leave schedule'}</h2><p>Select a date to see recorded leave requests.</p></div><div className="leave-controls"><select aria-label="Filter employee" value={selectedId} onChange={event => setSelectedId(event.target.value)}><option value="">All employees</option>{people.map(person => <option key={person.userid} value={person.userid}>{nameOf(person)}</option>)}</select><button type="button" aria-label="Previous month" onClick={() => setMonth(new Date(calendarYear, month.getMonth() - 1, 1))}><ChevronLeft size={16} /></button><input type="month" aria-label="Calendar month" value={`${calendarYear}-${String(month.getMonth() + 1).padStart(2, '0')}`} onChange={event => { if (event.target.value) { const [y, m] = event.target.value.split('-').map(Number); setMonth(new Date(y, m - 1, 1)); } }} /><button type="button" aria-label="Next month" onClick={() => setMonth(new Date(calendarYear, month.getMonth() + 1, 1))}><ChevronRight size={16} /></button></div></div>
-      <div className="leave-schedule-body">
-      <UniversalCalendar size="md" mode="single" month={month} onMonthChange={setMonth} selected={new Date(`${selectedDate}T12:00:00`)} onSelect={date => { if (date) setSelectedDate(dateKey(date)); }} weekStartsOn={1} showOutsideDays={false} holidaysMap={calendarConfig?.holidays} modifiers={{ approved: date => (byDay.get(dateKey(date)) || []).some(leave => statusOf(leave) === 'approved'), pending: date => (byDay.get(dateKey(date)) || []).some(leave => statusOf(leave) === 'pending') }} modifiersClassNames={{ approved: 'leave-day-approved', pending: 'leave-day-pending' }} footer={<div className="leave-legend"><span>Approved leave</span><span>Pending request</span></div>} />
-      <div className="leave-day-details" aria-live="polite"><h3>{new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h3>{!dailyLeaves.length && <p className="leave-empty">No recorded leave on this date.</p>}{dailyLeaves.map((leave, index) => <article key={`${leave.userid}-${leave.id || index}`}><div><strong>{nameOf(personById.get(leave.userid))}</strong><small>{leave.leave_type || 'Leave'} / {startOf(leave)} to {endOf(leave)}</small></div><span className={`leave-pill ${statusOf(leave)}`}>{leave.status || 'Pending'}</span></article>)}</div></div></section>
+    {error && <div className="leave-alert" role="alert">Leave records are unavailable: {error} <Button type="button" onClick={load} variant="outline" wrapContent={false}>Retry</Button></div>}
+    <MetricOverview loading={loading} aria-label="Leave overview"><MetricCard loading={loading} label="Employees" icon={Users} value={loading || error ? '-' : people.length} caption="Live directory" /><MetricCard loading={loading} label="Leave requests" icon={CalendarDays} value={loading || error ? '-' : visibleLeaves.length} caption={<>{calendarYear} and other recorded periods</>} /><MetricCard loading={loading} label="Pending review" icon={ClipboardClock} value={loading || error ? '-' : pending} caption="Awaiting a decision" /><MetricCard loading={loading} label="Approved" icon={CircleCheck} value={loading || error ? '-' : approved} caption="Recorded requests" /></MetricOverview>
+    <div className="workspace-grid leave-layout"><main className="leave-main">
+      <section className="leave-panel leave-schedule-panel" ref={calendarRef} tabIndex={-1}>
+        <TenantPanelHeader title={selectedId ? nameOf(personById.get(selectedId)) + "'s leave schedule" : 'Company leave schedule'} subtitle="Plan ahead with a shared view of employee time off." />
+        <LeaveSchedule people={people} leaves={visibleLeaves} holidays={calendarConfig?.holidays} leaveTypes={allLeaveTypes} selectedId={selectedId} onEmployeeChange={setSelectedId} month={month} onMonthChange={setMonth} selectedDate={selectedDate} onDateChange={setSelectedDate} loading={loading} />
+      </section>
 
       {/* Leave Types Bezier Chart Section with Type Selector and Calendar Year */}
       <div className="leave-graphs">
         <section className="leave-panel">
-          <div className="leave-panel-heading">
-            <div>
-              <span className="leave-eyebrow">REQUEST MIX</span>
-              <h2>Leave types</h2>
-              <p>Monthly days breakdown across leave categories in {chartYear}.</p>
-            </div>
-            <div className="leave-chart-header-controls">
+          <TenantPanelHeader title={<>Leave types</>} subtitle={<>Monthly days breakdown across leave categories in {chartYear}.</>} /><div className="tenant-panel-tools"><div className="leave-chart-header-controls">
               <select
                 aria-label="Filter leave type"
                 className="leave-type-dropdown"
@@ -222,8 +204,7 @@ export function LeavePage({ currentUser = {}, allUsers, api, onShowToast }) {
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
-            </div>
-          </div>
+            </div></div>
           {loading || error ? (
             <p className="leave-empty">Live chart unavailable.</p>
           ) : !enrichedTypes.length ? (
@@ -241,8 +222,14 @@ export function LeavePage({ currentUser = {}, allUsers, api, onShowToast }) {
         </section>
       </div>
 
-      <section className="leave-panel"><div className="leave-panel-heading"><div><span className="leave-eyebrow">REVIEW DESK</span><h2>Leave requests</h2><p>Approve or reject pending requests from the live records.</p></div><select aria-label="Filter request status" value={queueStatus} onChange={event => setQueueStatus(event.target.value)}><option value="pending">Pending</option><option value="all">All requests</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div><div className="leave-request-list">{loading ? <p className="leave-empty">Loading requests...</p> : error ? <p className="leave-empty">Requests unavailable.</p> : !requests.length ? <p className="leave-empty">No requests match this filter.</p> : requests.map((leave, index) => <article key={`${leave.userid}-${leave.id || index}`}><div><strong>{nameOf(personById.get(leave.userid))}</strong><small>{leave.userid} / {leave.leave_type || 'Leave'} / {startOf(leave)} <ArrowRight size={11} /> {endOf(leave)}</small>{leave.reason && <p>{leave.reason}</p>}</div><span className={`leave-pill ${statusOf(leave)}`}>{leave.status || 'Pending'}</span>{statusOf(leave) === 'pending' && <div className="leave-review-actions"><button type="button" onClick={() => setDecision({ ...leave, status: 'Approved' })}><Check size={14} />Approve</button><button type="button" onClick={() => setDecision({ ...leave, status: 'Rejected' })}><X size={14} />Reject</button></div>}</article>)}</div></section>
-    </main><aside className="leave-side"><EmployeeDirectory employees={people} selectedId={selectedId} onSelect={person => setSelectedId(person.userid)} loading={loading} error={error} subtitle="Filter the calendar and charts by employee." pageSize={5} headerAction={selectedId && <button type="button" className="leave-clear" onClick={() => setSelectedId('')}>Show all</button>} /></aside></div>
-    <Modal isOpen={!!decision} onClose={() => { if (!saving) { setDecision(null); setRemark(''); } }} title={decision?.status === 'Approved' ? 'Approve leave request' : 'Reject leave request'}><div className="leave-decision"><p>{decision && `${nameOf(personById.get(decision.userid))} / ${decision.leave_type || 'Leave'} / ${startOf(decision)} to ${endOf(decision)}`}</p>{decision?.status === 'Rejected' && <label>Reason for rejection<textarea value={remark} onChange={event => setRemark(event.target.value)} rows={3} required /></label>}<div><button type="button" className="leave-button" onClick={() => setDecision(null)} disabled={saving}>Cancel</button><button type="button" className="leave-button is-primary" onClick={review} disabled={saving || (decision?.status === 'Rejected' && !remark.trim())}>{saving ? 'Saving...' : `Confirm ${decision?.status?.toLowerCase()}`}</button></div></div></Modal>
+      <section className="leave-panel"><TenantPanelHeader title={<>Leave requests</>} subtitle={<>Approve or reject pending requests from the live records.</>} /><div className="tenant-panel-tools"><select aria-label="Filter request status" value={queueStatus} onChange={event => setQueueStatus(event.target.value)}><option value="pending">Pending</option><option value="all">All requests</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div><div className="leave-request-list"><SectionSkeleton loading={loading}>{loading ? <p className="leave-empty">Loading requests...</p> : error ? <p className="leave-empty">Requests unavailable.</p> : !requests.length ? <p className="leave-empty">No requests match this filter.</p> : requests.map((leave, index) => <article key={`${leave.userid}-${leave.id || index}`}><div><strong>{nameOf(personById.get(leave.userid))}</strong><small>{leave.userid} / {leave.leave_type || 'Leave'} / {startOf(leave)} <ArrowRight size={11} /> {endOf(leave)}</small>{leave.reason && <p>{leave.reason}</p>}</div><span className={`leave-pill ${statusOf(leave)}`}>{leave.status || 'Pending'}</span>{statusOf(leave) === 'pending' && <div className="leave-review-actions"><Button type="button" onClick={() => setDecision({
+  ...leave,
+  status: 'Approved'
+})} variant="outline" wrapContent={false}><Check size={14} />Approve</Button><Button type="button" onClick={() => setDecision({
+  ...leave,
+  status: 'Rejected'
+})} variant="outline" wrapContent={false}><X size={14} />Reject</Button></div>}</article>)}</SectionSkeleton></div></section>
+    </main><aside className="leave-side"><EmployeeDirectory employees={people} selectedId={selectedId} onSelect={person => setSelectedId(person.userid)} loading={loading} error={error} subtitle="Filter the calendar and charts by employee." pageSize={5} headerAction={selectedId && <Button type="button" className="leave-clear" onClick={() => setSelectedId('')} variant="outline" wrapContent={false}>Show all</Button>} /></aside></div>
+    <Modal isOpen={!!decision} onClose={() => { if (!saving) { setDecision(null); setRemark(''); } }} title={decision?.status === 'Approved' ? 'Approve leave request' : 'Reject leave request'}><div className="leave-decision"><p>{decision && `${nameOf(personById.get(decision.userid))} / ${decision.leave_type || 'Leave'} / ${startOf(decision)} to ${endOf(decision)}`}</p>{decision?.status === 'Rejected' && <label>Reason for rejection<textarea value={remark} onChange={event => setRemark(event.target.value)} rows={3} required /></label>}<div><Button type="button" className="leave-button" onClick={() => setDecision(null)} disabled={saving} variant="outline" wrapContent={false}>Cancel</Button><Button type="button" className="leave-button is-primary" onClick={review} disabled={saving || decision?.status === 'Rejected' && !remark.trim()} variant="colored" wrapContent={false}>{saving ? 'Saving...' : `Confirm ${decision?.status?.toLowerCase()}`}</Button></div></div></Modal>
   </div>;
 }

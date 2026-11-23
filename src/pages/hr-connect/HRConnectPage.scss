@@ -4,31 +4,14 @@
 .hr-connect {
   --hr-green: #{$color-primary};
 
-  .hr-primary {
-    background: $color-primary;
-    color: $color-surface;
-    border-color: $color-primary;
-
-    &:hover {
-      background: $color-primary-dark;
-    }
-  }
 
   .hr-record {
     display: flex;
     align-items: flex-start;
     gap: 13px;
     padding: 19px 0;
-    border: 0;
-    border-top: 1px solid $color-border;
-    background: transparent;
     width: 100%;
     text-align: left;
-    color: $color-primary;
-  }
-
-  button.hr-record:hover {
-    background: $color-surface-subtle;
   }
 
   input:focus-visible,
@@ -42,49 +25,25 @@
 .hr-context-note {
   display: flex;
   align-items: center;
-  gap: var(--space-sm, 10px);
+  gap: var(--space-2-5);
 }
 
 .hr-header-actions {
   flex-shrink: 0;
 }
 
-.hr-form,
-.hr-detail {
-  .hr-primary {
-    background: $color-primary;
-    color: $color-surface;
-    border-color: $color-primary;
-
-    &:hover {
-      background: $color-primary-dark;
-    }
-  }
-}
-
 .hr-tabs {
   display: flex;
-  gap: var(--space-lg, 24px);
+  gap: var(--space-6);
   overflow-x: auto;
   border-bottom: 1px solid $color-border;
-  margin-bottom: var(--space-lg, 24px);
+  margin-bottom: var(--space-6);
 
   button {
     display: flex;
     align-items: center;
     gap: 7px;
     flex-shrink: 0;
-    padding: 13px 0 16px;
-    border: 0;
-    border-bottom: 2px solid transparent;
-    background: transparent;
-    color: $color-text-muted;
-    font-size: var(--font-sm, 12px);
-
-    &[aria-pressed="true"] {
-      border-color: $color-primary;
-      color: $color-primary-dark;
-    }
 
     > span {
       padding: 2px 6px;
@@ -95,15 +54,9 @@
   }
 }
 
-.hr-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
-  gap: 22px;
-}
 
-.hr-secondary {
-  margin-top: 22px;
-}
+
+
 
 .hr-empty {
   display: flex;
@@ -114,14 +67,14 @@
   padding: 32px;
   text-align: center;
   color: $color-text-muted;
-  gap: var(--space-md, 12px);
+  gap: var(--space-3);
 
   > svg {
     background: $color-surface-subtle;
     box-sizing: content-box;
     padding: 15px;
     border: 1px solid $color-border;
-    border-radius: var(--radius-md, 12px);
+    border-radius: var(--radius-card, 12px);
   }
 
   h3 {
@@ -138,7 +91,7 @@
 }
 
 .hr-records {
-  padding: 0 var(--space-lg, 24px) var(--space-md, 12px);
+  padding: 0 var(--space-6) var(--space-3);
 }
 
 .hr-record-icon {
@@ -204,23 +157,14 @@
 .hr-quick-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  padding: 0 var(--space-lg, 24px) var(--space-lg, 24px);
-  gap: var(--space-md, 12px);
+  padding: 24px var(--space-6) var(--space-6);
+  gap: var(--space-3);
 
   button {
     display: flex;
     align-items: center;
-    gap: var(--space-md, 12px);
-    background: $color-surface-subtle;
-    border: 1px solid $color-border;
-    border-radius: var(--radius-sm, 9px);
-    padding: 20px 15px;
+    gap: var(--space-3);
     text-align: left;
-    color: $color-primary;
-
-    &:hover {
-      background: $color-primary-subtle;
-    }
 
     > span {
       flex: 1;
@@ -244,19 +188,13 @@
 }
 
 .hr-resources {
-  padding: 0 var(--space-lg, 24px);
+  padding: 0 var(--space-6);
 
   button {
     display: flex;
     width: 100%;
     align-items: center;
-    gap: var(--space-md, 12px);
-    padding: 15px 0;
-    border: 0;
-    border-top: 1px solid $color-border;
-    background: transparent;
-    color: $color-text-secondary;
-    font-size: var(--font-xs, 11px);
+    gap: var(--space-3);
 
     svg:last-child {
       margin-left: auto;
@@ -267,7 +205,7 @@
 .hr-mail-note {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-md, 12px);
+  gap: var(--space-3);
   padding: 17px 24px;
   background: $color-surface-subtle;
   border-top: 1px solid $color-border;
@@ -292,14 +230,14 @@
 
 .hr-toolbar {
   display: flex;
-  gap: var(--space-md, 12px);
+  gap: var(--space-3);
   margin: 4px 24px 20px;
 
   label {
     display: flex;
     align-items: center;
     flex: 1;
-    gap: var(--space-sm, 10px);
+    gap: var(--space-2-5);
     border: 1px solid $color-border;
     border-radius: var(--radius-sm, 7px);
     background: $color-surface-subtle;
@@ -337,6 +275,9 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+
+  > p { margin: 0; }
+  .hr-form-recipient { grid-column: 1 / -1; }
 
   &-hint {
     font-size: var(--font-sm, 12px);
@@ -384,11 +325,6 @@
     padding-top: 18px;
   }
 
-  button:disabled {
-    opacity: 0.5;
-    cursor: wait;
-  }
-
   :focus-visible {
     outline: 2px solid $color-primary;
     outline-offset: 3px;
@@ -428,16 +364,6 @@
     color: $color-text-muted;
     font-size: var(--font-xs, 10px);
   }
-
-  button:disabled {
-    opacity: 0.5;
-    cursor: wait;
-  }
-
-  button:focus-visible {
-    outline: 2px solid $color-primary;
-    outline-offset: 3px;
-  }
 }
 
 .hr-message-body {
@@ -474,16 +400,7 @@
   }
 }
 
-@media (max-width: 1150px) {
-  .hr-connect .tenant-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
 
-  .hr-main-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 @media (max-width: 600px) {
   .hr-header-actions {
@@ -518,5 +435,121 @@
 
   .hr-form-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+// Use the shared card surface; this page owns only its content layout.
+.hr-connect {
+  .hr-overview-grid {
+    --workspace-grid-gap: var(--space-6);
+    margin-top: 0;
+    > :first-child { grid-column: span 8; }
+    > :last-child { grid-column: span 4; }
+    margin-bottom: var(--space-6);
+
+    > .card { margin: 0; }
+  }
+
+  .hr-tabs.card {
+    margin: 0 0 var(--space-6);
+    padding: 10px;
+    gap: 8px;
+    border: 0;
+
+    button { min-height: 40px; }
+  }
+
+  .hr-record.btn {
+    border: 0;
+    border-bottom: 1px solid $color-border;
+    border-radius: 0;
+    background: transparent;
+    white-space: normal;
+
+    &:last-child { border-bottom: 0; }
+    &:hover:not(:disabled) { background: $color-surface-subtle; }
+    &:focus-visible { outline: 2px solid $color-primary; outline-offset: -2px; }
+  }
+
+  .hr-quick-actions .btn {
+    min-height: 76px;
+    justify-content: flex-start;
+    border-radius: 10px;
+    border: 1px solid $color-border;
+    background: $color-surface;
+    box-shadow: none;
+    transform: none;
+    &:hover:not(:disabled) {
+      background: $color-surface-subtle;
+      border-color: $color-primary;
+      box-shadow: none;
+      transform: none;
+      svg { transform: none; }
+    }
+    padding: 16px;
+    white-space: normal;
+    > svg { flex-shrink: 0; }
+    > svg:first-child { color: $color-primary; }
+  }
+
+  .hr-resources {
+    display: grid;
+    gap: 0;
+    padding-block: 8px;
+    .btn {
+      justify-content: flex-start;
+      min-height: 48px;
+      padding: 12px 0;
+      border: 0;
+      border-bottom: 1px solid $color-border;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      text-align: left;
+      white-space: normal;
+      &:last-child { border-bottom: 0; }
+      &:hover:not(:disabled) {
+        background: $color-surface-subtle;
+        box-shadow: none;
+        transform: none;
+        svg { transform: none; }
+      }
+    }
+  }
+
+  .hr-mail-note p { color: $color-text-muted; }
+
+  @media (max-width: 1000px) {
+    .hr-overview-grid > .card { grid-column: 1 / -1; }
+  }
+
+  @media (max-width: 600px) {
+    .hr-quick-actions { padding: 16px; }
+    .hr-record { gap: 8px; flex-wrap: wrap; }
+    .hr-record-copy { flex-basis: 65%; }
+  }
+}
+
+// Resource rows stay flat in every interaction state.
+.hr-connect .hr-resources .btn.btn {
+  padding-inline: 10px;
+  background-image: none;
+  animation: none;
+  transition: background-color 150ms ease;
+
+  &:hover:not(:disabled):not(.is-disabled),
+  &:active:not(:disabled):not(.is-disabled) {
+    background: transparent;
+    border-color: $color-border;
+    box-shadow: none;
+    transform: none;
+    animation: none;
+    svg { transform: none; }
+  }
+
+  &:last-child { border-bottom: 0; }
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
   }
 }

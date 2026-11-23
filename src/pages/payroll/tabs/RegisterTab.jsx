@@ -1,3 +1,6 @@
+import { DossierSkeleton } from '../../employees/EmployeesPage/DossierSkeleton';
+import { BankSalaryLetter } from '../components/BankSalaryLetter';
+import { TenantPanelHeader } from '../../../components/ui/TenantPanel';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Badge } from '../../../components/ui/Badge';
@@ -9,21 +12,21 @@ import { fullName, getMonthRecord, inr, isFinal } from '../lib/payrollHelpers';
 const PAGE_SIZE = 8;
 
 /** Tab 3: whole company for the selected month. */
-export function RegisterTab({ users, year, month, version, onDownload }) {
+export function RegisterTab({ users, year, month, version, onDownload, periodRecords = {}, dataBusy, dataError, accounts = {}, configuration }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('ALL');
   const [page, setPage] = useState(1);
 
   const data = useMemo(
-    () => users.map((employee) => ({ employee, record: getMonthRecord(employee, year, month) })),
-    [users, year, month, version]
+    () => users.map((employee) => ({ employee, record: periodRecords[employee.userid] || {status:'Not started'} })),
+    [users, year, month, version, periodRecords]
   );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return data.filter(({ employee, record }) => {
-      const hay = `${fullName(employee)} ${employee.userid || ''}`.toLowerCase();
-      const label = isFinal(record) ? 'Finalized' : 'Draft';
+      const hay = `${fullName(employee)} ${employee.department || ''}`.toLowerCase();
+      const label = record.status;
       return hay.includes(q) && (status === 'ALL' || label === status);
     });
   }, [data, search, status]);
@@ -36,30 +39,23 @@ export function RegisterTab({ users, year, month, version, onDownload }) {
   const done = data.filter((d) => isFinal(d.record)).length;
 
   const kpis = [
-    ['Total gross payroll', inr(gross), `${month} ${year}`, 'text-[#3e5432]'],
-    ['Total net payable', inr(net), 'Bank transfer amount', 'text-[#486537]'],
-    ['Finalized', `${done} / ${users.length}`, `${users.length - done} still in draft`, 'text-[#587443]'],
-    ['Deductions', inr(gross - net), 'PF, PT, TDS and custom', 'text-[#D97706]']
+    ['Total gross payroll', inr(gross), `${month} ${year}`, 'text-[var(--color-text)]'],
+    ['Total net payable', inr(net), 'Saved salary amounts', 'text-[var(--color-text)]'],
+    ['Finalized', `${done} / ${users.length}`, `${data.filter(d=>d.record.status==='Draft').length} saved drafts`, 'text-[var(--color-text)]'],
+    ['Deductions', inr(gross - net), 'PF, PT, TDS and custom', 'text-[var(--color-text-secondary)]']
   ];
 
+  if (dataBusy) return <DossierSkeleton/>;
+  if (dataError) return null;
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map(([label, value, note, tone]) => (
-          <div key={label} className="card p-4 bg-white border border-[#e2e9da]">
-            <span className="text-[13px] font-semibold text-[#7d8e70]">{label}</span>
-            <p className={`text-xl font-bold mt-1 ${tone}`}>{value}</p>
-            <span className="text-[11px] text-[#7d8e70]">{note}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="card p-0 bg-white border border-[#e2e9da] overflow-hidden">
+      <BankSalaryLetter users={users} periodRecords={periodRecords} accounts={accounts} month={month} year={year} configuration={configuration}/>
+      <div className="card tenant-panel p-0 overflow-hidden"><TenantPanelHeader title="Company register" subtitle="Saved salary records and recorded payments for this period."/>
         <FilterBar
           searchValue={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search employee name or ID..."
-          className="border-0 border-b border-[#e2e9da] rounded-none shadow-none"
+          searchPlaceholder="Search employee name or department..."
+          className="border-0 border-b border-[var(--color-border)] rounded-none shadow-none"
         >
           <select
             value={status}
@@ -68,13 +64,13 @@ export function RegisterTab({ users, year, month, version, onDownload }) {
           >
             <option value="ALL">All Statuses</option>
             <option value="Finalized">Finalized</option>
-            <option value="Draft">Draft</option>
+            <option value="Draft">Draft</option><option value="Not started">Not started</option>
           </select>
         </FilterBar>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-[13px]">
-            <thead className="bg-[#f8faf5] text-[#7d8e70] font-semibold border-b border-[#e2e9da] text-[11px]">
+            <thead className="bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)] font-semibold border-b border-[var(--color-border)] text-[11px]">
               <tr>
                 <th className="py-3.5 px-4">Employee</th>
                 <th className="py-3.5 px-4">Department</th>
@@ -82,30 +78,31 @@ export function RegisterTab({ users, year, month, version, onDownload }) {
                 <th className="py-3.5 px-4">Gross</th>
                 <th className="py-3.5 px-4">Deductions</th>
                 <th className="py-3.5 px-4">Net</th>
-                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Salary status</th><th className="py-3.5 px-4">Payment</th>
                 <th className="py-3.5 px-4 text-center">Payslip</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#e2e9da] text-[#3e5432]">
+            <tbody className="divide-y divide-[var(--color-border)] text-[var(--color-text)]">
               {paged.length === 0 && (
-                <tr><td colSpan={8} className="py-10 text-center text-[#7d8e70]">No records match these filters.</td></tr>
+                <tr><td colSpan={9} className="py-10 text-center text-[var(--color-text-muted)]">No records match these filters.</td></tr>
               )}
               {paged.map(({ employee, record }) => (
-                <tr key={employee.userid} className="hover:bg-[#f8faf5]">
+                <tr key={employee.userid} className="hover:bg-[var(--color-surface-subtle)]">
                   <td className="py-3.5 px-4">
                     <div className="font-bold">{fullName(employee)}</div>
-                    <span className="text-[11px] text-[#7d8e70]">{employee.userid}</span>
+
                   </td>
-                  <td className="py-3.5 px-4 text-[#7d8e70]">{employee.department}</td>
-                  <td className="py-3.5 px-4 text-[11px] text-[#7d8e70]">{record.bank_account || '•••• 1024'}</td>
+                  <td className="py-3.5 px-4 text-[var(--color-text-muted)]">{employee.department}</td>
+                  <td className="py-3.5 px-4 text-[11px] text-[var(--color-text-muted)]">{accounts[employee.userid]?.account_no ? 'Ending '+accounts[employee.userid].account_no.slice(-4) : accounts[employee.userid]?.preferred_payment_method || 'Not provided'}</td>
                   <td className="py-3.5 px-4 font-mono">{inr(record.monthly_gross)}</td>
-                  <td className="py-3.5 px-4 text-[#DC2626]">{inr(record.total_deductions)}</td>
-                  <td className="py-3.5 px-4 font-bold text-[#486537]">{inr(record.monthly_net)}</td>
+                  <td className="py-3.5 px-4 text-[var(--color-danger)]">{inr(record.total_deductions)}</td>
+                  <td className="py-3.5 px-4 font-bold text-[var(--color-text)]">{inr(record.monthly_net)}</td>
                   <td className="py-3.5 px-4">
-                    <Badge variant={isFinal(record) ? 'success' : 'warning'}>{isFinal(record) ? 'Finalized' : 'Draft'}</Badge>
+                    <span className="payroll-status">{record.status}</span>
                   </td>
+                  <td className="py-3.5 px-4">{record.payment_status}<small className="payroll-payment-note">{inr(record.paid)} recorded</small>{record.payment_method && <small className="payroll-payment-note">{record.payment_method}</small>}{record.payment_reference && <small className="payroll-payment-note">{record.payment_reference}</small>}</td>
                   <td className="py-3.5 px-4 text-center">
-                    <DownloadIconButton title={`Download ${employee.first_name}'s payslip`} onClick={() => onDownload(employee, record)} />
+                    <DownloadIconButton disabled={!isFinal(record)} title={`Download ${employee.first_name}'s payslip`} onClick={() => onDownload(employee, record)} />
                   </td>
                 </tr>
               ))}

@@ -1,8 +1,10 @@
 import { getMonthlySalary, getInitialMonthlyRecord } from '../../../lib/salaryStore';
+import { applyIndiaBenefits } from '../../../../shared/indiaSalaryStructure.mjs';
+import { applyPolicyComponents } from '../../../../shared/salaryPolicy.mjs';
 import { getRowsForMonth, MONTH_NAMES } from './customRowsStore';
 
 export const fullName = (emp) =>
-  emp ? `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.userid || 'Employee' : 'Employee';
+  emp ? `${emp.first_name || ''} ${emp.last_name || ''}`.trim() || emp.name || 'Employee' : 'Employee';
 
 export const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -36,13 +38,14 @@ export function computeTotals(rec) {
 
 /** Write computed totals onto a record. */
 export function withTotals(rec) {
+  rec = isFinal(rec) ? rec : applyIndiaBenefits(applyPolicyComponents(rec));
   const { gross, deductions, net } = computeTotals(rec);
   return {
     ...rec,
     monthly_gross: gross,
     total_deductions: deductions,
     monthly_net: net,
-    annual_ctc: gross * 12
+    annual_ctc: Math.round((gross + Number(rec.employer_pf || 0) + Number(rec.employer_esi || 0) + Number(rec.gratuity_provision || 0)) * 1200) / 100
   };
 }
 
@@ -92,11 +95,11 @@ export function previousMonth(year, month) {
 }
 
 /* ---------- CSV export ---------- */
-export function buildPayrollCsv(users, year, month) {
-  const head = ['Employee ID', 'Name', 'Department', 'Gross', 'Deductions', 'Net', 'Status'];
+export function buildPayrollCsv(users, year, month, records = {}) {
+  const head = ['Name', 'Department', 'Gross', 'Deductions', 'Net', 'Salary status', 'Payment status', 'Paid', 'Pending'];
   const lines = users.map((u) => {
-    const r = getMonthRecord(u, year, month);
-    return [u.userid, fullName(u), u.department || '', r.monthly_gross || 0, r.total_deductions || 0, r.monthly_net || 0, r.status || 'Draft']
+    const r = records[u.userid] || {status:'Not started'};
+    return [fullName(u), u.department || '', r.monthly_gross || 0, r.total_deductions || 0, r.monthly_net || 0, r.status || 'Not started', r.payment_status || 'Unpaid', r.paid || 0, r.pending || 0]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(',');
   });

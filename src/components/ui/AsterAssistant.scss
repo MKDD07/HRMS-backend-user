@@ -1,0 +1,15 @@
+.aster-assistant { border: 1px solid var(--color-border, #e4e7ec); border-radius: 16px; padding: 18px; margin: 16px 0; background: linear-gradient(120deg, var(--color-surface, #fff), var(--color-primary-subtle, #f4f2f8)); color: var(--color-text, #27292c);
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  header p, .aster-note { font-size: 12px; color: var(--color-text-muted, #667085); margin: 4px 0; }
+  label { display: grid; gap: 8px; font-size: 13px; font-weight: 600; }
+  textarea { width: 100%; padding: 12px; border: 1px solid var(--color-border, #e4e7ec); border-radius: 10px; font: inherit; font-weight: 400; color: inherit; background: var(--color-surface, white); resize: vertical; }
+  .aster-result { margin-top: 14px; display: grid; gap: 10px; }
+  .aster-research { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 400px; overflow: auto; font-size: 13px; line-height: 1.7; a { color: var(--color-primary, #724a97); text-decoration: underline; } }
+}
+.aster-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.aster-emblem, .aster-orbit { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #ede9fe, #fce7f3); color: #7350a1; }
+.aster-working { display: flex; align-items: center; gap: 12px; padding: 14px; font-size: 13px; .aster-orbit { animation: aster-pulse 1.5s ease-in-out infinite; } }
+.aster-dots { display: inline-block; letter-spacing: 4px; padding-left: 5px; animation: aster-pulse 1s ease-in-out infinite; }
+.aster-error { color: var(--color-danger, #b42318); font-size: 13px; }
+@keyframes aster-pulse { 0%,100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .aster-working .aster-orbit, .aster-dots { animation: none; } }

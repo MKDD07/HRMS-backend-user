@@ -1,0 +1,46 @@
+.attendance-rules-editor.dossier-inline-form {
+  > fieldset { display: flex; flex-direction: column; gap: 20px; margin: 0; padding: 0; border: 0; min-width: 0; }
+  .attendance-rules-card.card { padding: 0; margin: 0; border: 0; background: var(--color-surface); border-radius: var(--radius-card); box-shadow: var(--shadow-main); overflow: hidden; }
+  .card-head { padding: 18px 20px; border-bottom: 1px solid var(--color-gray-100); h2 { font-size: 14px; font-weight: 600; } }
+  .tenant-panel-head { padding: 18px 20px 0; border: 0; background: transparent; h2 { font-size: 13px; font-weight: 500; } p { font-size: 11px; margin-top: 5px; color: var(--color-text-muted); } }
+  .attendance-rules-body { padding: 16px 20px 20px; }
+  .dossier-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; gap: 14px; align-items: start; > label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; font-weight: 400; color: var(--color-text-secondary); } input, select, textarea { box-sizing: border-box; font: inherit; font-size: 12px; color: var(--color-text); background: var(--color-surface-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-input); padding: 9px 12px; width: 100%; min-width: 0; &:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; background: var(--color-surface); } } input, select { height: 40px; } textarea { resize: vertical; min-height: 70px; } }
+  .dossier-form-grid + .dossier-form-grid { margin-top: 16px; }
+  .attendance-rule-switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 0; border-radius: var(--radius-input); background: var(--color-surface-subtle); min-height: 65px; label { font-size: 12px; font-weight: 400; color: var(--color-text); cursor: pointer; } small { display: block; margin-top: 4px; font-size: 10px; font-weight: 400; color: var(--color-text-muted); line-height: 1.5; } .toggle { flex-shrink: 0; } }
+  .attendance-rules-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+  .attendance-rules-boundary { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--color-text-secondary); padding: 12px; margin: 12px 0 0; background: var(--color-primary-subtle); border-radius: var(--radius-input); svg { flex-shrink: 0; } }
+  .attendance-working-days { margin-top: 16px; legend { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; } > div { display: flex; flex-wrap: wrap; gap: 8px; } label { position: relative; cursor: pointer; input { position: absolute; opacity: 0; width: 1px; height: 1px; } span { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid var(--color-border); border-radius: var(--radius-input); font-size: 11px; color: var(--color-text-secondary); } input:checked + span { border-color: var(--color-success-light); background: var(--color-success-subtle); color: var(--color-success); } input:focus-visible + span { outline: 2px solid var(--color-primary); outline-offset: 2px; } input:disabled + span { opacity: .6; cursor: default; } } }
+  .attendance-rules-footer { display: flex; justify-content: flex-end; padding: 16px 20px; background: var(--color-surface-subtle); }
+  @media (max-width: 640px) { .attendance-rules-options, .dossier-form-grid { grid-template-columns: minmax(0, 1fr); } }
+}
+
+.dossier-workspace.live-dossier .dossier-tab-body .attendance-rules-editor.dossier-inline-form {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  .attendance-rule-switch { border: 1px solid var(--color-gray-100); border-radius: 10px; background: var(--color-gray-50); }
+  .attendance-working-days label span { border-radius: var(--radius-button); background: var(--color-surface); }
+  .attendance-working-days label input:checked + span { border-color: var(--color-gray-900); background: var(--color-gray-900); color: #fff; }
+  .attendance-rules-footer { padding: 0; background: transparent; }
+}
+
+.attendance-rules-editor {
+  .attendance-assigned-shift { padding: 16px 20px; border-bottom: 1px solid var(--color-border); font-size: 11px; color: var(--color-text-muted); strong { color: var(--color-text); font-weight: 500; } }
+  .attendance-admin-notes { font-size: 12px; summary { cursor: pointer; padding: 10px 0; color: var(--color-text-secondary); } label { display: grid; gap: 7px; } }
+  .attendance-effective-rule { padding: 16px 20px; strong { font-size: 12px; font-weight: 500; } p { font-size: 11px; margin: 6px 0; color: var(--color-text-secondary); } small { display: block; margin-top: 5px; font-size: 10px; color: var(--color-text-muted); } }
+}
+.geofence-map-preview { margin-top: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-input); overflow: hidden; .geofence-map-frame { position: relative; height: 180px; iframe { width: 100%; height: 100%; border: 0; } } .geofence-map-radius { pointer-events: none; position: absolute; width: 106px; height: 106px; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 2px solid var(--color-primary); border-radius: 50%; background: color-mix(in srgb, var(--color-primary) 12%, transparent); } p { display: flex; justify-content: space-between; padding: 10px 12px; font-size: 10px; color: var(--color-text-muted); } a { color: var(--color-primary); } }
+
+.attendance-rules-editor.dossier-inline-form {
+  .attendance-rules-options--combined { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 0; }
+  label.attendance-admin-notes { display: grid; gap: 7px; margin-top: 16px; color: var(--color-text-secondary); font-size: 12px; textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-input); background: var(--color-surface-subtle); color: var(--color-text); font: inherit; resize: vertical; } }
+  @media(max-width: 700px) { .attendance-rules-options--combined { grid-template-columns: minmax(0, 1fr); } }
+}
+
+.attendance-rules-editor.dossier-inline-form {
+  .dossier-form-grid > label:only-child { grid-column: 1 / -1; }
+  .attendance-rules-options--combined .attendance-rule-switch { min-height: 64px; padding: 12px; label { font-size: 12px; } }
+  .attendance-effective-rule { background: var(--color-surface-subtle); border-bottom: 1px solid var(--color-border); padding: 14px 20px; p { line-height: 1.6; } }
+  .attendance-rules-footer { background: var(--color-surface); }
+  .attendance-admin-notes textarea { min-height: 68px; }
+}

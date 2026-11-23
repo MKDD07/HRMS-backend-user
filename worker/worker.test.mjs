@@ -14,6 +14,9 @@ sqlite.exec(readFileSync(new URL('../migrations/hrms/0004_approval_workflows.sql
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0005_hr_connect.sql', import.meta.url), 'utf8'));
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0006_dashboard_access.sql', import.meta.url), 'utf8'));
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0007_billing.sql', import.meta.url), 'utf8'));
+sqlite.exec(readFileSync(new URL('../migrations/hrms/0018_billing_recurring.sql', import.meta.url), 'utf8'));
+sqlite.exec(readFileSync(new URL('../migrations/hrms/0019_billing_renewal_guards.sql', import.meta.url), 'utf8'));
+sqlite.exec(readFileSync(new URL('../migrations/hrms/0020_billing_workspace_policy.sql', import.meta.url), 'utf8'));
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0008_holiday_cache.sql', import.meta.url), 'utf8'));
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0009_talent_operations.sql', import.meta.url), 'utf8'));
 sqlite.exec(readFileSync(new URL('../migrations/hrms/0010_asset_issues.sql', import.meta.url), 'utf8'));
@@ -66,7 +69,7 @@ try {
   const billingOverview = await call('/billing/overview', { token: adminA.token });
   assert.equal(billingOverview.plans.length, 4, 'Authenticated billing route must be registered');
   assert.equal(billingOverview.checkoutEnabled, false);
-  await call('/billing/orders', { token: adminA.token, body: { plan_id: 'starter' }, status: 503 });
+  await call('/billing/orders', { token: adminA.token, body: { plan_id: 'starter',accepted:true,confirmed:true }, status: 503 });
   await call('/dashboard-configuration/settings', { token: adminA.token });
   await call(`/platform/companies/${a.company_id}/branding`, { token: adminA.token, body: { welcome_text: 'Wrong owner' }, status: 403 });
   await call(`/platform/companies/${a.company_id}/branding`, { token: env.OWNER_PROVISIONING_TOKEN, body: { welcome_text: 'Welcome to our team.' } });
@@ -113,6 +116,33 @@ try {
   assert.equal(leave.workflow.status, 'Blocked');
 
   // Workflow integration: real roles, tenant boundaries, snapshots and persistence.
+  const companyDefault = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  const shifts = [
+    { id: 'office', status: 'Active', isDefault: true, workingDays: companyDefault },
+    { id: 'weekend', status: 'Active', workingDays: ['Sat', 'Sun'] },
+  ];
+  sqlite.prepare("INSERT INTO dashboard_configuration(company_id,section,payload) VALUES(?,'shifts',?)").run(a.company_id, JSON.stringify(shifts));
+  sqlite.prepare("UPDATE employees SET profile=json_set(profile,'$.shift_id','weekend') WHERE user_id=?").run(concurrent[0].user_id);
+  sqlite.prepare("UPDATE employees SET profile=json_set(profile,'$.shift_id','weekend','$.shift_override',json(?)) WHERE user_id=?")
+    .run(JSON.stringify({ status: 'Active', workingDays: ['Tue'] }), concurrent[1].user_id);
+  sqlite.prepare('INSERT INTO company_calendar(company_id,holidays) VALUES(?,?) ON CONFLICT(company_id) DO UPDATE SET holidays=excluded.holidays')
+    .run(a.company_id, JSON.stringify([
+      { name: 'Office closed', holiday_date: '2026-11-20', type: 'Company Holiday', active: true },
+      { name: 'Optional', holiday_date: '2026-11-21', type: 'Optional Holiday', active: true },
+      { name: 'Restricted', holiday_date: '2026-11-22', type: 'Restricted Holiday', active: true },
+      { name: 'Disabled', holiday_date: '2026-11-23', type: 'Company Holiday', active: false },
+    ]));
+  const schedules = await call('/attendance/schedule', { token: adminA.token });
+  assert.deepEqual(schedules.officeHolidays, [{ date: '2026-11-20', name: 'Office closed' }]);
+  assert.deepEqual(schedules.workingDaysByUser[employee.user_id], companyDefault);
+  assert.deepEqual(schedules.workingDaysByUser[concurrent[0].user_id], ['Sat', 'Sun']);
+  assert.deepEqual(schedules.workingDaysByUser[concurrent[1].user_id], ['Tue']);
+  assert.deepEqual(await call('/attendance/schedule', { token: adminB.token }), { officeHolidays: [], workingDaysByUser: {} });
+  await call('/attendance/schedule', { token: employeeA.token, status: 403 });
+  sqlite.prepare('INSERT INTO company_calendar(company_id,leave_types) VALUES(?,?) ON CONFLICT(company_id) DO UPDATE SET leave_types=excluded.leave_types')
+    .run(a.company_id, JSON.stringify([{ name: 'Medical Leave', active: true }, { name: 'Archived Leave', active: false }]));
+  assert.deepEqual(await call('/workflows/leave-types', { token: employeeA.token }), ['Medical Leave']);
+  assert.deepEqual(await call('/workflows/leave-types', { token: adminB.token }), []);
   const manager1 = await activate(concurrent[0].username);
   const manager2 = await activate(concurrent[1].username);
   const cc = await activate(concurrent[2].username);
@@ -121,6 +151,7 @@ try {
   config.nodes = ids.map((id,index) => ({id,position:{x:index*280,y:0}}));
   config.links = ids.slice(1).map((manager,index) => ({id:'link-'+index,manager,employee:employee.user_id,type:index===0?'direct':'indirect',responsibilities:{...defaultResponsibilities(),leave:{enabled:true,role:index===2?'cc':'approver',step:index+1,backup:'',unavailable:false,from:'',until:''},attendance:{enabled:true,role:index===2?'cc':'approver',step:1,backup:'',unavailable:false,from:'',until:''}}}));
   config.policies[0].mode = 'sequential';
+  config.links[1].responsibilities.expense.enabled = true;
   config.policies[0].escalationUser = next.user_id;
   await call('/workflows/configuration',{token:employeeA.token,body:{configuration:config,revision:0},status:403});
   const published = await call('/workflows/configuration',{token:adminA.token,body:{configuration:config,revision:0}});
@@ -153,9 +184,41 @@ try {
   await call('/workflows/requests/'+blocked.workflow.request_id+'/reassign',{token:adminA.token,body:{userId:manager1.user_id,reason:'Missing route resolved'}});
   await call('/workflows/requests/'+blocked.workflow.request_id+'/decision',{token:manager1.token,body:{decision:'Approved'}});
   const correction = await call('/workflows/requests',{token:employeeA.token,body:{kind:'attendance',payload:{reason:'Missed punch',date:'2026-09-01',check_in:'09:00',check_out:'18:00',timezone:'+05:30'}}});
-  await call('/workflows/requests/'+correction.request_id+'/decision',{token:manager1.token,body:{decision:'Approved'}});
+  const attendancePreview = await call('/workflows/requests/preview', { token: adminA.token, body: { requester: employee.user_id, kind: 'attendance' } });
+  assert.equal(attendancePreview.requester.userId, employee.user_id);
+  assert.deepEqual(new Set(attendancePreview.approvers.map(person => person.userId)), new Set([manager1.user_id, manager2.user_id]));
+  const expensePreview = await call('/workflows/requests/preview', { token: employeeA.token, body: { kind: 'expense' } });
+  assert.deepEqual(expensePreview.approvers.map(person => person.userId), [manager2.user_id]);
+  await call('/workflows/requests/preview', { token: employeeA.token, body: { requester: manager1.user_id, kind: 'attendance' }, status: 403 });
+  const profilesPath = '/workflows/requests/' + correction.request_id + '/profiles';
+  const savedProfiles = await call(profilesPath, { token: manager1.token });
+  assert.ok(savedProfiles.some(person => person.userId === employee.user_id));
+  assert.ok(savedProfiles.some(person => person.userId === manager1.user_id));
+  assert.deepEqual((await call(profilesPath, { token: cc.token })).map(person => person.userId), [employee.user_id]);
+  await call(profilesPath, { token: adminB.token, status: 404 });
+  const attendanceInbox = await call('/workflows/requests?view=mine&kind=attendance',{token:employeeA.token});
+  assert.deepEqual(attendanceInbox.map(item => item.request_id), [correction.request_id]);
+  assert.ok((await call('/workflows/requests?view=approvals&kind=attendance',{token:manager1.token})).some(item => item.request_id === correction.request_id && item.canApprove));
+  assert.deepEqual(await call('/workflows/requests?view=all&kind=attendance',{token:adminB.token}), []);
+  await call('/workflows/requests?view=all&kind=attendance',{token:employeeA.token,status:403});
+  await call('/workflows/requests?kind=invalid',{token:employeeA.token,status:400});
+  const correctionDecision = await call('/workflows/requests/'+correction.request_id+'/decision',{token:manager1.token,body:{decision:'Approved'}});
+  assert.equal(correctionDecision.kind, 'attendance');
   const attendanceRow=sqlite.prepare("SELECT * FROM attendance WHERE employee_id=? AND date='2026-09-01'").get(employee.employee_id);
   assert.equal(attendanceRow.check_in_time,'2026-09-01T03:30:00.000Z');
+  await call('/workflows/requests/'+correction.request_id+'/delete', { token: adminA.token, body: {}, status: 409 });
+  const removableLeave = await call('/apply-leave', {
+    token: employeeA.token,
+    body: { leave_type: 'Casual', start_date: '2026-10-08', end_date: '2026-10-08', reason: 'Submitted in error' },
+  });
+  const removableId = removableLeave.workflow.request_id;
+  await call('/workflows/requests/'+removableId+'/delete', { token: manager1.token, body: {}, status: 404 });
+  await call('/workflows/requests/'+removableId+'/delete', { token: adminB.token, body: {}, status: 404 });
+  assert.deepEqual(await call('/workflows/requests/'+removableId+'/delete', { token: employeeA.token, body: {} }), { deleted: true });
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS count FROM leave_requests WHERE leave_id=?').get(removableLeave.leave_id).count, 0);
+  assert.equal(sqlite.prepare('SELECT COUNT(*) AS count FROM workflow_notifications WHERE request_id=?').get(removableId).count, 0);
+  assert.equal(sqlite.prepare("SELECT COUNT(*) AS count FROM workflow_audit WHERE request_id=? AND action='deleted'").get(removableId).count, 1);
+  assert.ok(!(await call('/workflows/requests?view=mine', { token: employeeA.token })).some(item => item.request_id === removableId));
   assert.equal((await call('/workflows/notifications',{token:adminB.token})).length,0);
 
   // Simultaneous decisions commit exactly one set of side effects.

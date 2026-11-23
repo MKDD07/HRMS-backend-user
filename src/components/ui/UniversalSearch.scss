@@ -1,0 +1,43 @@
+.universal-search {
+  display: flex; align-items: center; gap: 10px; min-width: 0; width: 100%;
+  min-height: 42px; padding: 0 12px; box-sizing: border-box;
+  border: 1px solid var(--color-border, #e5e7eb); border-radius: 5px;
+  --universal-search-surface: #fafbfc;
+  background: var(--universal-search-surface); color: var(--color-text-muted, #6b7280);
+  transition: border-color 150ms, box-shadow 150ms;
+  &:focus-within {
+    border-color: transparent; outline: none; box-shadow: none;
+    background: linear-gradient(var(--universal-search-surface), var(--universal-search-surface)) padding-box,
+      linear-gradient(110deg, #399b94, #6794d1, #9468cf, #399b94) border-box;
+    background-size: 100% 100%, 250% 100%;
+    animation: universal-search-stroke 4s linear infinite;
+  }
+  > svg { flex-shrink: 0; }
+  > .universal-search__input[type="search"] { flex: 1; width: 100%; min-width: 0; min-height: 40px; padding: 0; border: 0;
+    border-radius: 0; outline: none; box-shadow: none; background: transparent;
+    color: var(--color-text, #27292c); font: inherit; font-size: 13px;
+    &::placeholder { color: var(--color-text-muted, #6b7280); }
+    &::-webkit-search-cancel-button { display: none; }
+    &:focus-visible { outline: none; }
+  }
+  kbd { flex-shrink: 0; white-space: nowrap; padding: 2px 5px; border: 1px solid #e5e7eb;
+    border-radius: 4px; background: #fff; color: #6b7280; font: inherit; font-size: 10px; }
+  &--filled { --universal-search-surface: var(--color-bg, #f3f4f6); border-color: transparent; }
+  &--compact { min-height: 34px; padding: 0 9px; gap: 7px; border-radius: 7px;
+    > .universal-search__input[type="search"] { min-height: 32px; font-size: 13px; }
+  }
+  &__clear { display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px;
+    background: transparent; color: inherit; cursor: pointer;
+    &:hover { background: var(--color-border, #e5e7eb); }
+    &:focus-visible { outline: 2px solid var(--td-focus, #6366f1); outline-offset: 1px; }
+  }
+  &:has(input:disabled) { opacity: .55; }
+  @media (prefers-reduced-motion: reduce) { &:focus-within { animation: none; } }
+
+}
+
+@keyframes universal-search-stroke {
+  0%, 100% { background-position: 0 0, 0% 50%; }
+  50% { background-position: 0 0, 100% 50%; }
+}

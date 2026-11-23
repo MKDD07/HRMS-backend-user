@@ -23,21 +23,8 @@
   font-family: var(--font-family-base, $font-family-base);
   box-shadow: 0 1px 4px rgba(41, 50, 37, 0.03);
 
-  button,
-  input,
-  select,
-  textarea,
-  kbd {
+  input, select, textarea, kbd {
     font-family: inherit;
-  }
-
-  button {
-    cursor: pointer;
-
-    &:focus-visible {
-      outline: 2px solid $color-focus;
-      outline-offset: 2px;
-    }
   }
 
   &__identity {
@@ -85,16 +72,13 @@
     flex-shrink: 0;
     width: 38px;
     height: 38px;
-    border: 1px solid var(--header-line);
-    border-radius: var(--radius-md, 10px);
-    background: $color-surface;
-    color: var(--header-muted);
-    transition: background var(--ease-fast, 0.15s), border-color var(--ease-fast, 0.15s), color var(--ease-fast, 0.15s);
+    padding: 0;
 
-    &:hover {
-      background: $color-primary-subtle;
-      border-color: $color-border-dark;
-      color: var(--header-accent);
+    &:hover:not(:disabled),
+    &[aria-expanded='true'] {
+      background: var(--color-gray-200);
+      color: var(--color-gray-900);
+      > svg { transform: none; }
     }
 
     &>svg {
@@ -128,18 +112,14 @@
     max-width: 440px;
     min-width: 160px;
     height: 42px;
-    padding: 0 var(--space-3, 12px);
-    border: 1px solid var(--header-line);
-    border-radius: var(--radius-md, 11px);
-    background: $color-surface-subtle;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
     color: var(--header-muted);
     transition: border-color var(--ease-fast, 0.15s), box-shadow var(--ease-fast, 0.15s), background var(--ease-fast, 0.15s);
 
-    &:focus-within {
-      background: $color-surface;
-      border-color: $color-primary-light;
-      box-shadow: 0 0 0 3px rgba(87, 123, 80, 0.08);
-    }
+    > .universal-search { height: 42px; }
 
     &>svg {
       flex-shrink: 0;
@@ -183,17 +163,7 @@
   }
 
   &__clear {
-    display: flex;
-    padding: 4px;
-    border: 0;
-    border-radius: var(--radius-sm, 5px);
-    background: transparent;
-    color: var(--header-muted);
-
-    &:hover {
-      background: $color-primary-subtle;
-      color: $color-text-main;
-    }
+    display: flex
   }
 
   &__actions {
@@ -235,19 +205,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-2-5, 10px);
-    padding: 5px 8px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md, 11px);
-    background: transparent;
     text-align: left;
-    color: var(--header-muted);
-    transition: background var(--ease-fast, 0.15s), border-color var(--ease-fast, 0.15s);
-
-    &:hover,
-    &[aria-expanded="true"] {
-      background: $color-primary-subtle;
-      border-color: var(--header-line);
-    }
 
     &-copy {
       display: flex;
@@ -317,18 +275,7 @@
     align-items: center;
     gap: var(--space-2-5, 10px);
     width: 100%;
-    padding: var(--space-3, 12px) var(--space-3-5, 14px);
-    border: 0;
-    background: $color-surface;
-    color: var(--header-muted);
     text-align: left;
-    transition: background var(--ease-fast, 0.15s);
-
-    &:hover,
-    &:focus-visible {
-      background: $color-primary-subtle;
-      outline-offset: -3px !important;
-    }
 
     &>span {
       flex: 1;
@@ -438,17 +385,7 @@
       justify-content: space-between;
       gap: var(--space-3, 12px);
       width: 100%;
-      padding: 8px 6px;
-      border: 0;
-      border-radius: var(--radius-sm, 6px);
-      background: transparent;
-      text-align: left;
-      font-size: var(--font-2sm, 13px);
-      color: var(--header-ink);
-
-      &:hover {
-        background: $color-primary-subtle;
-      }
+      text-align: left
     }
 
     small {
@@ -461,18 +398,6 @@
     align-items: center;
     gap: var(--space-2-5, 10px);
     width: 100%;
-    border: 0;
-    border-top: 1px solid var(--header-line);
-    padding: var(--space-3-5, 14px) var(--space-4-5, 18px);
-    background: $color-danger-subtle;
-    color: $color-danger;
-    font-size: var(--font-xs, 12px) !important;
-    font-weight: var(--weight-medium, 500);
-    transition: background var(--ease-fast, 0.15s);
-
-    &:hover {
-      background: rgba(179, 57, 44, 0.12);
-    }
 
     svg:last-child {
       margin-left: auto;
@@ -555,7 +480,6 @@
 
     &__profile {
       gap: 5px;
-      padding: 4px;
     }
 
     &__search-results {
@@ -573,5 +497,27 @@
       transition: none !important;
       animation: none !important;
     }
+  }
+}
+.tenant-topbar__account-panel {
+  border: 1px solid $color-border; border-radius: 14px; overflow: hidden;
+  background: $color-surface; box-shadow: $shadow-md;
+  .tenant-topbar__account-summary { padding: 18px 20px; gap: 7px; }
+  .tenant-topbar__logout.btn {
+    width: calc(100% - 16px); margin: 0 8px 8px; padding: 12px;
+    border: 0; border-radius: 8px; box-shadow: none;
+    background: $color-bg-subtle; color: $color-text-secondary;
+    &:hover:not(:disabled) { background: $color-bg-hover; box-shadow: none; }
+  }
+}
+
+.tenant-topbar .tenant-topbar__profile.btn {
+  width: 44px; height: 44px; min-height: 44px; padding: 0;
+  border: 0; border-radius: 50%; background: transparent; box-shadow: none;
+  &:hover:not(:disabled), &[aria-expanded='true'] { background: transparent; box-shadow: none; }
+  .tenant-topbar__profile-avatar {
+    box-sizing: border-box; width: 42px; height: 42px; padding: 3px;
+    border-radius: 50%; background: linear-gradient(135deg, #84b886 0%, #519a99 45%, #a691cc 100%);
+    > img, > div { width: 36px; height: 36px; border-radius: 50%; border: 2px solid $color-surface; box-sizing: border-box; }
   }
 }

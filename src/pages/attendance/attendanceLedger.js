@@ -2,6 +2,17 @@
 export const recordDate = record => String(record.date || record.attdate || '').slice(0, 10);
 export const hasPunch = value => /\d{1,2}:\d{2}/.test(String(value || ''));
 export const monthDates = month => Array.from({ length: new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate() }, (_, i) => dateKey(new Date(month.getFullYear(), month.getMonth(), i + 1)));
+const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export function matrixClosure(cell, day, workingDays, officeHolidays) {
+  if (!['NR', '-', 'H', 'WO'].includes(cell.code) || cell.records.some(record =>
+    hasPunch(record.check_in_time || record.intime) || hasPunch(record.check_out_time || record.outtime)
+  )) return '';
+  const holiday = officeHolidays?.get(day);
+  if (holiday) return `Office closed: ${holiday}`;
+  const weekday = weekdays[new Date(day + 'T12:00:00Z').getUTCDay()];
+  return workingDays?.length && !workingDays.includes(weekday) ? 'Weekly off' : '';
+}
+
 export function reportedMinutes(record) {
   const raw = record.total_hours ?? record.totalhours;
   if (raw == null || raw === '') return null;

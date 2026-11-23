@@ -42,7 +42,6 @@
 
   &.is-active {
     fill: $color-text;
-    font-weight: 700;
   }
 }
 
@@ -121,7 +120,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: var(--space-md, 12px);
+    gap: var(--space-3);
     padding-bottom: 6px;
     margin-bottom: 6px;
     border-bottom: 1px solid $color-border;
@@ -210,10 +209,6 @@
     }
 
     &.is-active {
-      background: $color-primary-subtle;
-      border-color: $color-primary;
-      color: $color-primary-dark;
-      box-shadow: 0 1px 3px rgba(87, 123, 80, 0.15);
 
       .bezier-tag-code {
         color: $color-primary-dark;

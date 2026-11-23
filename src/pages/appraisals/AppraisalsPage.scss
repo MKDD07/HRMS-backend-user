@@ -1,0 +1,38 @@
+.appraisal-workspace, .appraisal-dialog {
+  label { display: grid; gap: var(--space-2); min-width: 0; }
+  .appraisal-check { display: flex; align-items: center; gap: var(--space-3); margin-block: var(--space-4); input { width: 18px; min-height: 18px; accent-color: var(--color-primary); } }
+  .appraisal-question-editor { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: end; margin-block: var(--space-3); label { flex: 1 1 180px; } }
+  .appraisal-audit details { padding: var(--space-4) 0; border-bottom: 1px solid var(--color-border); summary { cursor: pointer; font-size: var(--font-xs); line-height: 1.7; } p { margin-top: var(--space-3); } pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 25rem; overflow: auto; font-size: var(--font-xs); padding: var(--space-3); background: var(--color-surface-subtle); border-radius: var(--radius-input); } }
+}
+.appraisal-workspace {
+  .appraisal-layout { --workspace-grid-gap: var(--space-5); margin-top: 0; > .appraisal-main { grid-column: span 8; } > .employee-directory { grid-column: span 4; margin: 0; } }
+  .appraisal-layout--full > .appraisal-main { grid-column: 1 / -1; }
+  .appraisal-main { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+  .appraisal-panel { margin: 0; }
+  .appraisal-directory-meta { font-size: var(--font-2xs); line-height: 1.6; color: var(--color-text-muted); }
+  .appraisal-employee-cell { display: flex; align-items: center; gap: var(--space-3); > div { min-width: 0; } strong { font-weight: var(--weight-bold); } }
+  .talent-toolbar label { min-width: 160px; font-size: var(--font-xs); > span { color: var(--color-text-muted); } }
+  .talent-filters > .universal-search { flex: 1; min-width: 0; }
+  .talent-table-scroll tbody tr:hover { background: transparent; }
+  .talent-table-scroll td { vertical-align: middle; }
+  .talent-table-scroll th { white-space: nowrap; }
+  .talent-table-scroll tr:last-child td { border-bottom: 0; }
+  .talent-editor-body > .metric-overview { margin-block: var(--space-4); }
+  .talent-editor-body > .metric-overview .metric-card { min-width: 0; }
+  @media (max-width: 900px) { .appraisal-layout > .appraisal-main, .appraisal-layout > .employee-directory { grid-column: 1 / -1; } }
+  @media (max-width: 600px) { .talent-toolbar > .talent-actions { width: 100%; > label { flex: 1 1 180px; min-width: 0; } } }
+}
+.appraisal-review {
+  display: flex; flex-direction: column; gap: var(--space-5); min-width: 0;
+  > form { display: flex; flex-direction: column; gap: var(--space-5); }
+  .talent-editor-body { display: flex; flex-direction: column; gap: var(--space-4); }
+}
+.appraisal-stages {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  span { padding: var(--space-2) var(--space-3); border-radius: var(--radius-input); background: var(--color-surface-subtle); color: var(--color-text-muted); font-size: var(--font-xs); }
+  span[aria-current='step'] { background: var(--color-primary); color: var(--color-surface); }
+}
+.appraisal-question { display: flex; flex-direction: column; gap: var(--space-3); padding-block: var(--space-4); border-bottom: 1px solid var(--color-border); &:last-child { border-bottom: 0; } }
+.appraisal-response, .appraisal-peer-summary, .appraisal-outcome { display: flex; flex-direction: column; gap: var(--space-2); white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--space-4); border-radius: var(--radius-input); background: var(--color-surface-subtle); margin-block: var(--space-2); font-size: var(--font-xs); line-height: 1.7; }
+.appraisal-band { font-size: var(--font-lg); }
+.appraisal-notice { padding: var(--space-3) var(--space-4); background: var(--color-success-subtle); color: var(--color-success-dark); border-radius: var(--radius-input); font-size: var(--font-xs); }

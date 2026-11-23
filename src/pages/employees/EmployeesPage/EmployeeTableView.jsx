@@ -1,3 +1,4 @@
+import { Button } from '../../../components/ui/Button';
 import React from 'react';
 import { ChevronRight, Download, Calendar, MapPin } from 'lucide-react';
 import { Avatar } from '../../../components/ui/Avatar';
@@ -34,8 +35,10 @@ export function EmployeeTableView({
               employees.map((emp) => (
                 <tr
                   key={emp.userid}
-                  className="hover:bg-[#F9FAFB]/80 transition-colors group cursor-pointer"
-                  onClick={() => onSelectEmployee(emp.userid)}
+                  className={emp.plan_locked ? "opacity-45 cursor-not-allowed" : "hover:bg-[#F9FAFB]/80 transition-colors group cursor-pointer"}
+                  aria-disabled={Boolean(emp.plan_locked)}
+                  title={emp.plan_locked ? "Outside current plan capacity" : undefined}
+                  onClick={() => !emp.plan_locked && onSelectEmployee(emp.userid)}
                 >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
@@ -109,35 +112,17 @@ export function EmployeeTableView({
                       className="flex items-center justify-end gap-1.5"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button
-                        type="button"
-                        id={`btn-payslip-${emp.userid}`}
-                        onClick={() => onOpenSlipModal(emp)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-semibold text-[#374151] bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:text-[#111827] hover:border-[#D1D5DB] transition-all cursor-pointer shadow-2xs"
-                        title="Download Payslip PDF"
-                      >
+                      <Button disabled={Boolean(emp.plan_locked)} type="button" id={`btn-payslip-${emp.userid}`} onClick={() => onOpenSlipModal(emp)} className="inline-flex items-center gap-1.5  " title="Download Payslip PDF" variant="outline" wrapContent={false}>
                         <Download className="w-3.5 h-3.5 text-[#6B7280]" />
                         <span>Payslip</span>
-                      </button>
-                      <button
-                        type="button"
-                        id={`btn-manage-employee-${emp.userid}`}
-                        onClick={() => onOpenManageModal(emp)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 font-semibold text-[#111827] bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg hover:bg-white hover:border-[#D1D5DB] transition-all cursor-pointer shadow-2xs"
-                        title="Quick Manage"
-                      >
+                      </Button>
+                      <Button type="button" id={`btn-manage-employee-${emp.userid}`} onClick={() => onOpenManageModal(emp)} className="inline-flex items-center gap-1.5  " title="Quick Manage" variant="outline" wrapContent={false}>
                         <Calendar className="w-3.5 h-3.5 text-[#6B7280]" />
                         <span>Manage</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onOpenDossier(emp)}
-                        className="p-1.5 rounded-lg text-[#9CA3AF] hover:text-[#4F46E5] hover:bg-[#EEF2FF] transition-all cursor-pointer"
-                        title="Open Employee Dossier"
-                        aria-label="Open Employee Dossier"
-                      >
+                      </Button>
+                      <Button type="button" onClick={() => onOpenDossier(emp)} className="" title="Open Employee Dossier" aria-label="Open Employee Dossier" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                         <ChevronRight className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

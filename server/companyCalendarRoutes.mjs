@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { payrollAuthorization } from './payrollRoutes.mjs';
 import { createPayrollDatabase } from './payrollDatabase.mjs';
 import { calendarStorage } from './calendarStorage.mjs';
+import { reminderFields, dueCalendarReminders } from '../shared/calendarReminders.mjs';
 
 const text = (value, max = 160) => String(value ?? '').trim().slice(0, max);
 const number = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -83,6 +84,8 @@ export function createCompanyCalendarRouter({ database, filename, authorize = pa
     res.json(await cachedHolidays({ db, company: res.locals.actor.company_id, country: req.body.country, year: req.body.year, apiKey: process.env.CALENDARIFIC_API_KEY || process.env.VITE_CALENDARIFIC_API_KEY }));
   }));
   router.get('/configuration', route(async (req, res) => res.json(await store.configuration(res.locals.actor.company_id))));
+  router.get('/reminders', route(async (req, res) => { const actor = res.locals.actor; const config = await store.configuration(actor.company_id); res.json(dueCalendarReminders(config.importantDates, actor.user_id || actor.userid)); }));
+  router.post('/reminders/read', route(async (req, res) => { const actor = res.locals.actor; const config = await store.configuration(actor.company_id); for (const entry of config.importantDates.filter(entry => entry.owner_id === (actor.user_id || actor.userid) && (!req.body.id || `calendar:${entry.id}` === req.body.id))) await store.change(actor.company_id, 'important_dates', entry.id, { ...entry, read_at: new Date().toISOString() }); res.json({ saved: true }); }));
   router.post('/leave-types', route(async (req, res) => { const id = text(req.body.id, 100) || randomUUID(); const value = { ...validateLeaveType(req.body), id }; await store.change(res.locals.actor.company_id, 'leave_types', id, value); res.json(value); }));
   router.delete('/leave-types/:id', route(async (req, res) => { await store.change(res.locals.actor.company_id, 'leave_types', text(req.params.id, 100)); res.json({ success: true }); }));
   router.post('/holidays', route(async (req, res) => { const id = text(req.body.id, 100) || randomUUID(); const value = { ...validateHoliday(req.body), id }; await store.change(res.locals.actor.company_id, 'holidays', id, value); res.json(value); }));
@@ -90,7 +93,7 @@ export function createCompanyCalendarRouter({ database, filename, authorize = pa
   router.post('/groups', route(async (req, res) => { const id = text(req.body.id, 100) || randomUUID(); const value = { ...validateGroup(req.body), id }; await store.change(res.locals.actor.company_id, 'policy_groups', id, value); res.json(value); }));
   router.delete('/groups/:id', route(async (req, res) => { await store.change(res.locals.actor.company_id, 'policy_groups', text(req.params.id, 100)); res.json({ success: true }); }));
   router.post('/assignments', route(async (req, res) => { const value = validateAssignment(req.body); await store.assign(res.locals.actor.company_id, value); res.json(value); }));
-  router.post('/important-dates', route(async (req, res) => { const id = text(req.body.id, 100) || randomUUID(); const value = { ...validateHoliday(req.body), id }; await store.change(res.locals.actor.company_id, 'important_dates', id, value); res.json(value); }));
+  router.post('/important-dates', route(async (req, res) => { const id = text(req.body.id, 100) || randomUUID(); const value = { ...validateHoliday(req.body), ...reminderFields(req.body, res.locals.actor.user_id || res.locals.actor.userid), id }; await store.change(res.locals.actor.company_id, 'important_dates', id, value); res.json(value); }));
   router.delete('/important-dates/:id', route(async (req, res) => { await store.change(res.locals.actor.company_id, 'important_dates', text(req.params.id, 100)); res.json({ success: true }); }));
   return router;
 }

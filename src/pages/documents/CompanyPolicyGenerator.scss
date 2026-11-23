@@ -1,0 +1,55 @@
+@use '../../styles/asterActivity' as aster;
+.company-policy-generator {display:inline-flex; >.btn {width:38px;height:38px;padding:0;border-radius:12px;} .is-working {animation:policy-working 1.5s ease-in-out infinite;} }
+.company-policy-drawer {box-sizing:border-box;position:fixed;inset:0 0 0 auto;margin:0;width:min(560px,100vw);max-width:100vw;height:100dvh;max-height:100dvh;padding:0;border:0;border-left:1px solid #e6e8eb;background:#f7f8f9;color:#27292c;box-shadow:-16px 0 70px #27292c25;overflow:hidden; &[open] {display:flex;flex-direction:column;animation:policy-drawer-in .24s ease-out;} &::backdrop {background:#15161755;backdrop-filter:blur(2px);} >header {display:flex;align-items:flex-start;gap:16px;padding:28px;background:linear-gradient(130deg,#e9edf2,white);border-bottom:1px solid #e6e8eb;>div {flex:1;} h2 {margin:12px 0 8px;font-size:22px;} p {margin:0;font-size:13px;line-height:1.6;color:#6c727a;} } >footer {display:flex;flex-wrap:wrap;gap:10px;padding:20px 28px;background:white;border-top:1px solid #e6e8eb;} .is-working {animation:policy-working 1.5s ease-in-out infinite;} }
+.company-policy-drawer-eyebrow {display:flex;gap:8px;align-items:center;font-size:11px;font-weight:700;letter-spacing:1.3px;}
+.company-policy-drawer-body {flex:1;overflow:auto;padding:24px;display:flex;flex-direction:column;gap:18px; >section {padding:20px;border-radius:16px;background:white;border:1px solid #e6e8eb;} h3 {display:flex;gap:8px;align-items:center;margin:0 0 12px;font-size:14px;} p,small {font-size:12px;line-height:1.7;color:#6c727a;} dl {display:grid;gap:12px;margin:0 0 16px;div {display:grid;grid-template-columns:90px 1fr;gap:12px;font-size:12px;} dt {color:#6c727a;} dd {margin:0;font-weight:500;overflow-wrap:anywhere;} } ol {padding-left:20px;li {padding:12px 0;border-bottom:1px solid #e6e8eb;strong,small {display:block;} strong {font-size:13px;} p {margin:4px 0;}} } }
+.company-policy-departments {display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;label {display:flex;align-items:center;gap:8px;padding:10px 12px;background:#f7f8f9;border:1px solid #e6e8eb;border-radius:10px;font-size:12px;cursor:pointer;} input {accent-color:#27292c;} }
+.document-vault .vault-document-scope {display:block;margin-top:8px;font-size:10px;line-height:1.5;color:#4b4f56;font-weight:500;}
+@keyframes policy-drawer-in {from {transform:translateX(100%);}to {transform:translateX(0);}}
+@keyframes policy-working {50% {opacity:.5;}}
+@media(prefers-reduced-motion:reduce){.company-policy-drawer[open],.company-policy-generator .is-working,.company-policy-drawer .is-working {animation:none;}}
+.company-policy-generator > .btn {min-height:38px;}
+.company-policy-drawer-body details {margin-top:16px;summary {cursor:pointer;font-size:12px;font-weight:600;margin-bottom:14px;} dl >div {grid-template-columns:140px 1fr;} }
+
+// A bottom-attached chat card, with a rounded top edge.
+.company-policy-drawer {
+  @include aster.activity-frame;
+  position:fixed;
+  inset:auto 24px 0 auto;
+  width:min(560px,calc(100vw - 32px));
+  height:min(820px,calc(100dvh - 32px));
+  max-height:calc(100dvh - 32px);
+  border:1px solid #e6e8eb;
+  border-bottom:0;
+  border-radius:24px 24px 0 0;
+  box-shadow:0 -12px 60px #27292c20;
+  transform-origin:bottom right;
+  &[open] {animation:policy-card-rise .32s cubic-bezier(.2,.8,.2,1);}
+  >header {position:relative;isolation:isolate;overflow:hidden;flex-shrink:0;}
+  >footer {flex-shrink:0;}
+  &.is-generating >header::after {
+    content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+    background:linear-gradient(110deg,#e8dffc99,#e1edff99,#fce5ef99,#e8dffc99);
+    background-size:300% 100%;animation:aster-gradient-flow 5s linear infinite;
+  }
+  @media(max-width:600px){inset:auto 0 0;width:100vw;height:min(820px,calc(100dvh - 12px));max-height:calc(100dvh - 12px);>header {padding:22px;}>footer {padding:18px 22px;}}
+}
+@keyframes policy-card-rise {from {opacity:0;transform:translateY(100%);}to {opacity:1;transform:translateY(0);}}
+@media(prefers-reduced-motion:reduce){.company-policy-drawer[open],.company-policy-drawer.is-generating >header::after {animation:none;}}
+.company-policy-generator > .btn {
+  @include aster.activity-frame;
+  width:44px;height:44px;min-height:44px;border-radius:50%;
+  &.is-generating {
+    color:#fff;
+    background:linear-gradient(110deg,#8b5cf6,#3b82f6,#d65d9e,#8b5cf6);
+    background-size:300% 100%;
+    border-color:transparent;
+    box-shadow:0 6px 16px #8b5cf640,0 2px 6px #27292c26;
+    animation:aster-gradient-flow 4s linear infinite,policy-button-glow 3s ease-in-out infinite;
+    >svg {position:relative;z-index:6;filter:drop-shadow(0 1px 2px #27292c35);}
+  }
+  @media(prefers-reduced-motion:reduce){&.is-generating {animation:none;}}
+}
+@keyframes policy-button-glow {
+  50% {box-shadow:0 8px 22px #8b5cf65c,0 3px 10px #60a5fa40;}
+}

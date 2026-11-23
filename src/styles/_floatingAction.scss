@@ -1,0 +1,17 @@
+@use './color' as *;
+
+@mixin floating-action {
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  background: $color-primary;
+  border-color: $color-primary;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(35, 49, 32, .16);
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+    border-color: $color-primary-dark;
+  }
+}

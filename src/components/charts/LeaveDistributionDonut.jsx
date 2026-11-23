@@ -1,3 +1,5 @@
+import { ChartLegend } from './ChartLegend';
+import { chartPalette } from './chartColors';
 import React from 'react';
 import {
   ResponsiveContainer,
@@ -8,9 +10,9 @@ import {
 } from 'recharts';
 
 const DEFAULT_PIE_DATA = [
-  { name: 'Available Balance', value: 16, color: '#10B981' },
-  { name: 'Approved & Taken', value: 6, color: '#4F46E5' },
-  { name: 'Pending Review', value: 2, color: '#F59E0B' }
+  { name: 'Available Balance', value: 16, color: chartPalette[0] },
+  { name: 'Approved & Taken', value: 6, color: chartPalette[1] },
+  { name: 'Pending Review', value: 2, color: chartPalette[2] }
 ];
 
 function CustomDonutTooltip({ active, payload }) {
@@ -73,21 +75,7 @@ export function LeaveDistributionDonut({
         </div>
       </div>
 
-      {/* Legend chips */}
-      <div className="flex flex-wrap items-center justify-center gap-3 pt-1 text-[13px]">
-        {data.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-1.5 text-[#5F6368]">
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-[11px]">{item.name}</span>
-            <span className="font-semibold text-[#27292C] text-[11px]">
-              ({item.value}d)
-            </span>
-          </div>
-        ))}
-      </div>
+      <ChartLegend items={data.map(item => ({ id: item.name, label: item.name, color: item.color, detail: item.value + "d" }))} />
     </div>
   );
 }

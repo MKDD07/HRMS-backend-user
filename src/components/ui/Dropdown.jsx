@@ -1,3 +1,4 @@
+import { Button } from './Button';
 import React, { useState, useRef, useEffect } from 'react';
 
 export function Dropdown({
@@ -50,14 +51,10 @@ export function DropdownItem({
   className = ''
 }) {
   return (
-    <button
-      type="button"
-      className={`dropdown__item ${danger ? 'dropdown__item--danger' : ''} ${className}`}
-      onClick={onClick}
-    >
+    <Button type="button" className={`dropdown__item ${className}`} onClick={onClick} variant={danger ? 'danger' : 'fadeout'} layout="row" wrapContent={false}>
       {Icon && <Icon className="w-4 h-4 shrink-0" />}
       <span>{children}</span>
-    </button>
+    </Button>
   );
 }
 

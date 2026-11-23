@@ -1,8 +1,15 @@
 import { companyRequest } from './companyAuth';
 const call = (path, body) => companyRequest('/billing/' + path, { token: localStorage.getItem('pulse_hrms_token'), ...(body ? { method: 'POST', body: JSON.stringify(body) } : {}) });
 export const billingApi = {
+  testMode: body => call('test-mode',body),
+  changePlan: body => call('change-plan',body),
   overview: () => call('overview'),
-  create: plan_id => call('orders', { plan_id }),
+  purchase: id => call('purchases/' + encodeURIComponent(id)),
+  enableRenewal: body => call('recurring/create', body),
+  verifyRenewal: body => call('recurring/verify', body),
+  syncRenewal: recurring_id => call('recurring/sync', { recurring_id }),
+  cancelRenewal: recurring_id => call('recurring/cancel', { recurring_id }),
+  create: (plan_id, consent) => call('orders', { plan_id, ...consent }),
   verify: body => call('verify', body),
   reconcile: purchase_id => call('reconcile', { purchase_id })
 };

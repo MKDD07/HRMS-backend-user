@@ -1,0 +1,74 @@
+@use '../../styles/color' as *;
+
+.company-calendar-page .cc-fullcalendar {
+  padding: 18px;
+  min-width: 0;
+  --fc-border-color: #{$color-border};
+  --fc-today-bg-color: #f3f7ef;
+  .fc { font-size: 12px; }
+  .fc-scrollgrid { border-radius: 10px; overflow: hidden; }
+  .fc-col-header-cell { padding: 10px 0; background: $color-surface-subtle; }
+  .fc-col-header-cell-cushion { color: $color-text-muted; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .fc-daygrid-day-frame { min-height: 100px; }
+  .fc-daygrid-day { cursor: pointer; &:hover { background: $color-surface-subtle; } }
+  .fc-daygrid-day-number { color: $color-text; padding: 8px; text-decoration: none; }
+  .cc-fc-selected { background: $color-primary-subtle; box-shadow: inset 0 0 0 2px $color-primary; }
+  .fc-daygrid-event { border-width: 0 0 0 3px; border-style: solid; border-radius: 4px; padding: 4px 6px; margin: 3px 4px; cursor: pointer; background-image: linear-gradient(115deg, color-mix(in srgb, var(--event-type-color) 18%, transparent), transparent); transition: filter 160ms ease, box-shadow 160ms ease; &:hover { filter: saturate(1.2); box-shadow: 0 2px 8px #17231c12; } }
+  .fc-event-main { color: inherit; }
+  .cc-fc-event-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 500; }
+  .fc-daygrid-more-link { color: $color-text-muted; font-size: 10px; }
+  .fc-popover { background: $color-surface; }
+  &.cc-fullcalendar-compact {
+    padding: 0;
+    --fc-border-color: transparent;
+    --fc-neutral-bg-color: transparent;
+    .fc-scrollgrid, .fc-scrollgrid td, .fc-scrollgrid th { border: 0; }
+    .fc-scrollgrid { border-radius: 0; }
+    .fc-col-header-cell { padding: 4px 0 8px; background: transparent; }
+    .fc-col-header-cell-cushion { font-size: 9px; letter-spacing: .04em; }
+    .fc-daygrid-day-frame { min-height: 40px; margin: 2px; border-radius: 6px; background: var(--color-surface); }
+    .fc-day-disabled { background: transparent; }
+    .fc-day-disabled .fc-daygrid-day-frame { background: transparent; }
+    .fc-daygrid-day:hover { background: transparent; }
+    .fc-daygrid-day-number { padding: 3px 5px; font-size: 10px; }
+    .fc-daygrid-event { padding: 2px 3px; margin: 1px 2px; border-left-width: 2px; border-radius: 4px; }
+    .cc-fc-event-label { font-size: 8px; line-height: 1.3; }
+    .fc-daygrid-more-link { font-size: 8px; }
+  }
+}
+@media (max-width: 640px) {
+  .company-calendar-page .cc-fullcalendar:not(.cc-fullcalendar-compact) { padding: 10px; .fc-daygrid-day-frame { min-height: 76px; } .cc-fc-event-label { font-size: 9px; } }
+}
+
+.company-calendar-page .cc-holiday-layout > .cc-holiday-calendar-card { display: block; }
+
+.cc-holiday-popover {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  border: 1px solid $color-border;
+  border-radius: 16px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--calendar-type-color) 10%, #{$color-surface}), #{$color-surface} 55%);
+  border-top: 3px solid var(--calendar-type-color);
+  &[open] { animation: holiday-editor-enter 220ms cubic-bezier(.2,.8,.2,1) both; }
+  color: $color-text;
+  box-shadow: 0 20px 60px #18231c26, 0 4px 14px #18231c12;
+  &::backdrop { background: #17231c12; }
+  .cc-popover-close { position: absolute; right: 14px; top: 16px; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: $color-surface-subtle; color: $color-text-muted; cursor: pointer; }
+  .cc-holiday-editor { position: static; min-height: 0; border: 0; }
+  .tenant-panel-head { padding: 20px 52px 16px 20px; min-height: 0; border-bottom: 1px solid $color-border; background: transparent; }
+  form { padding: 18px 20px 20px; margin: 0; }
+  fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+  .cc-holiday-form { display: grid; gap: 14px; }
+  label { display: grid; gap: 6px; color: $color-text-secondary; font-size: 12px; font-weight: 500; }
+  input, select, textarea { box-sizing: border-box; width: 100%; min-height: 40px; border: 1px solid $color-border; border-radius: 8px; padding: 9px 11px; font: inherit; font-size: 13px; color: $color-text; background: $color-surface-subtle; &:focus { outline: 2px solid $color-primary; outline-offset: 2px; } }
+  small { font-size: 11px; color: $color-text-muted; }
+  footer { display: flex; align-items: center; gap: 8px; border-top: 1px solid $color-border; margin-top: 20px; padding-top: 16px; }
+  .cc-holiday-published { display: flex; align-items: center; gap: 8px; margin-right: auto; }
+  .cc-holiday-published label { font-size: 11px; }
+}
+@keyframes holiday-editor-enter { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .cc-holiday-popover[open] { animation: none; } }

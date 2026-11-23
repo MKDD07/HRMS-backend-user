@@ -21,21 +21,32 @@
   h3 { font-size: var(--font-sm); font-weight: var(--heading-font-weight); }
 }
 .talent-workspace { display: grid; gap: var(--space-6); max-width: var(--page-width); margin-inline: auto; }
-.talent-page-heading, .talent-section-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
-.talent-page-heading p { margin-top: var(--space-2); color: var(--color-text-secondary); }
+.recruitment-workspace {
+  .recruitment-overview { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px; border-radius: 16px; background: linear-gradient(115deg,var(--color-primary-subtle),var(--color-surface)); h2 { font-size: 22px; } p { font-size: 12px; color: var(--color-text-muted); margin-top: 8px; max-width: 520px; } }
+  .recruitment-workflow { display: flex; gap: 18px; span { display: grid; gap: 6px; font-size: 12px; } small { color: var(--color-primary); font-size: 10px; font-weight: 600; } }
+  .talent-tabs .btn { border-radius: 8px; }
+  .talent-toolbar { border-bottom: 0; }
+  .talent-candidate { background: var(--color-surface); border-color: transparent; box-shadow: 0 3px 12px #18231c08; border-radius: 10px; padding: 16px; }
+  .talent-pipeline section { border-radius: 12px; }
+  @media(max-width:700px) { .recruitment-overview { flex-wrap: wrap; padding: 20px; } }
+}
+
+.talent-workspace {
+  .talent-employee-context { background: linear-gradient(120deg, var(--department-tint), var(--department-glow) 60%, var(--color-surface)); border: 1px solid var(--color-border); padding: 22px; gap: 18px; }
+  .talent-selected-person { display: flex; align-items: center; gap: 16px; width: 100%; padding-bottom: 16px; border-bottom: 1px solid color-mix(in srgb, var(--department-accent) 15%, transparent); > div { min-width: 0; } strong { display: block; font-size: 18px; font-weight: 600; } span, small { display: block; font-size: 12px; color: var(--color-text-secondary); margin-top: 5px; } }
+  .talent-person-contact { display: flex; flex-wrap: wrap; gap: 14px; span { display: inline-flex; align-items: center; gap: 6px; overflow-wrap: anywhere; font-size: 11px; } svg { color: var(--department-accent); flex-shrink: 0; } }
+  .talent-context-copy { flex: 1; min-width: 220px; h2 { font-size: 15px; } p { max-width: 600px; line-height: 1.6; } }
+  .talent-directory-details { display: grid; gap: 5px; line-height: 1.5; .talent-person-code { color: var(--department-accent); font-size: 10px; font-weight: 600; } }
+  .talent-panel { box-shadow: 0 3px 16px #18231c05; }
+  .talent-eyebrow:empty { display: none; }
+}
+
+
 .talent-eyebrow { display: block; margin-bottom: var(--space-2); color: var(--color-primary); font-size: var(--font-2xs); font-weight: var(--heading-font-weight); letter-spacing: .08em; }
 .talent-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .talent-panel, .talent-stats { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); overflow: hidden; }
-.talent-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
-  > div { padding: var(--space-5); display: grid; gap: var(--space-2); border-inline-end: 1px solid var(--color-border); }
-  > div:last-child { border: 0; }
-  span, small { color: var(--color-text-secondary); font-size: var(--font-xs); }
-  strong { font-size: var(--font-3xl); font-weight: var(--heading-font-weight); font-variant-numeric: tabular-nums; }
-}
 .talent-toolbar, .talent-filters { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--color-border); }
-.talent-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap;align-items: center;
-  button { padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-input); background: transparent; color: var(--color-text-secondary); font: inherit; cursor: pointer; }
-  button[aria-pressed='true'] { background: var(--color-primary-subtle); color: var(--color-primary-dark); font-weight: var(--heading-font-weight); }
+.talent-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap;align-items: center
 }
 .talent-filters { justify-content: flex-start;
   > select { width: auto; min-width: var(--space-40); }
@@ -54,11 +65,6 @@
   td small { color: var(--color-text-secondary); margin-top: var(--space-1); }
   tbody tr:hover { background: var(--color-surface-subtle); }
 }
-.talent-status { display: inline-block; border-radius: var(--radius-input); padding: var(--space-1) var(--space-2); font-size: var(--font-2xs); white-space: nowrap; background: var(--color-surface-subtle); color: var(--color-text-secondary);
-  &--success { background: $color-success-subtle; color: $color-success-dark; }
-  &--danger { background: $color-danger-subtle; color: $color-danger-dark; }
-  &--active { background: var(--color-primary-subtle); color: var(--color-primary-dark); }
-}
 .talent-progress { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-xs);
   progress { appearance: none; height: var(--space-2); width: var(--space-20); border: 0; border-radius: var(--radius-input); overflow: hidden; background: var(--color-surface-subtle); accent-color: var(--color-primary); }
   progress::-webkit-progress-bar { background: var(--color-primary-subtle); }
@@ -73,9 +79,8 @@
   h3 { display: flex; justify-content: space-between; margin-bottom: var(--space-3); }
   h3 span { color: var(--color-text-secondary); }
 }
-.talent-candidate { width: 100%; display: grid; text-align: left; gap: var(--space-2); padding: var(--space-4); margin-bottom: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-input); background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; overflow-wrap: anywhere;
+.talent-candidate { width: 100%; display: grid; text-align: left; gap: var(--space-2); padding: var(--space-4); margin-bottom: var(--space-3); overflow-wrap: anywhere;
   small, span { color: var(--color-text-secondary); font-size: var(--font-xs); }
-  &:hover { border-color: var(--color-primary); }
 }
 .talent-dialog { margin: auto; padding: 0; width: min(calc(100vw - var(--space-8)), calc(var(--space-96) * 2)); max-width: none; max-height: calc(100dvh - var(--space-8)); border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: $shadow-xl;
   &::backdrop { background: color-mix(in srgb, var(--color-text) 35%, transparent); }
@@ -99,17 +104,16 @@
 .talent-history p { margin-top: var(--space-2); }
 .talent-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: $breakpoint-md) {
-  .talent-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); > div { border-bottom: 1px solid var(--color-border); } }
   .talent-form-grid { grid-template-columns: minmax(0, 1fr); }
-  .talent-page-heading h1 { font-size: var(--font-2xl); }
-  .talent-page-heading { align-items: flex-start; }
+
+
 }
 
 .talent-directory-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(var(--space-72), var(--space-96));
-  align-items: start;
-  gap: var(--space-5);
+  --workspace-grid-gap: var(--space-5);
+  margin-top: 0;
+  > .talent-records-main { grid-column: span 8; }
+  > .employee-directory { grid-column: span 4; }
   > .employee-directory { top: var(--space-5); }
 }
 .talent-records-main { display: grid; gap: var(--space-5); min-width: 0; }
@@ -121,7 +125,7 @@
 }
 .talent-directory-layout .talent-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: $breakpoint-lg) {
-  .talent-directory-layout { grid-template-columns: minmax(0, 1fr); }
+  .talent-directory-layout { > .talent-records-main, > .employee-directory { grid-column: 1 / -1; } }
   .talent-directory-layout > .employee-directory { position: static; }
 }
 
@@ -131,3 +135,17 @@
   color: var(--color-primary-dark);
 }
 .talent-acknowledgement { min-width: var(--space-48); max-width: var(--space-80); overflow-wrap: anywhere; }
+.recruitment-board-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 20px 0; h2 { font-size:15px; } p { font-size:12px; color:var(--color-text-secondary); margin-top:5px; } select { min-width:180px; } }
+.recruitment-board-lanes {
+  section { background:linear-gradient(180deg,color-mix(in srgb,var(--stage-color) 7%,var(--color-surface)),var(--color-surface-subtle) 180px); border:0; }
+  h3 { align-items:center; justify-content:flex-start; gap:8px; small { margin-left:auto; font-size:11px; color:var(--color-text-secondary); } }
+}
+.recruitment-stage-dot { width:7px; height:7px; border-radius:50%; background:var(--stage-color); }
+.recruitment-person-card { padding:15px; margin-bottom:12px; background:var(--color-surface); border-radius:12px; box-shadow:0 3px 12px #18231c08; p { font-size:11px; color:var(--color-text-secondary); overflow-wrap:anywhere; margin-top:12px; } }
+.recruitment-person-heading { display:flex; align-items:center; gap:10px; strong { display:block; font-size:13px; } small { display:block; font-size:11px; color:var(--color-text-secondary); margin-top:3px; } }
+.recruitment-initials { display:grid; place-items:center; flex-shrink:0; width:36px; height:36px; font-size:12px; font-weight:600; color:var(--stage-color); background:color-mix(in srgb,var(--stage-color) 12%,var(--color-surface)); border-radius:12px; }
+.recruitment-source { display:inline-block; margin-top:10px; font-size:10px; padding:3px 8px; border-radius:20px; color:var(--color-text-secondary); background:var(--color-surface-subtle); }
+.recruitment-next-interview { display:flex; align-items:center; gap:6px; padding-top:12px; font-size:10px; color:var(--color-text-secondary); }
+.recruitment-card-actions { display:flex; align-items:center; gap:4px; margin-top:12px; >:first-child { margin-right:auto; } }
+.recruitment-lane-empty { padding:24px 8px; text-align:center; font-size:11px; color:var(--color-text-muted); }
+@media(max-width:700px) { .recruitment-board-heading { flex-wrap:wrap; label { width:100%; } } }

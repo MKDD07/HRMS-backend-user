@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import { readAttendanceSnapshot, saveAttendanceSnapshot, clearAttendanceSnapshot } from './attendanceConsoleCache.mjs';
+const value = { employees: [{ userid: 'one' }], attendance: { one: [] }, leaves: [] };
+saveAttendanceSnapshot('account-a', value, 100);
+assert.equal(readAttendanceSnapshot('account-a', 59999), value);
+assert.equal(readAttendanceSnapshot('account-a', 60100), null, 'expires after one minute');
+assert.equal(readAttendanceSnapshot('account-b', 200), null, 'account isolation');
+assert.equal(readAttendanceSnapshot('account-a', 200), null, 'switching accounts clears previous data');
+saveAttendanceSnapshot('account-a', value);
+clearAttendanceSnapshot();
+assert.equal(readAttendanceSnapshot('account-a'), null, 'explicit refresh bypasses cache');
+console.log('Attendance snapshot cache checks passed.');

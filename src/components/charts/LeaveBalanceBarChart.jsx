@@ -1,3 +1,5 @@
+import { ChartLegend } from './ChartLegend';
+import { chartPalette } from './chartColors';
 import React from 'react';
 import {
   ResponsiveContainer,
@@ -36,21 +38,21 @@ function CustomBarTooltip({ active, payload, label }) {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-[#5F6368]">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#27292C]" />
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: chartPalette[0] }} />
               <span>Allotted Quota</span>
             </span>
             <span className="font-semibold text-[#27292C] font-mono">{allotted}d</span>
           </div>
           <div className="flex items-center justify-between text-[#5F6368]">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#EF4444]" />
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: chartPalette[1] }} />
               <span>Days Consumed</span>
             </span>
             <span className="font-semibold text-[#EF4444] font-mono">{utilized}d</span>
           </div>
           <div className="flex items-center justify-between text-[#5F6368]">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#000000]" />
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: chartPalette[2] }} />
               <span>Available Balance</span>
             </span>
             <span className="font-semibold text-[#000000] font-mono">{remaining}d</span>
@@ -74,12 +76,6 @@ export function LeaveBalanceBarChart({ data = DEFAULT_CATEGORY_DATA, height = 30
             Comparative balance sheet of allotted entitlement vs days utilized
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-[11px] text-[#5F6368]">
-          <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-[#000000]" />
-            Healthy Quota
-          </span>
-        </div>
       </div>
 
       <div className="w-full" style={{ height }}>
@@ -102,32 +98,26 @@ export function LeaveBalanceBarChart({ data = DEFAULT_CATEGORY_DATA, height = 30
               tick={{ fill: '#5F6368', fontSize: 11 }}
             />
             <Tooltip content={<CustomBarTooltip />} />
-            <Legend
-              verticalAlign="top"
-              align="right"
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ paddingBottom: '12px', fontSize: '11px' }}
-            />
+            <Legend content={<ChartLegend />} />
 
             <Bar
               dataKey="allotted"
               name="Allotted Quota"
-              fill="#27292C"
+              fill={chartPalette[0]}
               radius={[4, 4, 0, 0]}
               maxBarSize={28}
             />
             <Bar
               dataKey="utilized"
               name="Days Utilized"
-              fill="#EF4444"
+              fill={chartPalette[1]}
               radius={[4, 4, 0, 0]}
               maxBarSize={28}
             />
             <Bar
               dataKey="remaining"
               name="Available Balance"
-              fill="#10B981"
+              fill={chartPalette[2]}
               radius={[4, 4, 0, 0]}
               maxBarSize={28}
             />

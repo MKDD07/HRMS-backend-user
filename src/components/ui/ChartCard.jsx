@@ -1,4 +1,5 @@
 import React from 'react';
+import { TenantPanel } from './TenantPanel';
 
 export function ChartCard({
   title,
@@ -9,18 +10,10 @@ export function ChartCard({
   className = ''
 }) {
   return (
-    <div className={`chart-card ${className}`}>
-      <div className="chart-card__header">
-        <div>
-          <h3 className="chart-card__title">{title}</h3>
-          {subtitle && <p className="chart-card__subtitle">{subtitle}</p>}
-        </div>
-        {actions && <div className="chart-card__actions">{actions}</div>}
-      </div>
-
+    <TenantPanel title={title} subtitle={subtitle} actions={actions} className={className}>
       <div className="chart-card__body">{children}</div>
 
-      {footer && <div className="chart-card__footer">{footer}</div>}
-    </div>
+      {footer && <div className="tenant-panel-footer">{footer}</div>}
+    </TenantPanel>
   );
 }

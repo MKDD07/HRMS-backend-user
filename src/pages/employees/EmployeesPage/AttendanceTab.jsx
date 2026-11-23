@@ -168,60 +168,28 @@ export function AttendanceTab({ employee, onShowToast }) {
         {/* Controls: Prev/Next Month, Today & View Switcher */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center bg-white rounded-lg border border-[#E5E7EB] p-0.5 shadow-2xs">
-            <button
-              type="button"
-              onClick={handlePrevMonth}
-              className="p-1 rounded hover:bg-[#F3F4F6] text-[#4B5563] hover:text-[#111827] transition-colors cursor-pointer"
-              title="Previous Month"
-            >
+            <Button type="button" onClick={handlePrevMonth} className="" title="Previous Month" variant="outline" wrapContent={false} iconOnly={true} size="sm">
               <ChevronLeft className="w-4 h-4" />
-            </button>
+            </Button>
             <span className="font-semibold text-xs text-[#111827] px-2 min-w-[110px] text-center select-none">
               {monthLabel}
             </span>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              className="p-1 rounded hover:bg-[#F3F4F6] text-[#4B5563] hover:text-[#111827] transition-colors cursor-pointer"
-              title="Next Month"
-            >
+            <Button type="button" onClick={handleNextMonth} className="" title="Next Month" variant="outline" wrapContent={false} iconOnly={true} size="sm">
               <ChevronRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
 
-          <button
-            type="button"
-            onClick={handleToday}
-            className="px-2.5 py-1 text-xs font-semibold text-[#374151] bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:text-[#111827] shadow-2xs transition-all cursor-pointer"
-          >
+          <Button type="button" onClick={handleToday} className=" " variant="outline" wrapContent={false}>
             Today
-          </button>
+          </Button>
 
           <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-lg border border-[#E5E7EB]">
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={`p-1 rounded transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-white text-[#111827] shadow-2xs'
-                  : 'text-[#6B7280] hover:text-[#111827]'
-              }`}
-              title="Calendar Grid View"
-            >
+            <Button type="button" onClick={() => setViewMode('grid')} className={`    ${viewMode === 'grid' ? "" : ""}`} title="Calendar Grid View" variant="outline" wrapContent={false} iconOnly={true} size="sm">
               <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={`p-1 rounded transition-all cursor-pointer ${
-                viewMode === 'list'
-                  ? 'bg-white text-[#111827] shadow-2xs'
-                  : 'text-[#6B7280] hover:text-[#111827]'
-              }`}
-              title="Punch Timeline List View"
-            >
+            </Button>
+            <Button type="button" onClick={() => setViewMode('list')} className={`    ${viewMode === 'list' ? "" : ""}`} title="Punch Timeline List View" variant="outline" wrapContent={false} iconOnly={true} size="sm">
               <List className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -448,17 +416,13 @@ export function AttendanceTab({ employee, onShowToast }) {
                       {item.note || '—'}
                     </td>
                     <td className="py-2.5 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDayDetails(item);
-                          setIsAdjusting(true);
-                        }}
-                        className="text-xs font-semibold text-[#4F46E5] hover:underline cursor-pointer"
-                      >
+                      <Button type="button" onClick={e => {
+  e.stopPropagation();
+  openDayDetails(item);
+  setIsAdjusting(true);
+}} className="" variant="outline" wrapContent={false}>
                         Adjust
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -500,12 +464,7 @@ export function AttendanceTab({ employee, onShowToast }) {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <Button
-                variant="secondary"
-                size="xs"
-                icon={Clock}
-                onClick={() => setIsAdjusting((prev) => !prev)}
-              >
+              <Button variant="secondary" size="xs" icon={Clock} onClick={() => setIsAdjusting(prev => !prev)}>
                 {isAdjusting ? 'Close Adjust' : 'Regularize Punch'}
               </Button>
             </div>
@@ -519,13 +478,9 @@ export function AttendanceTab({ employee, onShowToast }) {
                   <ShieldCheck className="w-4 h-4 text-[#2563EB]" />
                   Admin Punch Regularization: Day {selectedRecord.day} ({selectedRecord.date})
                 </h5>
-                <button
-                  type="button"
-                  onClick={() => setIsAdjusting(false)}
-                  className="text-xs font-semibold text-[#1E3A8A] hover:underline cursor-pointer"
-                >
+                <Button type="button" onClick={() => setIsAdjusting(false)} className="" variant="outline" wrapContent={false}>
                   Cancel
-                </button>
+                </Button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -556,12 +511,7 @@ export function AttendanceTab({ employee, onShowToast }) {
               </div>
 
               <div className="flex justify-end gap-2 pt-1">
-                <Button
-                  variant="primary"
-                  size="xs"
-                  icon={CheckCircle2}
-                  onClick={handleApplyPunch}
-                >
+                <Button variant="primary" size="xs" icon={CheckCircle2} onClick={handleApplyPunch}>
                   Save Regularized Punch
                 </Button>
               </div>

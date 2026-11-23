@@ -1,3 +1,5 @@
+import { workspacePolicy, seatAccess } from './planPolicy.mjs';
+import { shiftTimingError } from '../shared/shiftTiming.mjs';
 import { liveCapacity } from './billing.mjs';
 import { DASHBOARD_PAGES, parsePages } from '../shared/dashboardAccess.mjs';
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
@@ -5,19 +7,22 @@ const stmt = (db, sql, params = []) => db.prepare(sql).bind(...params);
 export async function dashboardAdmin({ db, actor, path, method, body, hashPassword }) {
   if (actor.role !== 'company_admin') fail('Only the Super Admin can manage dashboard users.', 403);
   if (path === '/api/v1/dashboard-users' && method === 'GET') {
-    const rows = await stmt(db, `SELECT e.employee_id,e.user_id,e.employee_code,e.first_name,e.last_name,e.dashboard_access,e.dashboard_pages,u.username,u.must_change_password,u.status FROM employees e JOIN users u ON u.company_id=e.company_id AND u.user_id=e.user_id WHERE e.company_id=? AND u.role='employee' ORDER BY e.first_name`, [actor.company_id]).all();
-    return rows.results.map(row => ({ ...row, dashboard_pages: parsePages(row.dashboard_pages) }));
+    const rows = await stmt(db, `SELECT e.employee_id,e.user_id,e.employee_code,e.first_name,e.last_name,e.department,e.designation,json_extract(e.profile,'$.profile_pic_url') AS profile_pic_url,e.dashboard_access,e.dashboard_pages,u.username,u.must_change_password,u.status FROM employees e JOIN users u ON u.company_id=e.company_id AND u.user_id=e.user_id WHERE e.company_id=? AND u.role='employee' ORDER BY e.first_name`, [actor.company_id]).all();
+    const seats=await seatAccess(db,actor.company_id,await workspacePolicy(db,actor.company_id));
+    return rows.results.map(row => ({ ...row, plan_locked: Boolean(seats.get(row.user_id)?.plan_locked), dashboard_plan_locked: Boolean(seats.get(row.user_id)?.dashboard_plan_locked), userid: row.user_id, dashboard_pages: parsePages(row.dashboard_pages) }));
   }
   if (path !== '/api/v1/dashboard-users' || method !== 'POST') fail('Route not found.', 404);
   const user = await stmt(db, "SELECT u.user_id,u.status FROM employees e JOIN users u ON u.company_id=e.company_id AND u.user_id=e.user_id WHERE e.company_id=? AND e.employee_id=? AND u.role='employee'", [actor.company_id, body.employee_id]).first();
   if (!user) fail('Employee not found.', 404);
   if (body.dashboard_access && user.status !== 'active') fail('Only active employees can receive dashboard access.');
   if (typeof body.dashboard_access !== 'boolean') fail('Choose whether dashboard access is enabled.');
+  const policy=await workspacePolicy(db,actor.company_id);
   const pages = parsePages(body.dashboard_pages);
+  if(pages.some(page=>!policy.pages.includes(page)))fail('Choose only pages included in your workspace plan.');
   if (!Array.isArray(body.dashboard_pages) || pages.length !== body.dashboard_pages.length || new Set(pages).size !== pages.length || (body.dashboard_access && !pages.length)) fail('Select at least one valid page for dashboard access.');
   const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
   if (!/^[a-z0-9][a-z0-9._-]{2,99}$/.test(username)) fail('User ID must have 3–100 letters, numbers, dots, underscores or hyphens.');
-  const capacity = await liveCapacity(db, actor.company_id);
+  const capacity = policy.testEnabled ? {dashboard_limit:policy.dashboardLimit,employee_limit:policy.employeeLimit,expired:false} : await liveCapacity(db, actor.company_id);
   const existing = await stmt(db, 'SELECT dashboard_access FROM employees WHERE company_id=? AND employee_id=?', [actor.company_id, body.employee_id]).first();
   if (body.dashboard_access && !existing.dashboard_access && capacity.expired) fail('Renew your company plan before granting new dashboard access.', 409);
   if (body.dashboard_access && !existing.dashboard_access && !body.password) fail('Set a temporary password when granting access.');
@@ -42,8 +47,12 @@ export async function dashboardConfiguration({ db, actor, section, method, body 
       if (![s.startTime, s.endTime].every(t => /^([01]\d|2[0-3]):[0-5]\d$/.test(t)) || s.startTime === s.endTime) fail('Enter valid and different shift times.');
       if (!Array.isArray(s.workingDays) || !s.workingDays.length || s.workingDays.some(d => !['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].includes(d))) fail('Select valid working days.');
       if (![s.breakDurationMins, s.gracePeriodMins].every(n => Number.isInteger(n) && n >= 0 && n <= 240)) fail('Break and grace minutes must be between 0 and 240.');
+      if (s.earlyExitGraceMins != null && (!Number.isInteger(s.earlyExitGraceMins) || s.earlyExitGraceMins < 0 || s.earlyExitGraceMins > 240)) fail('Early-exit grace must be 0-240 minutes.');
+      if (s.halfDayHours != null && (typeof s.halfDayHours !== 'number' || !Number.isFinite(s.halfDayHours) || s.halfDayHours < 0 || s.halfDayHours > 12)) fail('Half-day hours must be 0-12.');
       if (!['Active', 'Inactive'].includes(s.status) || typeof s.isDefault !== 'boolean' || (s.isDefault && s.status !== 'Active')) fail('The default shift must be active.');
       const minutes = t => Number(t.slice(0,2))*60 + Number(t.slice(3));
+      const timingError = shiftTimingError(s);
+      if (timingError) fail(timingError);
       if (s.breakDurationMins >= (minutes(s.endTime)-minutes(s.startTime)+1440)%1440) fail('Break must be shorter than the shift.');
     }
   } else {

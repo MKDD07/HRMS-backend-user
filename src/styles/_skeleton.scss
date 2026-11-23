@@ -1,0 +1,312 @@
+// ============================================================================
+// PulseHRMS Shared Skeleton Animation Tokens & Components
+// ============================================================================
+@use "variables" as *;
+@use "color" as *;
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #f0f2f5;
+  border-radius: var(--radius-sm, 6px);
+  user-select: none;
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 100%
+    );
+    animation: skeleton-shimmer 1.5s infinite ease-in-out;
+  }
+
+  &--circle {
+    border-radius: 50% !important;
+  }
+
+  &--rounded {
+    border-radius: var(--radius-card, 12px);
+  }
+
+  &--text {
+    height: 12px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+// Skeleton Card for Employee Directory
+.employee-directory-card-skeleton {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md, 12px);
+  width: 100%;
+  padding: 15px 12px;
+  border-radius: var(--radius-sm, 9px);
+  background: $color-surface;
+  border: 1px solid transparent;
+  pointer-events: none;
+  user-select: none;
+
+  &__avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #eef1f4;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+
+  &__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__name {
+    width: 65%;
+    height: 13px;
+    border-radius: 4px;
+    background: #eef1f4;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+
+  &__role {
+    width: 45%;
+    height: 11px;
+    border-radius: 4px;
+    background: #f4f6f8;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+
+  &__meta {
+    width: 80%;
+    height: 9px;
+    border-radius: 4px;
+    background: #f6f8fa;
+    margin-top: 2px;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+}
+
+// Skeleton for Attendance Person Workspace
+.attendance-workspace-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+  width: 100%;
+  padding: 20px;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: var(--radius-card, 12px);
+  pointer-events: none;
+  user-select: none;
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid $color-border-light;
+  }
+
+  &__title {
+    width: 240px;
+    height: 18px;
+    border-radius: 4px;
+    background: #eef1f4;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+
+  &__subtitle {
+    width: 380px;
+    max-width: 80%;
+    height: 12px;
+    border-radius: 4px;
+    background: #f4f6f8;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+
+  &__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+    gap: var(--space-sm, 10px);
+    margin: 8px 0 16px;
+  }
+
+  &__kpi-card {
+    height: 72px;
+    border-radius: var(--radius-sm, 7px);
+    background: #f8fafc;
+    border: 1px solid $color-border-light;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  &__row {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    height: 32px;
+    border-radius: 6px;
+    background: #f8fafc;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 50%,
+        transparent 100%
+      );
+      animation: skeleton-shimmer 1.5s infinite ease-in-out;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after,
+  .employee-directory-card-skeleton__avatar::after,
+  .employee-directory-card-skeleton__name::after,
+  .employee-directory-card-skeleton__role::after,
+  .employee-directory-card-skeleton__meta::after,
+  .attendance-workspace-skeleton__title::after,
+  .attendance-workspace-skeleton__subtitle::after,
+  .attendance-workspace-skeleton__kpi-card::after,
+  .attendance-workspace-skeleton__row::after {
+    animation: none;
+    display: none;
+  }
+}

@@ -1,0 +1,105 @@
+@use "../../styles/color" as *;
+
+.dashboard-users .dashboard-users-grid.workspace-grid {
+  --workspace-grid-gap: var(--space-5-5);
+  --dashboard-access-height: min(720px, calc(100dvh - var(--tenant-header-height, 82px) - var(--space-8)));
+  > .dashboard-users-content .card { margin: 0; }
+  > .dashboard-users-content { grid-column: span 8; min-width: 0; }
+  > .employee-directory { grid-column: span 4; min-width: 0; }
+  @media (min-width: 901px) {
+    > .dashboard-users-content .card { height: var(--dashboard-access-height); display: flex; flex-direction: column; > .card-head { flex-shrink: 0; } }
+    > .employee-directory {
+      --directory-sticky-top: calc(var(--tenant-header-height, 82px) + var(--space-4));
+      position: sticky;
+      top: var(--directory-sticky-top);
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      height: var(--dashboard-access-height);
+      > * { flex-shrink: 0; }
+      > .employee-directory-cards { flex: 1 1 auto; min-height: 0; max-height: none; }
+    }
+  }
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    > .dashboard-users-content, > .employee-directory { grid-column: 1; }
+  }
+}
+.dashboard-access-editor {
+  min-width: 0;
+  animation: dashboard-access-reveal .25s ease both;
+  &:focus { outline: none; }
+}
+.ws-form.dashboard-access-form { padding: 0; gap: 0; flex: 1; min-height: 0; }
+.dashboard-access-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: var(--space-4) var(--space-5); }
+.dashboard-access-switch {
+  --toggle-active-color: var(--color-success);
+  --toggle-inactive-color: var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  strong { color: $color-text-main; font-size: var(--font-xs); font-weight: 600; }
+  .toggle { flex-shrink: 0; }
+}
+.dashboard-access-section {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  + .dashboard-access-section { margin-top: var(--space-6); }
+  > h3 { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--font-2sm); font-weight: 600; color: $color-text-main; }
+  .ws-hint { margin: 0; }
+}
+.dashboard-access-footer {
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid $color-border;
+  > .ws-hint { margin: 0 auto 0 0; }
+}
+.dashboard-access-placeholder > div:last-child {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  text-align: center;
+  color: $color-text-muted;
+  h3 { color: $color-text-main; font-size: 16px; margin: 18px 0 10px; }
+  p { max-width: 340px; margin: auto; font-size: 13px; line-height: 1.8; }
+}
+@keyframes dashboard-access-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .dashboard-access-body, .dashboard-access-footer { padding-inline: var(--space-4); }
+  .dashboard-access-form .ws-form-grid, .dashboard-access-form .ws-permissions { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-access-editor { animation: none; }
+}
+
+// A quiet status label keeps color meaningful without repeating filled badges.
+.dashboard-access-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--font-2xs);
+  color: $color-text-muted;
+  &::before { content: ''; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; }
+  &.is-enabled::before { background: $color-success; }
+  &.is-disabled::before { background: $color-warning; }
+}
+.dashboard-access-action.btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  &.is-enabled { color: $color-success-dark; }
+  &.is-pending { color: #2b6cb0; }
+  &:hover:not(:disabled):not(.is-disabled) { background: transparent; border-color: transparent; animation: none; background-image: none; transform: none; box-shadow: none; }
+}

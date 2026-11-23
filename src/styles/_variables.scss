@@ -16,9 +16,11 @@ $font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monosp
   --background-color: 255 255 255;
   --button-bg: 23 23 23;
   --button-bg-gradient: #171717;
+  --button-primary-gradient: linear-gradient(135deg, var(--color-gray-700), var(--color-gray-900) 50%, var(--color-gray-950));
   --button-text-color: 255 255 255;
   --focus-outline-color: 11 97 205;
   --shadow-color: 168 232 226;
+  --shadow-main: 0 1px 1px var(--tw-shadow-color, #0000000d), 0 4px 6px var(--tw-shadow-color, #222a350a), 0 24px 68px var(--tw-shadow-color, #2f30370d), 0 2px 3px var(--tw-shadow-color, #0000000a);
 
   --placeholder-color: 250 250 250;
 
@@ -158,9 +160,9 @@ $font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monosp
   --page-container: min(calc(100vw - var(--page-padding) * 2), var(--page-width));
 
   /* Border radius */
-  --radius-button: 60px;
+  --radius-button: 9999px;
   --radius-input: 6px;
-  --radius-card: clamp(var(--space-2-5), 1.053vw, var(--space-5));
+  --radius-card: 12px;
   --radius-block: clamp(var(--space-2-5), 1.053vw, var(--space-5));
 
   --icon-weight: 1.5px;

@@ -384,103 +384,48 @@ export function EmployeeOrgHierarchy({
           <div className="flex flex-wrap items-center gap-2">
             {/* View Mode Switcher */}
             <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-lg border border-[#E5E7EB]">
-              <button
-                type="button"
-                onClick={() => setViewMode('tree')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md transition-all ${viewMode === 'tree'
-                  ? 'bg-white text-[#111827] shadow-xs'
-                  : 'text-[#5F6368] hover:text-[#111827]'
-                  }`}
-              >
+              <Button type="button" onClick={() => setViewMode('tree')} className={`flex items-center gap-1.5       ${viewMode === 'tree' ? "" : ""}`} variant="outline" wrapContent={false}>
                 <GitBranch className="w-3.5 h-3.5" />
                 Visual Tree
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('stages')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md transition-all ${viewMode === 'stages'
-                  ? 'bg-white text-[#111827] shadow-xs'
-                  : 'text-[#5F6368] hover:text-[#111827]'
-                  }`}
-              >
+              </Button>
+              <Button type="button" onClick={() => setViewMode('stages')} className={`flex items-center gap-1.5       ${viewMode === 'stages' ? "" : ""}`} variant="outline" wrapContent={false}>
                 <Layers className="w-3.5 h-3.5" />
                 5-Stage Pipeline
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md transition-all ${viewMode === 'list'
-                  ? 'bg-white text-[#111827] shadow-xs'
-                  : 'text-[#5F6368] hover:text-[#111827]'
-                  }`}
-              >
+              </Button>
+              <Button type="button" onClick={() => setViewMode('list')} className={`flex items-center gap-1.5       ${viewMode === 'list' ? "" : ""}`} variant="outline" wrapContent={false}>
                 <CornerDownRight className="w-3.5 h-3.5" />
                 Indented Roster
-              </button>
+              </Button>
             </div>
 
             {/* Tree Zoom Controls */}
             {viewMode === 'tree' && (
               <div className="flex items-center bg-[#F3F4F6] p-0.5 rounded-lg border border-[#E5E7EB]">
-                <button
-                  type="button"
-                  title="Zoom Out"
-                  onClick={() => setZoomLevel((z) => Math.max(0.7, +(z - 0.1).toFixed(1)))}
-                  className="p-1.5 text-[#5F6368] hover:text-[#111827] rounded"
-                >
+                <Button type="button" title="Zoom Out" onClick={() => setZoomLevel(z => Math.max(0.7, +(z - 0.1).toFixed(1)))} className="" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                   <ZoomOut className="w-3.5 h-3.5" />
-                </button>
+                </Button>
                 <span className="text-[11px] px-2 text-[#27292C]">
                   {Math.round(zoomLevel * 100)}%
                 </span>
-                <button
-                  type="button"
-                  title="Zoom In"
-                  onClick={() => setZoomLevel((z) => Math.min(1.3, +(z + 0.1).toFixed(1)))}
-                  className="p-1.5 text-[#5F6368] hover:text-[#111827] rounded"
-                >
+                <Button type="button" title="Zoom In" onClick={() => setZoomLevel(z => Math.min(1.3, +(z + 0.1).toFixed(1)))} className="" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                   <ZoomIn className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  title="Reset Zoom"
-                  onClick={() => setZoomLevel(1)}
-                  className="px-2 text-[11px] text-[#5F6368] hover:text-[#111827]"
-                >
+                </Button>
+                <Button type="button" title="Reset Zoom" onClick={() => setZoomLevel(1)} className="" variant="outline" wrapContent={false}>
                   Reset
-                </button>
+                </Button>
               </div>
             )}
 
             {/* Expand / Collapse All */}
-            <Button
-              variant="secondary"
-              size="sm"
-              className="text-[13px]"
-              onClick={expandAll}
-              title="Expand all subordinate branches"
-            >
+            <Button variant="secondary" size="sm" className="" onClick={expandAll} title="Expand all subordinate branches">
               Expand All
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="text-[13px]"
-              onClick={collapseAll}
-              title="Collapse all subordinate branches"
-            >
+            <Button variant="secondary" size="sm" className="" onClick={collapseAll} title="Collapse all subordinate branches">
               Collapse
             </Button>
 
             {/* Reset to Default */}
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={RotateCcw}
-              className="text-[13px] text-[#5F6368]"
-              onClick={handleResetHierarchy}
-              title="Reset hierarchy to verified corporate default"
-            >
+            <Button variant="secondary" size="sm" icon={RotateCcw} className="" onClick={handleResetHierarchy} title="Reset hierarchy to verified corporate default">
               Reset
             </Button>
           </div>
@@ -499,13 +444,9 @@ export function EmployeeOrgHierarchy({
               className="w-full pl-9 pr-8 text-[13px] h-9 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] placeholder-[#9CA3AF]"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px] text-[#9CA3AF] hover:text-[#111827]"
-              >
+              <Button type="button" onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2" variant="outline" wrapContent={false}>
                 ✕
-              </button>
+              </Button>
             )}
           </div>
 
@@ -698,20 +639,10 @@ export function EmployeeOrgHierarchy({
                 </div>
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setAddUnderTarget(null)}
-                  >
+                  <Button variant="secondary" size="sm" onClick={() => setAddUnderTarget(null)}>
                     Cancel
                   </Button>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={UserPlus}
-                    disabled={!selectedSubordinateId}
-                    onClick={handleConfirmAddUnder}
-                  >
+                  <Button variant="primary" size="sm" icon={UserPlus} disabled={!selectedSubordinateId} onClick={handleConfirmAddUnder}>
                     Assign Under {addUnderTarget.name.split(' ')[0]}
                   </Button>
                 </div>
@@ -796,19 +727,10 @@ export function EmployeeOrgHierarchy({
             </div>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setChangeManagerTarget(null)}
-              >
+              <Button variant="secondary" size="sm" onClick={() => setChangeManagerTarget(null)}>
                 Cancel
               </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                icon={Check}
-                onClick={handleConfirmChangeManager}
-              >
+              <Button variant="primary" size="sm" icon={Check} onClick={handleConfirmChangeManager}>
                 Save Reporting Manager
               </Button>
             </div>
@@ -845,19 +767,10 @@ export function EmployeeOrgHierarchy({
             </div>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setEditJobTitleTarget(null)}
-              >
+              <Button variant="secondary" size="sm" onClick={() => setEditJobTitleTarget(null)}>
                 Cancel
               </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                icon={Check}
-                onClick={handleConfirmEditJobTitle}
-              >
+              <Button variant="primary" size="sm" icon={Check} onClick={handleConfirmEditJobTitle}>
                 Update Job Title
               </Button>
             </div>
@@ -994,17 +907,12 @@ function HierarchyTreeNode({
               >
                 {node.job_title}
               </p>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenEditJobTitle(node);
-                }}
-                title="Edit Job Title"
-                className="opacity-0 group-hover/title:opacity-100 p-0.5 text-[#9CA3AF] hover:text-[#4F46E5] transition-opacity"
-              >
+              <Button type="button" onClick={e => {
+  e.stopPropagation();
+  onOpenEditJobTitle(node);
+}} title="Edit Job Title" className="" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                 <Edit3 className="w-3 h-3" />
-              </button>
+              </Button>
             </div>
 
             <p className="text-[11px] text-[#9CA3AF] truncate mt-0.5">
@@ -1016,82 +924,49 @@ function HierarchyTreeNode({
         {/* Reporting Chain Status Pill */}
         <div className="mt-3 pt-2.5 border-t border-[#F3F4F6] flex items-center justify-between text-[11px]">
           <span className="text-[#6B7280]">Works Under:</span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenChangeManager(node);
-            }}
-            className="font-medium text-[#4F46E5] hover:underline truncate max-w-[150px]"
-            title="Click to select or change who this person works under"
-          >
+          <Button type="button" onClick={e => {
+  e.stopPropagation();
+  onOpenChangeManager(node);
+}} className="truncate max-w-[150px]" title="Click to select or change who this person works under" variant="outline" wrapContent={false}>
             {node.reports_to
               ? `${allNodes[node.reports_to]?.name || node.reports_to}`
               : 'Top Executive (None)'}
-          </button>
+          </Button>
         </div>
 
         {/* Node Bottom Action Bar */}
         <div className="mt-2.5 pt-2 border-t border-[#F3F4F6] flex items-center justify-between gap-1.5">
           {/* Add Under Button */}
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={Plus}
-            disabled={stageLevel >= MAX_STAGES}
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenAddUnder(node);
-            }}
-            className="text-[11px] h-7 px-2 py-0 border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]"
-            title={
-              stageLevel >= MAX_STAGES
-                ? `Cannot add under: Max ${MAX_STAGES} stages reached`
-                : `Add someone to work under ${node.name}`
-            }
-          >
+          <Button variant="secondary" size="sm" icon={Plus} disabled={stageLevel >= MAX_STAGES} onClick={e => {
+  e.stopPropagation();
+  onOpenAddUnder(node);
+}} className="  " title={stageLevel >= MAX_STAGES ? `Cannot add under: Max ${MAX_STAGES} stages reached` : `Add someone to work under ${node.name}`}>
             {stageLevel >= MAX_STAGES ? 'Max Stages' : 'Add Under'}
           </Button>
 
           {/* Change Manager Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenChangeManager(node);
-            }}
-            className="text-[11px] h-7 px-2 py-0 text-[#6B7280] hover:text-[#111827]"
-            title="Change who this person works under"
-          >
+          <Button variant="ghost" size="sm" onClick={e => {
+  e.stopPropagation();
+  onOpenChangeManager(node);
+}} className="  " title="Change who this person works under">
             Change Manager
           </Button>
 
           {/* Dossier Quick Link */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onSelectEmployee) onSelectEmployee(node.user_id);
-            }}
-            title="View Full Profile Dossier"
-            className="p-1 text-[#9CA3AF] hover:text-[#4F46E5] rounded"
-          >
+          <Button type="button" onClick={e => {
+  e.stopPropagation();
+  if (onSelectEmployee) onSelectEmployee(node.user_id);
+}} title="View Full Profile Dossier" className="" variant="outline" wrapContent={false} iconOnly={true} size="sm">
             <ExternalLink className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
 
         {/* Collapse / Expand Toggle Button on Node Bottom Edge */}
         {hasChildren && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleCollapse(node.user_id);
-            }}
-            className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white border border-[#D1D5DB] shadow-xs flex items-center justify-center text-[#4B5563] hover:text-[#111827] hover:border-[#4F46E5] transition-all z-10"
-            title={isCollapsed ? 'Expand reports' : 'Collapse reports'}
-          >
+          <Button type="button" onClick={e => {
+  e.stopPropagation();
+  toggleCollapse(node.user_id);
+}} className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6  flex items-center justify-center z-10" title={isCollapsed ? 'Expand reports' : 'Collapse reports'} variant="outline" wrapContent={false}>
             {isCollapsed ? (
               <span className="text-[10px] font-bold text-[#4F46E5]">
                 +{node.children.length}
@@ -1099,7 +974,7 @@ function HierarchyTreeNode({
             ) : (
               <ChevronDown className="w-3.5 h-3.5" />
             )}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -1266,13 +1141,9 @@ function StageSwimlaneView({
                             <p className="text-[11px] text-[#4B5563] truncate">
                               {node.job_title}
                             </p>
-                            <button
-                              type="button"
-                              onClick={() => onOpenEditJobTitle(node)}
-                              className="opacity-0 group-hover/title:opacity-100 text-[#9CA3AF] hover:text-[#4F46E5]"
-                            >
+                            <Button type="button" onClick={() => onOpenEditJobTitle(node)} className="" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                               <Edit3 className="w-2.5 h-2.5" />
-                            </button>
+                            </Button>
                           </div>
 
                           <p className="text-[10px] text-[#9CA3AF] mt-0.5">
@@ -1285,21 +1156,12 @@ function StageSwimlaneView({
 
                       {/* Card Actions */}
                       <div className="mt-2 pt-2 border-t border-[#F3F4F6] flex items-center justify-between">
-                        <button
-                          type="button"
-                          onClick={() => onOpenAddUnder(node)}
-                          disabled={level >= MAX_STAGES}
-                          className="text-[10px] font-semibold text-[#4F46E5] hover:underline disabled:opacity-40"
-                        >
+                        <Button type="button" onClick={() => onOpenAddUnder(node)} disabled={level >= MAX_STAGES} className="" variant="outline" wrapContent={false}>
                           + Add Under
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onOpenChangeManager(node)}
-                          className="text-[10px] text-[#6B7280] hover:text-[#111827]"
-                        >
+                        </Button>
+                        <Button type="button" onClick={() => onOpenChangeManager(node)} className="" variant="outline" wrapContent={false}>
                           Work Under...
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );
@@ -1366,33 +1228,18 @@ function IndentedRosterView({
                 <span>{node.job_title}</span>
                 <span>•</span>
                 <span>{node.department}</span>
-                <button
-                  type="button"
-                  onClick={() => onOpenEditJobTitle(node)}
-                  className="text-[#9CA3AF] hover:text-[#4F46E5]"
-                >
+                <Button type="button" onClick={() => onOpenEditJobTitle(node)} className="" variant="outline" wrapContent={false} iconOnly={true} size="sm">
                   <Edit3 className="w-2.5 h-2.5" />
-                </button>
+                </Button>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="text-[11px] h-7 px-2 py-0"
-              disabled={stageLevel >= MAX_STAGES}
-              onClick={() => onOpenAddUnder(node)}
-            >
+            <Button variant="secondary" size="sm" className="  " disabled={stageLevel >= MAX_STAGES} onClick={() => onOpenAddUnder(node)}>
               + Add Under
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-[11px] h-7 px-2 py-0"
-              onClick={() => onOpenChangeManager(node)}
-            >
+            <Button variant="ghost" size="sm" className="  " onClick={() => onOpenChangeManager(node)}>
               Work Under...
             </Button>
           </div>

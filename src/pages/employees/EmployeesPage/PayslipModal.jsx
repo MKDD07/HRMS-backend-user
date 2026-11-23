@@ -119,20 +119,10 @@ export function PayslipModal({
 
         {/* Footer Actions */}
         <div className="flex justify-end gap-2 pt-2 border-t border-[#E5E7EB]">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onClose}
-          >
+          <Button variant="secondary" size="sm" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            id="btn-confirm-download-pdf"
-            variant="primary"
-            size="sm"
-            icon={Download}
-            onClick={handleDownload}
-          >
+          <Button id="btn-confirm-download-pdf" variant="primary" size="sm" icon={Download} onClick={handleDownload}>
             Download {slipMonth} Payslip (PDF)
           </Button>
         </div>

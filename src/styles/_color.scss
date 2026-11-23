@@ -1,83 +1,101 @@
 // ============================================================================
 // PulseHRMS Color Tokens & Variables
+// Clean White-Based Theme with #27292C Primary Palette
 // ============================================================================
 
-// Primary Accent Greens
-$color-primary: #577b50;
-$color-primary-dark: #3e5836;
-$color-primary-light: #81956e;
-$color-primary-subtle: #edf3e6;
+// Primary Brand & Accents (#27292C Base)
+$color-primary: #27292c;
+$color-primary-dark: #1a1b1d;
+$color-primary-light: #484b50;
+$color-primary-subtle: #f1f2f4;
 
-// Surface & Background
+// Surface & Background (Pure White Based)
 $color-surface: #ffffff;
-$color-surface-subtle: #f8faf4;
+$color-surface-subtle: #fbfbfb;
 $color-bg: #ffffff;
-$color-bg-subtle: #fafcf7;
-$color-bg-muted: #f4f6ef;
-$color-bg-alt: #f8faf4;
-$color-bg-hover: #f5f8f1;
-$color-bg-secondary: #f2f5ea;
+$color-bg-subtle: #f7f8f9;
+$color-bg-muted: #f0f2f4;
+$color-bg-alt: #fafafa;
+$color-bg-hover: #f3f4f6;
+$color-bg-secondary: #eaedf0;
 
-// Text & Typography
-$color-text: #293225;
-$color-text-main: #293225;
-$color-text-dark: #34482a;
-$color-text-primary: #3e5432;
-$color-text-secondary: #4c5c42;
-$color-text-muted: #858e7e;
-$color-text-subtle: #939b8e;
-$color-text-caption: #a0a794;
-$color-text-disabled: #a0a794;
-$color-text-accent: #577b50;
-$color-text-link: #647956;
-$color-text-link-hover: #253e20;
+// Text & Typography (#27292C Main Text)
+$color-text: #27292c;
+$color-text-main: #27292c;
+$color-text-dark: #151617;
+$color-text-primary: #27292c;
+$color-text-secondary: #373b41;
+$color-text-muted: #4b4f56;
+$color-text-subtle: #8a919a;
+$color-text-caption: #a1a7b0;
+$color-text-disabled: #cbd0d6;
+$color-text-accent: #27292c;
+$color-text-link: #2b569a;
+$color-text-link-hover: #1b3a6b;
 
 // Borders & Dividers
-$color-border: #e7ebe3;
-$color-border-light: #eef1e8;
-$color-border-dark: #dce3d5;
-$color-border-hover: #d0d8c8;
-$color-border-input: #dfe7d6;
+$color-border: #e6e8eb;
+$color-border-light: #f0f2f5;
+$color-border-dark: #d3d7dc;
+$color-border-hover: #bcbfc5;
+$color-border-input: #d9dde2;
 
 // Accents & Focus
-$color-focus: #517158;
-$color-accent-green: #81956e;
-$color-accent-gold: #8b915e;
+$color-focus: #27292c;
+$color-accent-green: #388e3c;
+$color-accent-gold: #b78103;
 
 // Status & Accents
-$color-success: #34846a;
-$color-success-dark: #276551;
-$color-success-light: #b4dfd1;
-$color-success-subtle: #eaf7f0;
+$color-success: #2e7d32;
+$color-success-dark: #1b5e20;
+$color-success-light: #c8e6c9;
+$color-success-subtle: #edf7ed;
 
-$color-danger: #b3392c;
-$color-danger-dark: #8c291e;
-$color-danger-light: #f1b9b1;
-$color-danger-subtle: #fff0ee;
+$color-danger: #d32f2f;
+$color-danger-dark: #c62828;
+$color-danger-light: #ffcdd2;
+$color-danger-subtle: #fdeded;
 
-$color-warning: #c08d32;
-$color-warning-dark: #966c22;
-$color-warning-light: #f3deb1;
-$color-warning-subtle: #fff5e5;
-$color-warning-text: #92773c;
-$color-warning-bg: #fffbef;
-$color-warning-border: #f1e5bd;
+$color-warning: #ed6c02;
+$color-warning-dark: #e65100;
+$color-warning-light: #ffe0b2;
+$color-warning-subtle: #fff4e5;
+$color-warning-text: #9a4800;
+$color-warning-bg: #fffbf5;
+$color-warning-border: #fce1c3;
 
-$color-info: #5686d9;
-$color-info-dark: #3b66b2;
-$color-info-light: #bfdaf1;
-$color-info-subtle: #edf3ff;
+$color-info: #0288d1;
+$color-info-dark: #01579b;
+$color-info-light: #b3e5fc;
+$color-info-subtle: #e1f5fe;
 
-$color-brand: #7965d9;
-$color-brand-subtle: #f0edff;
+$color-brand: #5c6bc0;
+$color-brand-subtle: #ede7f6;
 
 // Shadows
-$shadow-sm: 0 1px 3px rgba(41, 50, 37, 0.06);
-$shadow-md: 0 4px 14px rgba(41, 50, 37, 0.08);
-$shadow-lg: 0 8px 24px rgba(41, 50, 37, 0.12);
-$shadow-xl: 0 20px 60px rgba(41, 50, 37, 0.16);
+$shadow-sm: 0 1px 3px rgba(39, 41, 44, 0.05);
+$shadow-md: 0 4px 14px rgba(39, 41, 44, 0.07);
+$shadow-lg: 0 8px 24px rgba(39, 41, 44, 0.1);
+$shadow-xl: 0 20px 60px rgba(39, 41, 44, 0.14);
 
 :root {
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-400: #90a1b9;
+  --color-slate-500: #62748e;
+  --color-gray-50: #f7f7f8;
+  --color-gray-100: #eeeef0;
+  --color-gray-200: #d9d9de;
+  --color-gray-300: #b7b8c2;
+  --color-gray-400: #9394a1;
+  --color-gray-500: #747686;
+  --color-gray-600: #5e5f6e;
+  --color-gray-700: #42434d;
+  --color-gray-800: #2f3037;
+  --color-gray-900: #212126;
+  --color-gray-950: #131316;
+
   --td-line: #{$color-border};
   --td-line-light: #{$color-border-light};
   --td-muted: #{$color-text-muted};

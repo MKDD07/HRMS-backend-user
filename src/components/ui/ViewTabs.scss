@@ -1,0 +1,42 @@
+.view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  margin: var(--space-4) 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button, 9999px);
+  background: var(--color-surface-subtle);
+  min-width: 0;
+  width: fit-content;
+  max-width: 100%;
+
+  .view-tabs__button {
+    border-radius: var(--radius-button, 9999px);
+    white-space: normal;
+    text-align: left;
+    > span { display: inline-flex; align-items: center; gap: var(--space-2); }
+  }
+  .view-tabs__count { font-size: var(--font-2xs); font-variant-numeric: tabular-nums; opacity: .75; }
+}
+
+.view-tabs.view-tabs--slider {
+  display: flex; flex-wrap: nowrap; width: 100%; gap: 8px; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent;
+  .view-tabs__viewport { flex: 1; min-width: 0; overflow: hidden; padding: 3px 0; }
+  .view-tabs__track { position: relative; display: flex; width: max-content; gap: 4px; transition: transform 240ms cubic-bezier(.2,.7,.2,1); }
+  .view-tabs__item {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; min-height: 36px; padding: 8px 12px;
+    border-radius: var(--radius-button, 9999px); font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer;
+    &:focus-visible { outline: 2px solid var(--color-gray-400); outline-offset: -2px; }
+    &:disabled { opacity: .45; cursor: not-allowed; }
+    svg { flex-shrink: 0; }
+  }
+  .view-tabs__arrow {
+    display: grid; place-items: center; flex: 0 0 30px; height: 30px; padding: 0; border: 1px solid var(--color-gray-200); border-radius: 50%; background: var(--color-surface); color: var(--color-gray-700); cursor: pointer;
+    &:hover:not(:disabled) { background: var(--color-gray-50); }
+    &:disabled { opacity: .3; cursor: default; }
+    &:focus-visible { outline: 2px solid var(--color-gray-400); outline-offset: 2px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .view-tabs__track { transition: none; } }
+}

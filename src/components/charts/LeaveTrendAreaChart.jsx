@@ -1,3 +1,6 @@
+import { ChartLegend } from './ChartLegend';
+import { chartPalette } from './chartColors';
+import { Button } from '../ui/Button';
 import React, { useState } from 'react';
 import {
   ResponsiveContainer,
@@ -82,36 +85,15 @@ export function LeaveTrendAreaChart({ data = DEFAULT_DATA, height = 300 }) {
         </div>
 
         <div className="flex items-center gap-1 bg-[#F9FAFB] p-0.5 rounded-lg border border-[#E5E7EB] self-start sm:self-auto text-[13px]">
-          <button
-            type="button"
-            onClick={() => setFilter('full')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${filter === 'full'
-              ? 'bg-white text-[#27292C] shadow-xs'
-              : 'text-[#5F6368] hover:text-[#27292C]'
-              }`}
-          >
+          <Button type="button" onClick={() => setFilter('full')} className={`     ${filter === 'full' ? "" : ""}`} variant="outline" wrapContent={false}>
             12 Months
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('last6')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${filter === 'last6'
-              ? 'bg-white text-[#27292C] shadow-xs'
-              : 'text-[#5F6368] hover:text-[#27292C]'
-              }`}
-          >
+          </Button>
+          <Button type="button" onClick={() => setFilter('last6')} className={`     ${filter === 'last6' ? "" : ""}`} variant="outline" wrapContent={false}>
             Past 6M
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('q3')}
-            className={`px-2.5 py-1 rounded-md font-medium transition-all ${filter === 'q3'
-              ? 'bg-white text-[#27292C] shadow-xs'
-              : 'text-[#5F6368] hover:text-[#27292C]'
-              }`}
-          >
+          </Button>
+          <Button type="button" onClick={() => setFilter('q3')} className={`     ${filter === 'q3' ? "" : ""}`} variant="outline" wrapContent={false}>
             Current Q3
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -125,20 +107,20 @@ export function LeaveTrendAreaChart({ data = DEFAULT_DATA, height = 300 }) {
             <defs>
               {/* Casual Leave Gradient */}
               <linearGradient id="colorCasual" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#4F46E5" stopOpacity={0.0} />
+                <stop offset="5%" stopColor={chartPalette[0]} stopOpacity={0.35} />
+                <stop offset="95%" stopColor={chartPalette[0]} stopOpacity={0.0} />
               </linearGradient>
 
               {/* Sick Leave Gradient */}
               <linearGradient id="colorSick" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0D9488" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#0D9488" stopOpacity={0.0} />
+                <stop offset="5%" stopColor={chartPalette[1]} stopOpacity={0.35} />
+                <stop offset="95%" stopColor={chartPalette[1]} stopOpacity={0.0} />
               </linearGradient>
 
               {/* Privilege Leave Gradient */}
               <linearGradient id="colorPrivilege" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0} />
+                <stop offset="5%" stopColor={chartPalette[2]} stopOpacity={0.35} />
+                <stop offset="95%" stopColor={chartPalette[2]} stopOpacity={0.0} />
               </linearGradient>
             </defs>
 
@@ -155,19 +137,13 @@ export function LeaveTrendAreaChart({ data = DEFAULT_DATA, height = 300 }) {
               tick={{ fill: '#5F6368', fontSize: 11 }}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend
-              verticalAlign="top"
-              align="right"
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ paddingBottom: '12px', fontSize: '11px' }}
-            />
+            <Legend content={<ChartLegend />} />
 
             <Area
               type="monotone"
               dataKey="casual"
               name="Casual Leave"
-              stroke="#4F46E5"
+              stroke={chartPalette[0]}
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorCasual)"
@@ -176,7 +152,7 @@ export function LeaveTrendAreaChart({ data = DEFAULT_DATA, height = 300 }) {
               type="monotone"
               dataKey="sick"
               name="Sick Leave"
-              stroke="#0D9488"
+              stroke={chartPalette[1]}
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorSick)"
@@ -185,7 +161,7 @@ export function LeaveTrendAreaChart({ data = DEFAULT_DATA, height = 300 }) {
               type="monotone"
               dataKey="privilege"
               name="Privilege Leave"
-              stroke="#F59E0B"
+              stroke={chartPalette[2]}
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorPrivilege)"

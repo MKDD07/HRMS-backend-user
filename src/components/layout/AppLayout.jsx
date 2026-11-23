@@ -1,7 +1,11 @@
+import { VaultAiLauncher } from '../ui/VaultAiLauncher';
+import { canUsePage } from '../../../shared/dashboardAccess.mjs';
 import React, { useState, useEffect } from 'react';
 import './TenantLayout.scss';
 import { subscribeNotifications, markAllNotificationsRead } from '../../lib/realtimeNotifications';
 import { Sidebar } from './Sidebar';
+import { SearchDesignProvider } from '../ui/SearchDesignContext';
+import { WorkspaceNavigationContext } from './WorkspaceNavigationContext';
 import { Topbar } from './Topbar';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -22,7 +26,15 @@ export function AppLayout({
   onDismissToast,
   children
 }) {
+  const [refreshVersion, setRefreshVersion] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 768px)');
+    const update = () => { setIsMobile(media.matches); setSidebarOpen(false); };
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
   const [punchModalOpen, setPunchModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -38,7 +50,7 @@ export function AppLayout({
   });
 
   const handleToggleSidebar = () => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    if (window.matchMedia('(max-width: 768px)').matches) {
       setSidebarOpen((prev) => !prev);
     } else {
       setSidebarCollapsed((prev) => {
@@ -86,8 +98,10 @@ export function AppLayout({
   };
 
   return (
-    <div className="tenant-shell">
+    <SearchDesignProvider key={`${currentUser?.company_id}:${currentUser?.user_id || currentUser?.userid || currentUser?.username}`} storageKey={`hrms-search-design:${currentUser?.company_id}:${currentUser?.user_id || currentUser?.userid || currentUser?.username}`} page={activePage}><div className="tenant-shell">
         <Topbar
+          onRefresh={() => { window.dispatchEvent(new Event('pulse-workspace-refresh')); setRefreshVersion(value => value + 1); }}
+          onNavigate={onNavigate}
           onToggleSidebar={handleToggleSidebar}
           currentUser={currentUser}
           onSwitchUser={onSwitchUser}
@@ -96,7 +110,7 @@ export function AppLayout({
           onOpenNotifications={() => setNotificationsOpen(true)}
           onLogout={onLogout}
           unreadCount={notifications.length}
-          isCollapsed={sidebarCollapsed}
+          isCollapsed={isMobile ? !sidebarOpen : sidebarCollapsed}
         />
       <Sidebar
         activeTab={activePage}
@@ -111,7 +125,7 @@ export function AppLayout({
       <div className={`layout-content ${sidebarCollapsed ? 'layout-content--collapsed' : ''}`}>
 
 
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6"><WorkspaceNavigationContext.Provider key={refreshVersion} value={{ onNavigate, currentUser, activePage }}>{children}</WorkspaceNavigationContext.Provider></main>
       </div>
 
       {/* Punch In / Out Modal */}
@@ -129,21 +143,11 @@ export function AppLayout({
                 Cancel
               </Button>
               {!isCheckedIn || isCheckedOut ? (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  loading={punchLoading}
-                  onClick={() => handlePunchAction('punch_in')}
-                >
+                <Button variant="primary" size="sm" loading={punchLoading} onClick={() => handlePunchAction('punch_in')}>
                   Confirm Punch In (Move In)
                 </Button>
               ) : (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  loading={punchLoading}
-                  onClick={() => handlePunchAction('punch_out')}
-                >
+                <Button variant="danger" size="sm" loading={punchLoading} onClick={() => handlePunchAction('punch_out')}>
                   Confirm Punch Out (Move Out)
                 </Button>
               )}
@@ -202,18 +206,10 @@ export function AppLayout({
         title="Recent System Notifications"
         footer={
           <div className="flex justify-between w-full items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => markAllNotificationsRead().catch(error => window.alert(error.message))}
-            >
+            <Button variant="ghost" size="sm" onClick={() => markAllNotificationsRead().catch(error => window.alert(error.message))}>
               Mark all read
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setNotificationsOpen(false)}
-            >
+            <Button variant="secondary" size="sm" onClick={() => setNotificationsOpen(false)}>
               Close
             </Button>
           </div>
@@ -239,6 +235,7 @@ export function AppLayout({
         </div>
       </Modal>
 
+      {canUsePage(currentUser,"documents") && <VaultAiLauncher key={currentUser.company_id + ":" + (currentUser.user_id || currentUser.userid)} currentUser={currentUser} onStart={() => onNavigate("documents")}/>}
       {/* Global Toast Alerts */}
       <ToastContainer>
         {toasts.map((toast) => (
@@ -251,6 +248,6 @@ export function AppLayout({
           />
         ))}
       </ToastContainer>
-    </div>
+    </div></SearchDesignProvider>
   );
 }

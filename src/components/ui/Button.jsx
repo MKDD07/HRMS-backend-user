@@ -1,4 +1,5 @@
 import React from 'react';
+import { ArrowUpRight } from 'lucide-react';
 
 /**
  * Universal Button Component
@@ -20,15 +21,19 @@ export function Button({
   icon: Icon,
   endIcon: EndIcon,
   iconOnly = false,
+  viewAll = false,
   pill = false,
   loading = false,
   active = false,
   disabled = false,
+  wrapContent = true,
+  layout,
   className = '',
   onClick,
   type = 'button',
   ...props
 }) {
+  const actionLabel = viewAll ? React.Children.toArray(children).filter(child => typeof child === 'string').join('') : undefined;
   const variantClass = `btn--${variant}`;
   const sizeClass = iconOnly ? `btn--icon-${size}` : (size !== 'md' ? `btn--${size}` : 'btn--md');
   const pillClass = pill ? 'btn--pill' : '';
@@ -40,18 +45,20 @@ export function Button({
   return (
     <button
       type={type}
-      className={`btn ${variantClass} ${sizeClass} ${pillClass} ${loadingClass} ${activeClass} ${className}`.trim()}
+      className={`btn ${variantClass} ${sizeClass} ${pillClass} ${loadingClass} ${activeClass} ${layout ? `btn--layout-${layout}` : ''} ${viewAll ? 'btn--view-all' : ''} ${className}`.trim()}
       disabled={disabled || loading}
       aria-pressed={active ? 'true' : undefined}
       aria-busy={loading ? 'true' : undefined}
       onClick={onClick}
+      aria-label={actionLabel}
+      title={actionLabel}
       {...props}
     >
-      {Icon && !loading && (
+      {!viewAll && Icon && !loading && (
         React.isValidElement(Icon) ? Icon : <Icon size={iconSize} className="shrink-0" />
       )}
-      {children && <span>{children}</span>}
-      {EndIcon && !loading && (
+      {viewAll ? <ArrowUpRight size={16} aria-hidden="true" /> : wrapContent ? (children && <span>{children}</span>) : children}
+      {!viewAll && EndIcon && !loading && (
         React.isValidElement(EndIcon) ? EndIcon : <EndIcon size={iconSize} className="shrink-0" />
       )}
     </button>

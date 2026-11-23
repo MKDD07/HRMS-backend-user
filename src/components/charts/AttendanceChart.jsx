@@ -1,3 +1,5 @@
+import { ChartLegend } from './ChartLegend';
+import { attendanceColors } from './chartColors';
 import React, { useState } from 'react';
 import './charts.scss';
 
@@ -97,7 +99,7 @@ export function AttendanceChart({
                   width={barW}
                   height={hPresent}
                   rx="3"
-                  fill="#10b981"
+                  fill={attendanceColors.present}
                   opacity={isHovered ? 1 : 0.9}
                 />
                 {/* Late (Amber) */}
@@ -107,7 +109,7 @@ export function AttendanceChart({
                   width={barW}
                   height={hLate}
                   rx="2"
-                  fill="#f59e0b"
+                  fill={attendanceColors.late}
                 />
                 {/* Absent (Rose) */}
                 <rect
@@ -116,7 +118,7 @@ export function AttendanceChart({
                   width={barW}
                   height={hAbsent}
                   rx="2"
-                  fill="#ef4444"
+                  fill={attendanceColors.absent}
                 />
 
                 {/* X-axis Label */}
@@ -143,34 +145,24 @@ export function AttendanceChart({
             <span className="font-bold text-white">
               {data[hoveredIdx].day}:
             </span>
-            <span className="text-emerald-400 font-semibold">
+            <span className="font-semibold" style={{ color: attendanceColors.present }}>
               {data[hoveredIdx].present}% Present
             </span>
-            <span className="text-amber-400">
+            <span style={{ color: attendanceColors.late }}>
               {data[hoveredIdx].late}% Late
             </span>
-            <span className="text-rose-400">
+            <span style={{ color: attendanceColors.absent }}>
               {data[hoveredIdx].absent}% Absent
             </span>
           </div>
         )}
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-5 mt-3 text-[13px] text-slate-400">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          <span>Present</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-          <span>Late In</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-          <span>Absent</span>
-        </div>
-      </div>
+      <ChartLegend items={[
+        { label: 'Present', color: attendanceColors.present },
+        { label: 'Late In', color: attendanceColors.late },
+        { label: 'Absent', color: attendanceColors.absent },
+      ]} />
     </div>
   );
 }

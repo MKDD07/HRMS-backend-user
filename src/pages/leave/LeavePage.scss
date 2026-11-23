@@ -7,23 +7,10 @@
   --lv-muted: #{$color-text-muted};
   max-width: 1600px;
   margin: 0 auto;
-  padding: var(--space-xs, 8px) 0 var(--space-xl, 30px);
+  padding: var(--space-2) 0 var(--space-7-5);
   color: var(--lv-ink);
 
-  button {
-    cursor: pointer;
-    font: inherit;
-
-    &:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-    }
-  }
-
-  button:focus-visible,
-  input:focus-visible,
-  select:focus-visible,
-  textarea:focus-visible {
+  input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 2px solid $color-primary;
     outline-offset: 2px;
   }
@@ -100,38 +87,7 @@
   }
 }
 
-.leave-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-lg, 20px);
-  margin-bottom: var(--space-lg, 24px);
 
-  h1 {
-    font-size: clamp(25px, 3vw, 34px);
-    letter-spacing: -0.04em;
-    font-weight: 600;
-    line-height: 1.2;
-
-    span {
-      color: $color-primary;
-    }
-  }
-
-  p {
-    color: var(--lv-muted);
-    font-size: var(--font-sm, 12px);
-    margin-top: 6px;
-    line-height: 1.55;
-  }
-
-  &-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs, 8px);
-    flex-wrap: wrap;
-  }
-}
 
 .leave-eyebrow {
   display: block;
@@ -139,7 +95,7 @@
   font-size: var(--font-xs, 10px);
   font-weight: 600;
   letter-spacing: 0.14em;
-  margin-bottom: var(--space-xs, 8px);
+  margin-bottom: var(--space-2);
 }
 
 .leave-refresh-btn {
@@ -188,29 +144,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 38px;
-  border: 1px solid $color-border;
-  border-radius: var(--radius-sm, 8px);
-  background: $color-surface;
-  color: $color-text-secondary;
-  padding: 8px 12px;
-  font-size: var(--font-xs, 11px) !important;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: $color-primary-subtle;
-  }
-
-  &.is-primary {
-    background: $color-primary;
-    color: $color-surface;
-    border-color: $color-primary;
-
-    &:hover {
-      background: $color-primary-dark;
-    }
-  }
+  gap: 7px
 }
 
 .leave-alert {
@@ -224,113 +158,46 @@
 
   button {
     margin-left: 10px;
-    color: inherit;
-    text-decoration: underline;
-    border: 0;
-    background: transparent;
   }
 }
 
-.leave-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  background: $color-surface;
-  border: 1px solid var(--lv-line);
-  border-radius: var(--radius-md, 12px);
-  overflow: hidden;
-  margin-bottom: 22px;
-
-  > div {
-    padding: 18px 22px;
-    min-width: 0;
-
-    + div {
-      border-left: 1px solid var(--lv-line);
-    }
-  }
-
-  span {
-    display: block;
-    color: $color-text-muted;
-    font-size: var(--font-xs, 11px);
-  }
-
-  strong {
-    display: block;
-    margin: 8px 0 5px;
-    font-size: var(--font-2xl, 27px);
-    font-weight: 600;
-    line-height: 1.2;
-  }
-
-  small {
-    color: $color-text-muted;
-    font-size: var(--font-xs, 10px);
-  }
-}
 
 .leave-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 8fr) minmax(280px, 4fr);
-  gap: 22px;
-  align-items: start;
+  --workspace-grid-gap: var(--space-5-5);
+  margin-top: 0;
+  > .leave-main { grid-column: span 9; }
+  > .leave-side { grid-column: span 3; }
 }
 
-.leave-main,
+.leave-main {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
 .leave-side {
   display: grid;
-  gap: var(--space-lg, 20px);
+  gap: var(--space-5);
   min-width: 0;
+  position: sticky;
+  top: calc(var(--tenant-header-height, 82px) + 20px);
+  align-self: start;
 }
 
 .leave-panel {
   background: $color-surface;
   border: 1px solid var(--lv-line);
-  border-radius: var(--radius-md, 12px);
+  border-radius: var(--radius-card, 12px);
   min-width: 0;
   overflow: hidden;
 
-  &-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--space-md, 16px);
-    padding: 19px 21px;
-    border-bottom: 1px solid $color-border;
 
-    h2 {
-      font-size: var(--font-md, 15px);
-      font-weight: 600;
-    }
-
-    p {
-      color: var(--lv-muted);
-      font-size: var(--font-sm, 12px);
-      margin-top: 6px;
-      line-height: 1.55;
-    }
-
-    > svg {
-      color: $color-primary;
-    }
-
-    select {
-      min-height: 36px;
-      background: $color-surface;
-      border: 1px solid $color-border;
-      border-radius: var(--radius-sm, 7px);
-      color: $color-text-secondary;
-      font-size: var(--font-xs, 11px);
-      padding: 0 9px;
-    }
-  }
 }
 
 .leave-controls {
   display: flex;
   align-items: center;
-  gap: var(--space-xs, 8px);
+  gap: var(--space-2);
   flex-wrap: wrap;
   justify-content: flex-end;
 
@@ -355,15 +222,12 @@
 
   button {
     width: 36px;
-    height: 36px;
-    min-height: 36px;
-    padding: 0;
   }
 }
 
 .leave-legend {
   display: flex;
-  gap: var(--space-md, 16px);
+  gap: var(--space-4);
   flex-wrap: wrap;
   font-size: var(--font-xs, 10px);
   color: $color-text-muted;
@@ -400,7 +264,7 @@
 
   article {
     display: flex;
-    gap: var(--space-md, 12px);
+    gap: var(--space-3);
     align-items: center;
     padding: 12px 0;
     border-top: 1px solid $color-border;
@@ -446,7 +310,7 @@
 .leave-graphs {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-lg, 20px);
+  gap: var(--space-5);
 }
 
 .leave-chart {
@@ -472,7 +336,7 @@
     &-header {
       display: flex;
       align-items: center;
-      gap: var(--space-xs, 8px);
+      gap: var(--space-2);
       margin-bottom: 6px;
       padding-bottom: 6px;
       border-bottom: 1px solid $color-border;
@@ -610,7 +474,7 @@
 
   article {
     display: flex;
-    gap: var(--space-md, 12px);
+    gap: var(--space-3);
     align-items: center;
     padding: 12px 0;
     border-top: 1px solid $color-border;
@@ -647,18 +511,10 @@
 .leave-review-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-xs, 8px);
+  gap: var(--space-2);
   flex-wrap: wrap;
   width: 100%;
-  justify-content: flex-end;
-
-  button {
-    min-height: 32px;
-
-    &:last-child {
-      color: $color-danger;
-    }
-  }
+  justify-content: flex-end
 }
 
 .leave-holiday-panel {
@@ -693,18 +549,8 @@
     width: 100%;
     display: flex;
     align-items: center;
-    gap: var(--space-md, 12px);
-    padding: 13px 2px;
-    border: 0;
-    border-bottom: 1px solid $color-border;
-    background: transparent;
+    gap: var(--space-3);
     text-align: left;
-    color: $color-text-secondary;
-    transition: background 0.15s ease;
-
-    &:hover {
-      background: $color-surface-subtle;
-    }
 
     > span {
       flex: 1;
@@ -748,14 +594,9 @@
   }
 }
 
-.leave-clear {
-  min-height: 29px;
-  padding: 5px 8px;
-}
-
 .leave-decision {
   display: grid;
-  gap: var(--space-md, 16px);
+  gap: var(--space-4);
   color: $color-text;
   font-size: var(--font-sm, 12px);
 
@@ -774,14 +615,14 @@
   > div {
     display: flex;
     justify-content: flex-end;
-    gap: var(--space-xs, 8px);
+    gap: var(--space-2);
   }
 }
 
 .leave-chart-header-controls {
   display: flex;
   align-items: center;
-  gap: var(--space-xs, 8px);
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
@@ -831,7 +672,7 @@
 
 @media (max-width: 950px) {
   .leave-layout {
-    grid-template-columns: 1fr;
+    > .leave-main, > .leave-side { grid-column: 1 / -1; }
   }
 
   .leave-holiday-panel {
@@ -844,31 +685,8 @@
 }
 
 @media (max-width: 650px) {
-  .leave-header {
-    align-items: flex-start;
-    flex-direction: column;
 
-    &-actions {
-      width: 100%;
 
-      .leave-button {
-        flex: 1;
-      }
-    }
-  }
-
-  .leave-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    > div:nth-child(3) {
-      border-left: 0;
-      border-top: 1px solid var(--lv-line);
-    }
-
-    > div:nth-child(4) {
-      border-top: 1px solid var(--lv-line);
-    }
-  }
 
   .leave-side {
     grid-template-columns: 1fr;
@@ -884,9 +702,7 @@
     border-spacing: 2px;
   }
 
-  .leave-panel-heading {
-    padding: 16px;
-  }
+
 
   .leave-controls select {
     max-width: 100%;

@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS internal_mail_messages(company_id TEXT NOT NULL,id TEXT NOT NULL,sender_id TEXT NOT NULL,request_id TEXT NOT NULL,payload TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(company_id,id),UNIQUE(company_id,sender_id,request_id));
+CREATE TABLE IF NOT EXISTS internal_mail_copies(company_id TEXT NOT NULL,message_id TEXT NOT NULL,user_id TEXT NOT NULL,kind TEXT NOT NULL,folder TEXT NOT NULL,seen INTEGER NOT NULL DEFAULT 0,starred INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(company_id,message_id,user_id,kind));
+CREATE INDEX IF NOT EXISTS internal_mail_inbox ON internal_mail_copies(company_id,user_id,folder);
+CREATE TABLE IF NOT EXISTS internal_mail_attachments(company_id TEXT NOT NULL,message_id TEXT NOT NULL,attachment_index INTEGER NOT NULL,chunk_index INTEGER NOT NULL,content TEXT NOT NULL,PRIMARY KEY(company_id,message_id,attachment_index,chunk_index));

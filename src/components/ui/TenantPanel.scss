@@ -1,0 +1,102 @@
+@use '../../styles/color' as *;
+
+.card,
+.panel,
+.tenant-panel {
+  min-width: 0;
+  padding: 0;
+  margin: 20px 0 28px;
+  border: 0;
+  box-shadow: var(--shadow-main);
+  border-radius: var(--radius-card, 12px);
+  background: var(--color-surface, #ffffff);
+  overflow: hidden;
+}
+
+.card-head,
+.card-header,
+.panel-head,
+.tenant-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  border-bottom: 1px solid $color-border;
+
+  /* Left: Title & Subtitle */
+  > div:first-child {
+    flex: 1 1 180px;
+    min-width: 0;
+
+    > h2, > h3, > h4 {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2, 8px);
+      margin: 0;
+      color: $color-text-main;
+      font-family: var(--heading-font-family, Inter, sans-serif);
+      font-size: var(--font-sm, 14px);
+      font-weight: var(--weight-bold, 600);
+      line-height: 1.4;
+      letter-spacing: -0.015em;
+      overflow-wrap: anywhere;
+      svg { flex-shrink: 0; }
+    }
+
+    > h2 {
+      font-size: 17px;
+    }
+
+    > p {
+      margin: var(--space-1, 4px) 0 0;
+      color: $color-text-muted;
+      font-size: var(--font-xs, 12px);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  /* Right: Action Buttons (No class needed) */
+  > div:last-child:not(:first-child),
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    max-width: 100%;
+    .btn { white-space: normal; max-width: 100%; }
+  }
+}
+
+.tenant-panel-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  border-bottom: 1px solid $color-border;
+  min-width: 0;
+  select {
+    max-width: 100%;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 1px solid $color-border;
+    border-radius: var(--radius-input, 6px);
+    background: $color-bg;
+    color: $color-text-main;
+    font: inherit;
+  }
+}
+
+.tenant-panel-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px) var(--space-5, 20px);
+  border-top: 1px solid $color-border;
+  color: $color-text-muted;
+  font-size: var(--font-xs, 12px);
+}

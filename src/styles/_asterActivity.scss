@@ -1,0 +1,24 @@
+// Shared activity frame for Aster document surfaces.
+@mixin activity-frame {
+  position: relative;
+  &.is-generating::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    padding: 2px;
+    border-radius: inherit;
+    background: linear-gradient(110deg, #a78bfa, #60a5fa, #f0abcf, #a78bfa);
+    background-size: 300% 100%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    animation: aster-gradient-flow 4s linear infinite;
+  }
+  @media(prefers-reduced-motion: reduce) {
+    &.is-generating::before { animation: none; }
+  }
+}
+@keyframes aster-gradient-flow { from {background-position: 0% 50%;} to {background-position: 150% 50%;} }

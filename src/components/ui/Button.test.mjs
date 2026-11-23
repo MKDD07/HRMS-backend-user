@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import Module from 'node:module';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { transformSync } from 'esbuild';
+
+const filename = fileURLToPath(new URL('./Button.jsx', import.meta.url));
+const compiled = transformSync(readFileSync(filename, 'utf8'), { loader: 'jsx', format: 'cjs' });
+const loaded = new Module(filename);
+loaded.paths = Module._nodeModulePaths(fileURLToPath(new URL('.', import.meta.url)));
+loaded._compile(compiled.code, filename);
+const { Button } = loaded.exports;
+const render = (props, children = 'Action') => renderToStaticMarkup(React.createElement(Button, props, children));
+
+assert.match(render({}), /type="button"/);
+const submit = render({ type: 'submit', name: 'action', value: 'Published' });
+for (const attr of ['type="submit"', 'name="action"', 'value="Published"']) assert.ok(submit.includes(attr));
+const loading = render({ loading: true });
+assert.match(loading, /disabled=""/);
+assert.match(loading, /aria-busy="true"/);
+assert.match(render({ disabled: true }), /disabled=""/);
+assert.match(render({ active: true }), /aria-pressed="true"/);
+assert.match(render({ 'aria-pressed': false }), /aria-pressed="false"/);
+const card = render({ layout: 'column', wrapContent: false }, React.createElement('strong', null, 'Record'));
+assert.match(card, /btn--layout-column/);
+assert.match(card, /<strong>Record<\/strong>/);
+assert.doesNotMatch(card, / layout=| wrapContent=/);
+console.log('Universal Button checks passed: default type, submit values, loading, disabled states, selection, and card content.');

@@ -1,3 +1,4 @@
+import { companyRequest } from '../../../lib/companyAuth';
 /**
  * Custom pay rows (Conveyance, Travel, Loan EMI ...) with a month scope.
  *
@@ -8,8 +9,7 @@
  *   created_at
  * }
  *
- * Storage is localStorage for now. To move to a real API, only change the
- * functions in this file (keep the same names and return values).
+ * Cloudflare D1 owns the records. This module keeps a session-scoped memory copy.
  */
 
 export const MONTH_NAMES = [
@@ -17,24 +17,26 @@ export const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-const KEY = 'hrms_custom_pay_rows_v2';
+let session, cached = {};
+const token = () => localStorage.getItem('pulse_hrms_token');
+const request = options => companyRequest('/salary-components', { token: token(), ...options });
+const post = body => request({ method: 'POST', body: JSON.stringify(body) });
 
 export const monthIndex = (year, month) => Number(year) * 12 + MONTH_NAMES.indexOf(month);
 
 function readAll() {
-  try {
-    return JSON.parse(localStorage.getItem(KEY) || '{}');
-  } catch {
-    return {};
-  }
+  if (session !== token()) { session = token(); cached = {}; }
+  return cached;
 }
 
-function writeAll(data) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(data));
-  } catch (err) {
-    console.error('Could not save custom pay rows:', err);
-  }
+export async function loadRows() {
+  const current = token();
+  const result = await request();
+  if (current !== token()) throw new Error('Account changed while loading payroll components.');
+  session = current;
+  cached = {};
+  for (const { userid, ...row } of result) (cached[userid] ||= []).push(row);
+  return cached;
 }
 
 export function getRows(uid) {
@@ -42,30 +44,19 @@ export function getRows(uid) {
 }
 
 /** Add the same row to many people at once. */
-export function addRowForUsers(uids, input) {
-  const all = readAll();
-  const stamp = Date.now();
-  uids.forEach((uid, i) => {
-    const row = {
-      ...input,
-      id: `row-${stamp}-${i}-${Math.random().toString(36).slice(2, 6)}`,
-      created_at: new Date().toISOString()
-    };
-    all[uid] = [...(all[uid] || []), row];
-  });
-  writeAll(all);
+export async function addRowForUsers(uids, input) {
+  await post({ action: 'add', employee_ids: uids, row: input });
+  await loadRows();
 }
 
-export function updateRow(uid, rowId, patch) {
-  const all = readAll();
-  all[uid] = (all[uid] || []).map((r) => (r.id === rowId ? { ...r, ...patch } : r));
-  writeAll(all);
+export async function updateRow(uid, rowId, patch) {
+  await post({ action: 'update', userid: uid, id: rowId, patch });
+  await loadRows();
 }
 
-export function deleteRow(uid, rowId) {
-  const all = readAll();
-  all[uid] = (all[uid] || []).filter((r) => r.id !== rowId);
-  writeAll(all);
+export async function deleteRow(uid, rowId) {
+  await post({ action: 'delete', userid: uid, id: rowId });
+  await loadRows();
 }
 
 export function isRowActive(row, year, month) {
