@@ -31,7 +31,7 @@ bucket_name = "hrms-documents-vault"
 BILLING_MODE = "live"
 # Temporarily disabled. Restore the site key to re-enable verification.
 RECAPTCHA_SITE_KEY = ""
-ALLOWED_ORIGINS = "https://hrms-backend-user.mkmkataria07.workers.dev,https://nexthr.com,https://www.nexthr.com,https://lutter-master.mkmkataria07.workers.dev,http://localhost:3000,http://127.0.0.1:3000"
+ALLOWED_ORIGINS = "https://hrms-backend-user.mkmkataria07.workers.dev,https://nexthr.com,https://www.nexthr.com,https://lutter-master.mkmkataria07.workers.dev,http://localhost:3000,http://127.0.0.1:3000,https://app-ffr5ewrwtnfrl5w7steznky2npn6l7d7jf4owkj3fcoca3vn5mkq.makeproxy-c.figma.site"
 ALLOW_LOCALHOST_ORIGINS = "true"
 RECAPTCHA_ALLOWED_HOSTNAMES = "nexthr.com,www.nexthr.com,localhost,127.0.0.1"
 
